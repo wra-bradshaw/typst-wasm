@@ -1,0 +1,20 @@
+[package]
+name = "typst-wasm"
+version = "0.1.0"
+edition = "2024"
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O4"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+js-sys = "0.3.72"
+serde = { version = "1.0", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+tsify = "0.5.6"
+typst = "0.13.0"
+typst-svg = "0.13.0"
+wasm-bindgen = "0.2.108"
+web-sys = "0.3"

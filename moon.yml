@@ -1,0 +1,144 @@
+$schema: "https://moonrepo.dev/schemas/project.json"
+
+# Typst WASM package - WebAssembly bindings for Typst
+# Complex build pipeline with font fetching, WASM compilation, and bundling
+
+language: typescript
+type: library
+
+# Exclude inherited global tasks that conflict with local task definitions
+workspace:
+  inheritedTasks:
+    exclude: ["build"]
+
+fileGroups:
+  rust-sources:
+    - "src/**/*.rs"
+    - "Cargo.toml"
+    - "Cargo.lock"
+    - ".cargo/**/*"
+
+  typescript-sources:
+    - "src/**/*.ts"
+    - "!src/wasm/**/*"
+    - "!src/fonts/files/**/*"
+    - "!src/fonts/index.ts" # Auto-generated
+    - "tsconfig.json"
+    - "tsdown.config.ts"
+    - "package.json"
+
+tasks:
+  # Task 1: Download and extract fonts
+  fetch-fonts:
+    command: "bash scripts/fetch-fonts.sh"
+    description: "Download and extract font files from New Computer Modern Math distribution"
+    inputs:
+      - "scripts/fetch-fonts.sh"
+    outputs:
+      - "src/fonts/files"
+    options:
+      cache: true
+      runInCI: true
+
+  # Task 2: Generate font index TypeScript file
+  generate-font-index:
+    command: "bun run scripts/generate-font-index.ts"
+    description: "Generate src/fonts/index.ts with URL imports"
+    deps:
+      - "fetch-fonts"
+    inputs:
+      - "src/fonts/files"
+      - "scripts/generate-font-index.ts"
+      - "package.json"
+    outputs:
+      - "src/fonts/index.ts"
+    options:
+      cache: true
+
+  # Task 3: Build Rust to WASM (dev mode)
+  build-wasm-dev:
+    command: "bash scripts/build-wasm.sh dev"
+    description: "Build Rust to WASM (development, unoptimized)"
+    inputs:
+      - "@group(rust-sources)"
+    outputs:
+      - "src/wasm/*"
+    options:
+      cache: true
+      runInCI: false # Only run in dev mode
+
+  # Task 3b: Build Rust to WASM (release mode)
+  build-wasm-release:
+    command: "bash scripts/build-wasm.sh release"
+    description: "Build Rust to WASM (release, optimized)"
+    inputs:
+      - "@group(rust-sources)"
+    outputs:
+      - "src/wasm/*"
+    options:
+      cache: true
+      runInCI: true
+
+  # Task 4: Bundle TypeScript with tsdown
+  bundle:
+    command: "bunx tsdown"
+    description: "Bundle TypeScript with tsdown"
+    deps:
+      - "generate-font-index"
+      - "build-wasm-release"
+    inputs:
+      - "@group(typescript-sources)"
+      - "tsdown.config.ts"
+    outputs:
+      - "dist/index.js"
+      - "dist/index.d.ts"
+      - "dist/worker.js"
+    options:
+      cache: true
+
+  # Task 5: Copy WASM file to dist
+  copy-wasm:
+    command: "cp src/wasm/typst_wasm_bg.wasm dist/typst_wasm_bg.wasm"
+    description: "Copy WASM binary to dist folder"
+    deps:
+      - "bundle"
+    inputs:
+      - "src/wasm/typst_wasm_bg.wasm"
+    outputs:
+      - "dist/typst_wasm_bg.wasm"
+    options:
+      cache: true
+
+  # Main build task - orchestrates all steps
+  build:
+    command: "noop"
+    deps:
+      - "fetch-fonts"
+      - "generate-font-index"
+      - "build-wasm-release"
+      - "bundle"
+      - "copy-wasm"
+    options:
+      cache: true
+
+  # Development mode with watch and dev WASM
+  dev:
+    command: "tsdown --watch --no-clean"
+    description: "Watch mode for development (uses dev WASM build)"
+    deps:
+      - "fetch-fonts"
+      - "generate-font-index"
+      - "build-wasm-dev"
+    inputs:
+      - "src/*"
+    options:
+      cache: false
+      persistent: true
+      runInCI: false
+
+  # Pre-publish build (ensures clean release build)
+  prepublishOnly:
+    deps:
+      - "build"
+    options:
+      cache: false

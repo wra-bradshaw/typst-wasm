@@ -1,0 +1,3 @@
+$schema: 'https://moonrepo.dev/schemas/toolchain.json'
+
+# Tools are provided by system/Nix.

@@ -1,0 +1,16 @@
+$schema: 'https://moonrepo.dev/schemas/workspace.json'
+
+projects:
+  typst-wasm: '.'
+
+vcs:
+  defaultBranch: 'main'
+  manager: 'git'
+  remoteCandidates:
+    - 'origin'
+    - 'upstream'
+
+pipeline:
+  autoCleanCache: true
+  logRunningCommand: true
+  installDependencies: true

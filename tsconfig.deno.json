@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["tsdown-plugin-worker/types", "deno", "node"],
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src/**/*", "scripts/**/*", "tests/e2e/scenario.ts", "tests/e2e/deno.e2e.ts"]
+}
