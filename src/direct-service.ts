@@ -1,8 +1,12 @@
 import { Data, Deferred, Effect, Ref } from "effect";
 import { PackageManager } from "./package-manager";
 import type { WasmModuleOrPath } from "./wasm-module";
-import init, { TypstCompiler, type InitOutput } from "./wasm";
-import type { WasmDiagnostic } from "./wasm/typst_wasm";
+import {
+  loadWasmModule,
+  type InitOutput,
+  type TypstCompilerInstance,
+  type WasmDiagnostic,
+} from "./wasm";
 
 class DirectServiceError extends Data.TaggedError("DirectServiceError")<{
   readonly message: string;
@@ -43,11 +47,11 @@ export class DirectService extends Effect.Service<DirectService>()("DirectServic
     const disposed = yield* Ref.make(false);
     const initialized = yield* Ref.make(false);
     const readyDeferred = yield* Deferred.make<void>();
-    const compilerRef = yield* Ref.make<TypstCompiler | null>(null);
+    const compilerRef = yield* Ref.make<TypstCompilerInstance | null>(null);
     const wasmExportsRef = yield* Ref.make<InitOutput | null>(null);
     const compileRef = yield* Ref.make<((compilerPtr: number) => Promise<[number, number, number]>) | null>(null);
 
-    const ensureCompiler = <T>(run: (compiler: TypstCompiler) => T, name: string): Effect.Effect<T, DirectServiceError> =>
+    const ensureCompiler = <T>(run: (compiler: TypstCompilerInstance) => T, name: string): Effect.Effect<T, DirectServiceError> =>
       Effect.gen(function* () {
         const compiler = yield* Ref.get(compilerRef);
         if (!compiler) {
@@ -111,24 +115,24 @@ export class DirectService extends Effect.Service<DirectService>()("DirectServic
 
         if (yield* Ref.get(disposed)) return;
         if (yield* Ref.get(initialized)) return;
-        yield* Ref.set(initialized, true);
 
         const initializedCompiler = yield* Effect.tryPromise({
           try: async () => {
+            const wasmModule = await loadWasmModule();
             const suspending = new (
               WebAssembly as unknown as {
                 Suspending: new (fn: (pathPtr: number, pathLen: number, resultLenPtr: number) => Promise<number>) => (pathPtr: number, pathLen: number, resultLenPtr: number) => number;
               }
             ).Suspending(hostFetch);
 
-            const wasmExports = await init({
+            const wasmExports = await wasmModule.default({
               module_or_path: moduleOrPath,
               imports: {
                 bridge: {
                   host_fetch: suspending,
                 },
               },
-            } as unknown as Parameters<typeof init>[0]);
+            });
 
             const promising = (
               WebAssembly as unknown as {
@@ -139,7 +143,7 @@ export class DirectService extends Effect.Service<DirectService>()("DirectServic
             return {
               wasmExports,
               compile: promising(wasmExports.typstcompiler_compile as (compilerPtr: number) => [number, number, number]),
-              compiler: new TypstCompiler(),
+              compiler: new wasmModule.TypstCompiler(),
             };
           },
           catch: (cause) =>
@@ -149,6 +153,7 @@ export class DirectService extends Effect.Service<DirectService>()("DirectServic
             }),
         });
 
+        yield* Ref.set(initialized, true);
         yield* Ref.set(wasmExportsRef, initializedCompiler.wasmExports);
         wasmExportsRuntime = initializedCompiler.wasmExports;
         yield* Ref.set(compileRef, initializedCompiler.compile);
@@ -197,7 +202,7 @@ export class DirectService extends Effect.Service<DirectService>()("DirectServic
           }
 
           const ret = yield* Effect.tryPromise({
-            try: () => compile((compiler as unknown as { __wbg_ptr: number }).__wbg_ptr),
+            try: () => compile(compiler.__wbg_ptr),
             catch: (cause) => new DirectServiceError({ message: "Direct command failed: compile", cause }),
           });
 

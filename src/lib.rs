@@ -14,7 +14,7 @@ use wasm_bindgen::prelude::*;
 
 #[link(wasm_import_module = "bridge")]
 unsafe extern "C" {
-    fn host_fetch(path_ptr: *const u8, path_len: u32, result_len_ptr: *mut u32) -> *const u8;
+    fn host_fetch(path_ptr: *const u8, path_len: u32, result_len_ptr: *mut u32) -> *mut u8;
 }
 
 pub struct ResourceBridge;
@@ -43,8 +43,10 @@ impl ResourceBridge {
             ));
         }
 
-        let data = unsafe { std::slice::from_raw_parts(result_ptr, result_len as usize) };
-        Ok(data.to_vec())
+        let data = unsafe {
+            Vec::from_raw_parts(result_ptr, result_len as usize, result_len as usize)
+        };
+        Ok(data)
     }
 }
 
@@ -89,6 +91,10 @@ impl TypstCompiler {
     pub fn add_source(&mut self, path: &str, text: &str) -> Result<(), String> {
         let id = FileId::new(None, VirtualPath::new(path));
         let source = Source::new(id, text.to_string());
+        self.files
+            .write()
+            .map_err(|_| "Failed to acquire write lock on files".to_string())?
+            .remove(&id);
         self.sources
             .write()
             .map_err(|_| "Failed to acquire write lock on sources".to_string())?
@@ -99,6 +105,10 @@ impl TypstCompiler {
     pub fn add_file(&mut self, path: &str, data: &[u8]) -> Result<(), String> {
         let id = FileId::new(None, VirtualPath::new(path));
         let bytes = Bytes::new(data.to_vec());
+        self.sources
+            .write()
+            .map_err(|_| "Failed to acquire write lock on sources".to_string())?
+            .remove(&id);
         self.files
             .write()
             .map_err(|_| "Failed to acquire write lock on files".to_string())?

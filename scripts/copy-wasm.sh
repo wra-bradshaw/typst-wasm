@@ -2,13 +2,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC_WASM_DIR="${SCRIPT_DIR}/../src/wasm"
-DIST_WASM_DIR="${SCRIPT_DIR}/../dist/wasm"
+SRC_WASM_PATH="${SCRIPT_DIR}/../src/wasm/typst_wasm_bg.wasm"
+DIST_WASM_PATH="${SCRIPT_DIR}/../dist/typst_wasm_bg.wasm"
 
-[[ -d "${SRC_WASM_DIR}" ]] || {
-  echo "Error: src/wasm not found" >&2
+[[ -f "${SRC_WASM_PATH}" ]] || {
+  echo "Error: ${SRC_WASM_PATH} not found" >&2
   exit 1
 }
 
-rm -rf "${DIST_WASM_DIR}"
-cp -r "${SRC_WASM_DIR}" "${DIST_WASM_DIR}"
+mkdir -p "$(dirname "${DIST_WASM_PATH}")"
+cp "${SRC_WASM_PATH}" "${DIST_WASM_PATH}"

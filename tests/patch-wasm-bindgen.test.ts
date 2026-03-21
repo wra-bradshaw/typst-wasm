@@ -1,15 +1,37 @@
 import { describe, expect, it } from "vitest";
 import { applyPatch } from "../scripts/patch-wasm-bindgen";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+
+const wasmBindgenFixture = `import * as import1 from "bridge"
+
+function __wbg_get_imports(memory) {
+    const import0 = {
+        __proto__: null,
+        memory: memory || new WebAssembly.Memory({ initial: 1, maximum: 1, shared: true }),
+    };
+    return {
+        __proto__: null,
+        "./typst_wasm_bg.js": import0,
+        "bridge": import1,
+    };
+}
+
+let wasm;
+
+async function __wbg_init(module_or_path, memory) {
+    if (wasm !== undefined) return wasm;
+
+    let thread_stack_size
+    if (typeof module_or_path === 'object' && 'module_or_path' in module_or_path) {
+            ({module_or_path, memory, thread_stack_size} = module_or_path)
+    }
+    const imports = __wbg_get_imports(memory);
+    return imports;
+}
+`;
 
 describe("patch-wasm-bindgen", () => {
   it("applies patch and is idempotent", () => {
-    const wasmPath = resolve(fileURLToPath(new URL("../src/wasm/typst_wasm.js", import.meta.url)));
-    const source = readFileSync(wasmPath, "utf8");
-
-    const once = applyPatch(source);
+    const once = applyPatch(wasmBindgenFixture);
     const twice = applyPatch(once);
 
     expect(once).toContain("/* __typst_wasm_custom_imports_patch__ */");

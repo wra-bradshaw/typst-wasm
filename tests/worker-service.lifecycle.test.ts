@@ -2,8 +2,14 @@ import { Effect } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 type WorkerMessage =
-  | { kind: "init"; requestId: number }
-  | { kind: string; requestId: number };
+  | {
+      kind: "init";
+      requestId: number;
+      payload: {
+        moduleOrPath: string;
+      };
+    }
+  | { kind: string; requestId: number; payload?: unknown };
 
 const workerState = {
   initMessages: [] as WorkerMessage[],
@@ -19,6 +25,13 @@ class MockTypstWorker {
     if (msg.kind === "init") {
       workerState.initMessages.push(msg);
       queueMicrotask(() => {
+        if (msg.payload.moduleOrPath === "bad.wasm") {
+          this.onmessage?.({
+            data: { requestId: msg.requestId, error: { message: "init failed" } },
+          } as MessageEvent);
+          return;
+        }
+
         this.onmessage?.({ data: { kind: "ready" } } as MessageEvent);
         this.onmessage?.({
           data: { requestId: msg.requestId, result: undefined },
@@ -83,5 +96,30 @@ describe("worker service lifecycle", () => {
     );
 
     expect(workerState.terminateCount).toBe(1);
+  });
+
+  it("surfaces init failures and allows a later retry", async () => {
+    const { WorkerService } = await import("../src/worker-service");
+
+    const result = await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          const workerService = yield* WorkerService;
+          const firstAttempt = yield* Effect.either(workerService.init("bad.wasm"));
+          const secondAttempt = yield* Effect.either(workerService.init("good.wasm"));
+          yield* workerService.ready;
+          return { firstAttempt, secondAttempt };
+        }).pipe(Effect.provide(WorkerService.Default)),
+      ),
+    );
+
+    expect(result.firstAttempt._tag).toBe("Left");
+    if (result.firstAttempt._tag === "Left") {
+      expect(result.firstAttempt.left._tag).toBe("RpcError");
+      expect(result.firstAttempt.left.kind).toBe("init");
+    }
+
+    expect(result.secondAttempt._tag).toBe("Right");
+    expect(workerState.initMessages).toHaveLength(2);
   });
 });

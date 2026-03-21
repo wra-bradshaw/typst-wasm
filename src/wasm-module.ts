@@ -1,3 +1,6 @@
-import type { InitInput } from "./wasm/typst_wasm";
-
-export type WasmModuleOrPath = InitInput;
+export type WasmModuleOrPath =
+  | RequestInfo
+  | URL
+  | Response
+  | BufferSource
+  | WebAssembly.Module;

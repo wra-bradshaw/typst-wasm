@@ -19,7 +19,6 @@ logs
 .eslintcache
 .cache
 *.tsbuildinfo
-.moon/cache
 
 # rust/wasm build and generated assets
 src/wasm
@@ -28,7 +27,6 @@ src/wasm
 # font cache and generated files
 src/fonts/files/
 src/fonts/.url
-src/fonts/index.ts
 *.txz
 *.xz
 

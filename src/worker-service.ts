@@ -2,18 +2,23 @@ import { Deferred, Effect, Queue, Ref } from "effect";
 import type { TypstWorkerProtocol } from "./protocol";
 import { PackageManager } from "./package-manager";
 import TypstWorker from "./worker.ts?worker";
-import { makeRpcClient, type RpcClient } from "./rpc";
+import { makeRpcClient, type RpcClient, type RpcError } from "./rpc";
 import { isRpcResponseMessage, type WorkerToMainMessage } from "./messages";
 import { makeFetchBridge } from "./fetch-bridge";
 import type { WasmModuleOrPath } from "./wasm-module";
 import { makeWorkerTransport } from "./worker-transport";
+
+type InitState =
+  | { readonly _tag: "idle" }
+  | { readonly _tag: "initializing"; readonly deferred: Deferred.Deferred<void, RpcError> }
+  | { readonly _tag: "ready" };
 
 export class WorkerService extends Effect.Service<WorkerService>()("WorkerService", {
   scoped: Effect.gen(function* () {
     const packageManager = yield* PackageManager;
 
     const disposed = yield* Ref.make(false);
-    const initialized = yield* Ref.make(false);
+    const initState = yield* Ref.make<InitState>({ _tag: "idle" });
     const terminated = yield* Ref.make(false);
     const readyDeferred = yield* Deferred.make<void>();
 
@@ -84,20 +89,44 @@ export class WorkerService extends Effect.Service<WorkerService>()("WorkerServic
             return;
           }
 
-          const alreadyInitialized = yield* Ref.get(initialized);
-          if (alreadyInitialized) {
-            return;
-          }
-
-          yield* Ref.set(initialized, true);
-          yield* rpcClient.notify({
-            kind: "init",
-            requestId: 0,
-            payload: {
-              sharedMemoryCommunication: fetchBridge.sharedMemoryCommunication,
-              moduleOrPath,
-            },
+          const initDeferred = yield* Deferred.make<void, RpcError>();
+          const action = yield* Ref.modify(initState, (state) => {
+            switch (state._tag) {
+              case "ready":
+                return [{ _tag: "ready" } as const, state] as const;
+              case "initializing":
+                return [{ _tag: "await", deferred: state.deferred } as const, state] as const;
+              case "idle":
+                return [
+                  { _tag: "start", deferred: initDeferred } as const,
+                  { _tag: "initializing", deferred: initDeferred } as const,
+                ] as const;
+            }
           });
+
+          switch (action._tag) {
+            case "ready":
+              return;
+            case "await":
+              return yield* Deferred.await(action.deferred);
+            case "start": {
+              const initResult = yield* rpcClient.call("init", {
+                sharedMemoryCommunication: fetchBridge.sharedMemoryCommunication,
+                moduleOrPath,
+              }).pipe(Effect.either);
+
+              if (initResult._tag === "Left") {
+                yield* Ref.set(initState, { _tag: "idle" });
+                yield* Deferred.fail(action.deferred, initResult.left);
+                return yield* Effect.fail(initResult.left);
+              }
+
+              yield* Deferred.await(readyDeferred);
+              yield* Ref.set(initState, { _tag: "ready" });
+              yield* Deferred.succeed(action.deferred, undefined);
+              return;
+            }
+          }
         }),
 
       dispose: Effect.gen(function* () {

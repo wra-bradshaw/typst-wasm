@@ -1,7 +1,7 @@
 import { SharedMemoryCommunication, SharedMemoryCommunicationStatus } from "./protocol";
 import { isMainToWorkerMessage, type MainToWorkerMessage, type WorkerToMainMessage } from "./messages";
-import init, { TypstCompiler, type InitOutput } from "./wasm";
 import { Data, Effect } from "effect";
+import { loadWasmModule, type InitOutput, type TypstCompilerInstance } from "./wasm";
 
 export type { MainToWorkerMessage, WorkerToMainMessage } from "./messages";
 
@@ -22,7 +22,7 @@ class WorkerCommandError extends Data.TaggedError("WorkerCommandError")<{
   readonly cause?: unknown;
 }> {}
 
-let compiler: TypstCompiler | null = null;
+let compiler: TypstCompilerInstance | null = null;
 let sharedMemoryCommunication: SharedMemoryCommunication | null = null;
 let wasmExports: InitOutput | null = null;
 
@@ -94,7 +94,7 @@ const errorResponse = (requestId: number, code: WorkerRpcErrorCode, message: str
   error: { code, message, cause } satisfies WorkerRpcError,
 });
 
-const ensureCompiler = (requestId: number): Effect.Effect<TypstCompiler, WorkerCommandError> =>
+const ensureCompiler = (requestId: number): Effect.Effect<TypstCompilerInstance, WorkerCommandError> =>
   compiler
     ? Effect.succeed(compiler)
     : Effect.fail(
@@ -105,7 +105,7 @@ const ensureCompiler = (requestId: number): Effect.Effect<TypstCompiler, WorkerC
         }),
       );
 
-const runCompilerCommand = <T>(requestId: number, commandName: string, run: (readyCompiler: TypstCompiler) => T): Effect.Effect<T, WorkerCommandError> =>
+const runCompilerCommand = <T>(requestId: number, commandName: string, run: (readyCompiler: TypstCompilerInstance) => T): Effect.Effect<T, WorkerCommandError> =>
   Effect.gen(function* () {
     const readyCompiler = yield* ensureCompiler(requestId);
     return yield* Effect.try({
@@ -131,17 +131,27 @@ self.onmessage = (e: MessageEvent) => {
       switch (request.kind) {
         case "init": {
           sharedMemoryCommunication = SharedMemoryCommunication.hydrateObj(request.payload.sharedMemoryCommunication);
+          const wasmModule = yield* Effect.tryPromise({
+            try: loadWasmModule,
+            catch: (cause) =>
+              new WorkerCommandError({
+                requestId: request.requestId,
+                code: "INIT_FAILED",
+                message: "Failed to load WASM module",
+                cause,
+              }),
+          });
 
           wasmExports = yield* Effect.tryPromise({
             try: () =>
-              init({
+              wasmModule.default({
                 module_or_path: request.payload.moduleOrPath,
                 imports: {
                   bridge: {
                     host_fetch: hostFetch,
                   },
                 },
-              } as unknown as Parameters<typeof init>[0]),
+              }),
             catch: (cause) =>
               new WorkerCommandError({
                 requestId: request.requestId,
@@ -151,7 +161,7 @@ self.onmessage = (e: MessageEvent) => {
               }),
           });
 
-          compiler = new TypstCompiler();
+          compiler = new wasmModule.TypstCompiler();
           self.postMessage({ kind: "ready" } as WorkerToMainMessage);
           return successResponse(request.requestId, undefined);
         }

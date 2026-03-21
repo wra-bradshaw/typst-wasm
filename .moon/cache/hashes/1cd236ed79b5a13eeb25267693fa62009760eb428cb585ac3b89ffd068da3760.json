@@ -1,0 +1,1 @@
+[{"projects":{"typst-wasm":{"source":"."}},"configs":{".moon/toolchains.yml":"2946e31ce3b368490acc4f5e99183c5cce175eae",".moon/workspace.yml":"a8df16245d74abaada96c610730e9582fe8cd311","moon.yml":"abd51fa42159ad5a0697f613401fdcfa874c64a4"},"env":{"MOON_OUTPUT_STYLE":"","MOON_RETRY_COUNT":""},"inDocker":false,"version":"2.0.0"}]

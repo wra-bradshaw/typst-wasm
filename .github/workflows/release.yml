@@ -1,45 +1,17 @@
-name: Release
+name: CI
 
 on:
   push:
-    tags:
-      - 'v*'
+  pull_request:
 
 jobs:
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-
+  check:
+    runs-on: ubuntu-22.04
     permissions:
-      contents: write
+      contents: read
       id-token: write
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install Nix
-        uses: cachix/install-nix-action@v31
-
-      - name: Install dependencies
-        run: nix develop -c bun install
-
-      - name: Generate GitHub Changelog
-        run: nix develop -c bunx changelogithub
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build
-        run: nix develop -c bun run build
-
-      - name: Setup Node.js for OIDC
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Publish to NPM with OIDC
-        run: nix develop -c npm publish --provenance --access public
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - run: nix flake check

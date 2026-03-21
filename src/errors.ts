@@ -1,8 +1,10 @@
 import { Data } from "effect";
-import type { WasmDiagnostic } from "./wasm/typst_wasm";
+import type { WasmDiagnostic } from "./wasm";
 
 export class CompileError extends Data.TaggedError("CompileError")<{
   readonly diagnostics: WasmDiagnostic[];
+  readonly message?: string;
+  readonly cause?: unknown;
 }> {}
 
 export class CompilerNotInitializedError extends Data.TaggedError("CompilerNotInitializedError")<{

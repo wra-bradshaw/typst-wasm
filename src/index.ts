@@ -1,6 +1,6 @@
 import { Deferred, Effect } from "effect";
-import type { CompileError, ListFilesError, HasFileError } from "./errors";
-import type { WasmDiagnostic } from "./wasm/typst_wasm";
+import { CompileError, HasFileError, ListFilesError } from "./errors";
+import type { WasmDiagnostic } from "./wasm";
 import type { WasmModuleOrPath } from "./wasm-module";
 import { AutomaticBackendLayer, CompilerBackend } from "./compiler-backend";
 
@@ -9,6 +9,26 @@ export interface CompileResult {
   diagnostics: WasmDiagnostic[];
   internalError?: string;
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const extractRequestId = (error: unknown): number =>
+  isRecord(error) && typeof error.requestId === "number" ? error.requestId : -1;
+
+const extractErrorMessage = (error: unknown): string => {
+  if (typeof error === "string") return error;
+  if (isRecord(error) && typeof error.message === "string") return error.message;
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+};
+
+const hasErrorDiagnostics = (diagnostics: WasmDiagnostic[]): boolean =>
+  diagnostics.some((diagnostic) => diagnostic.severity === "error");
 
 export interface TypstCompilerOptions {
   moduleOrPath: WasmModuleOrPath;
@@ -64,10 +84,48 @@ export class TypstCompilerService extends Effect.Service<TypstCompilerServiceTyp
       addSource: backend.addSource,
       removeFile: backend.removeFile,
       clearFiles: backend.clearFiles,
-      listFiles: backend.listFiles,
-      hasFile: backend.hasFile,
+      listFiles: backend.listFiles.pipe(
+        Effect.mapError(
+          (error) =>
+            new ListFilesError({
+              requestId: extractRequestId(error),
+              message: extractErrorMessage(error),
+            }),
+        ),
+      ),
+      hasFile: (path: string) =>
+        backend.hasFile(path).pipe(
+          Effect.mapError(
+            (error) =>
+              new HasFileError({
+                requestId: extractRequestId(error),
+                path,
+                message: extractErrorMessage(error),
+              }),
+          ),
+        ),
       setMain: backend.setMain,
-      compile: backend.compile,
+      compile: () =>
+        backend.compile().pipe(
+          Effect.mapError(
+            (error) =>
+              new CompileError({
+                diagnostics: [],
+                message: extractErrorMessage(error),
+                cause: error,
+              }),
+          ),
+          Effect.flatMap((result) =>
+            hasErrorDiagnostics(result.diagnostics)
+              ? Effect.fail(
+                  new CompileError({
+                    diagnostics: result.diagnostics,
+                    message: result.internalError ?? "Compilation produced error diagnostics",
+                  }),
+                )
+              : Effect.succeed(result),
+          ),
+        ),
     };
   }),
   dependencies: [AutomaticBackendLayer],

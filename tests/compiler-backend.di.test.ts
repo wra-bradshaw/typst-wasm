@@ -2,6 +2,20 @@ import { Deferred, Effect, Layer, Ref } from "effect";
 import { describe, expect, it } from "vitest";
 import { CompilerBackend, selectAutomaticBackendKind } from "../src/compiler-backend";
 import { TypstCompilerService } from "../src/index";
+import type { WasmDiagnostic } from "../src/wasm";
+
+const errorDiagnostic: WasmDiagnostic = {
+  message: "failed to compile",
+  severity: "error",
+  file: null,
+  line: null,
+  column: null,
+  start: null,
+  end: null,
+  formatted: "failed to compile",
+  hints: [],
+  trace: [],
+};
 
 describe("compiler backend DI", () => {
   it("auto-selects worker when both worker and jspi capabilities are present", () => {
@@ -137,5 +151,92 @@ describe("compiler backend DI", () => {
     expect(calls).toBe(1);
     expect(result.files).toEqual(["main.typ"]);
     expect(result.output.svg).toBe("<svg />");
+  });
+
+  it("maps compile diagnostics with severity error to CompileError", async () => {
+    const backendLayer = Layer.succeed(CompilerBackend, {
+      ready: Effect.void,
+      init: () => Effect.void,
+      dispose: Effect.void,
+      addFont: () => Effect.void,
+      addFile: () => Effect.void,
+      addSource: () => Effect.void,
+      removeFile: () => Effect.void,
+      clearFiles: Effect.void,
+      listFiles: Effect.succeed(["main.typ"]),
+      hasFile: () => Effect.succeed(true),
+      setMain: () => Effect.void,
+      compile: () =>
+        Effect.succeed({
+          svg: "",
+          diagnostics: [errorDiagnostic],
+        }),
+    });
+
+    const result = await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          const compiler = yield* TypstCompilerService;
+          yield* compiler.init({ moduleOrPath: "test.wasm" });
+          return yield* Effect.either(compiler.compile());
+        }).pipe(
+          Effect.provide(TypstCompilerService.Default),
+          Effect.provide(backendLayer),
+        ),
+      ),
+    );
+
+    expect(result._tag).toBe("Left");
+    if (result._tag === "Left") {
+      expect(result.left._tag).toBe("CompileError");
+      expect(result.left.diagnostics).toEqual([errorDiagnostic]);
+    }
+  });
+
+  it("maps listFiles and hasFile failures to their exported tags", async () => {
+    const backendLayer = Layer.succeed(CompilerBackend, {
+      ready: Effect.void,
+      init: () => Effect.void,
+      dispose: Effect.void,
+      addFont: () => Effect.void,
+      addFile: () => Effect.void,
+      addSource: () => Effect.void,
+      removeFile: () => Effect.void,
+      clearFiles: Effect.void,
+      listFiles: Effect.fail(new Error("list failed")),
+      hasFile: () => Effect.fail(new Error("lookup failed")),
+      setMain: () => Effect.void,
+      compile: () =>
+        Effect.succeed({
+          svg: "<svg />",
+          diagnostics: [],
+        }),
+    });
+
+    const result = await Effect.runPromise(
+      Effect.scoped(
+        Effect.gen(function* () {
+          const compiler = yield* TypstCompilerService;
+          yield* compiler.init({ moduleOrPath: "test.wasm" });
+          const files = yield* Effect.either(compiler.listFiles);
+          const hasFile = yield* Effect.either(compiler.hasFile("main.typ"));
+          return { files, hasFile };
+        }).pipe(
+          Effect.provide(TypstCompilerService.Default),
+          Effect.provide(backendLayer),
+        ),
+      ),
+    );
+
+    expect(result.files._tag).toBe("Left");
+    if (result.files._tag === "Left") {
+      expect(result.files.left._tag).toBe("ListFilesError");
+    }
+
+    expect(result.hasFile._tag).toBe("Left");
+    if (result.hasFile._tag === "Left") {
+      expect(result.hasFile.left._tag).toBe("HasFileError");
+      expect(result.hasFile.left.path).toBe("main.typ");
+    }
   });
 });

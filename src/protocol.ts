@@ -1,4 +1,4 @@
-import type { WasmDiagnostic } from "./wasm/typst_wasm";
+import type { WasmDiagnostic } from "./wasm";
 import type { WasmModuleOrPath } from "./wasm-module";
 
 const INITIAL_SAB_SIZE = 1024 * 1024; // 1MB
