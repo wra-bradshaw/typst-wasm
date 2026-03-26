@@ -1,5 +1,6 @@
 # dependencies
 node_modules
+result
 
 # outputs
 out
@@ -25,8 +26,7 @@ src/wasm
 .wasm-hash
 
 # font cache and generated files
-src/fonts/files/
-src/fonts/.url
+src/fonts
 *.txz
 *.xz
 

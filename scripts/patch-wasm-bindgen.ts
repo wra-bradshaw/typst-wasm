@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
 const PATCH_MARKER = "/* __typst_wasm_custom_imports_patch__ */";
+const DEFAULT_WASM_DIR = fileURLToPath(new URL("../src/wasm", import.meta.url));
 
 const normalizePatchedSource = (source: string): string => {
   let normalized = source;
@@ -39,6 +40,11 @@ const replaceIfRegex = (source: string, pattern: RegExp, to: string): string => 
     return source;
   }
   return source.replace(pattern, to);
+};
+
+const resolveWasmDir = (): string => {
+  const requestedDir = process.env.WASM_OUTPUT_DIR ?? process.argv[2];
+  return requestedDir ? resolve(requestedDir) : resolve(DEFAULT_WASM_DIR);
 };
 
 export const applyPatch = (source: string): string => {
@@ -114,7 +120,7 @@ export const applyPatch = (source: string): string => {
 };
 
 const run = () => {
-  const wasmJsPath = resolve(fileURLToPath(new URL("../src/wasm/typst_wasm.js", import.meta.url)));
+  const wasmJsPath = resolve(resolveWasmDir(), "typst_wasm.js");
   const source = readFileSync(wasmJsPath, "utf8");
   const patched = applyPatch(source);
 

@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 /**
  * Font index generator for typst-wasm
- * Generates src/fonts/index.ts with URL imports for each font variant
+ * Generates the font module for a target directory.
  */
 
-import { writeFile } from "fs/promises";
-import { join } from "path";
+import { mkdir, writeFile } from "fs/promises";
+import { join, resolve } from "path";
 
 // Font variant configurations
 const FONT_VARIANTS = [
@@ -14,9 +14,23 @@ const FONT_VARIANTS = [
   { file: "NewCMMath-Book", weight: 450, style: "normal" },
 ] as const;
 
+const FONT_DECLARATIONS = `declare module "*.otf" {
+  const url: string;
+  export default url;
+}
+`;
+
+function resolveOutputDir(): string {
+  const requestedDir = process.env.FONT_OUTPUT_DIR ?? process.argv[2];
+  return requestedDir ? resolve(requestedDir) : join(process.cwd(), "src", "fonts");
+}
+
 async function generateFontIndex(): Promise<void> {
-  const fontsDir = join(process.cwd(), "src", "fonts");
+  const fontsDir = resolveOutputDir();
   const indexPath = join(fontsDir, "index.ts");
+  const declarationsPath = join(fontsDir, "fonts.d.ts");
+
+  await mkdir(fontsDir, { recursive: true });
 
   // Generate font objects
   const fontObjects = FONT_VARIANTS.map((v) => {
@@ -61,8 +75,12 @@ export const defaultFonts = [
 ];
 `;
 
-  await writeFile(indexPath, content);
-  console.log("[fonts] Generated src/fonts/index.ts");
+  await Promise.all([
+    writeFile(indexPath, content),
+    writeFile(declarationsPath, FONT_DECLARATIONS),
+  ]);
+
+  console.log(`[fonts] Generated ${fontsDir}`);
 }
 
 // Run if executed directly

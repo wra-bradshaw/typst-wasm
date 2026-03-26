@@ -33,6 +33,20 @@
         );
     in
     {
+      packages = forEachSupportedSystem (
+        { pkgs, ... }:
+        let
+          fonts = pkgs.callPackage ./fonts.nix { };
+          wasm = pkgs.callPackage ./wasm.nix { };
+        in
+        {
+          inherit fonts wasm;
+          typst-wasm = pkgs.callPackage ./typst-wasm.nix {
+            inherit fonts wasm;
+          };
+        }
+      );
+
       devShells = forEachSupportedSystem (
         { pkgs, system }:
         {
