@@ -7,10 +7,9 @@
 pkgs.buildNpmPackage {
   pname = "typst-wasm";
   version = "0.1.0";
-  src = ./.;
+  src = ./packages/typst-wasm;
 
-  npmDepsHash = "sha256-u5w0eRi3mc3uCjBxCk0MdmRFXvmGok8Ejzl8vuqIAEY=";
-  npmDepsFetcherVersion = 2;
+  npmDepsHash = "sha256-qOOSAHDIuLsgs50LIBfbyKHthnXauecWxtsWo1My6kU=";
 
   nativeBuildInputs = [ pkgs.bun ];
 

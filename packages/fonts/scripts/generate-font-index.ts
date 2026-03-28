@@ -22,7 +22,7 @@ const FONT_DECLARATIONS = `declare module "*.otf" {
 
 function resolveOutputDir(): string {
   const requestedDir = process.env.FONT_OUTPUT_DIR ?? process.argv[2];
-  return requestedDir ? resolve(requestedDir) : join(process.cwd(), "src", "fonts");
+  return requestedDir ? resolve(requestedDir) : join(process.cwd(), "packages", "typst-wasm", "src", "fonts");
 }
 
 async function generateFontIndex(): Promise<void> {

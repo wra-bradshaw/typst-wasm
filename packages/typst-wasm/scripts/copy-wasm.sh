@@ -6,8 +6,8 @@ SRC_WASM_PATH="${SCRIPT_DIR}/../src/wasm/typst_wasm_bg.wasm"
 DIST_WASM_PATH="${SCRIPT_DIR}/../dist/typst_wasm_bg.wasm"
 
 [[ -f "${SRC_WASM_PATH}" ]] || {
-  echo "Error: ${SRC_WASM_PATH} not found" >&2
-  exit 1
+	echo "Error: ${SRC_WASM_PATH} not found" >&2
+	exit 1
 }
 
 mkdir -p "$(dirname "${DIST_WASM_PATH}")"

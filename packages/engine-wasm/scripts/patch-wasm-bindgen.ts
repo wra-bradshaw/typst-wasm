@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
 const PATCH_MARKER = "/* __typst_wasm_custom_imports_patch__ */";
-const DEFAULT_WASM_DIR = fileURLToPath(new URL("../src/wasm", import.meta.url));
+const DEFAULT_WASM_DIR = fileURLToPath(new URL("../out", import.meta.url));
 
 const normalizePatchedSource = (source: string): string => {
   let normalized = source;

@@ -27,7 +27,7 @@ pkgs.stdenvNoCC.mkDerivation {
       cp ${fontSource}/otf/$font_file "$out/files/$font_file"
     done
 
-    FONT_OUTPUT_DIR="$out" ${pkgs.bun}/bin/bun ${./scripts/generate-font-index.ts}
+    FONT_OUTPUT_DIR="$out" ${pkgs.bun}/bin/bun ${./packages/fonts/scripts/generate-font-index.ts}
 
     runHook postInstall
   '';

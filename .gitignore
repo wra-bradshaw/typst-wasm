@@ -22,11 +22,11 @@ logs
 *.tsbuildinfo
 
 # rust/wasm build and generated assets
-src/wasm
+packages/typst-wasm/src/wasm
 .wasm-hash
 
 # font cache and generated files
-src/fonts
+packages/typst-wasm/src/fonts
 *.txz
 *.xz
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyPatch } from "../scripts/patch-wasm-bindgen";
+import { applyPatch } from "../../engine-wasm/scripts/patch-wasm-bindgen";
 
 const wasmBindgenFixture = `import * as import1 from "bridge"
 

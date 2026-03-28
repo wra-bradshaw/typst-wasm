@@ -27,7 +27,7 @@ let
     chmod -R u+w "$out"
     cp -R ${
       rustPlatform.fetchCargoVendor {
-        src = ./.;
+        src = ./packages/engine-wasm;
         pname = "typst-wasm-wasm";
         version = "0.1.0";
         hash = "sha256-SdQoOxXZRMKr+XUcTHreBWDnBJL4xZjgbgkIa31nSiM=";
@@ -39,7 +39,7 @@ rustPlatform.buildRustPackage {
   pname = "typst-wasm-wasm";
   version = "0.1.0";
   inherit cargoDeps;
-  src = ./.;
+  src = ./packages/engine-wasm;
 
   doCheck = false;
   dontCargoInstall = true;
@@ -74,7 +74,7 @@ rustPlatform.buildRustPackage {
       --target-dir "$TMPDIR/typst-wasm-target" \
       -Z build-std=std,panic_abort
 
-    WASM_OUTPUT_DIR="$out" ${pkgs.bun}/bin/bun ${./scripts/patch-wasm-bindgen.ts}
+    WASM_OUTPUT_DIR="$out" ${pkgs.bun}/bin/bun ${./packages/engine-wasm/scripts/patch-wasm-bindgen.ts}
 
     runHook postBuild
   '';

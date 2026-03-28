@@ -1,6 +1,6 @@
 # typst-wasm
 
-`typst-wasm` is a standalone TypeScript + Rust package that exposes Typst compilation through a WASM backend with worker and JSPI integration.
+`typst-wasm` is published as a single npm package and developed in a workspace with separate internal packages for the TypeScript runtime and Rust/WASM engine.
 
 ## Requirements
 
@@ -30,16 +30,16 @@ Install Bun, Rust (`wasm32-unknown-unknown` target), and `wasm-pack` manually.
 ## Commands
 
 ```bash
-bun install
-bun run lint
-bun run test
-bun run build
+npm install
+npm run lint
+npm run test
+npm run build
 ```
 
 Optional full runtime coverage:
 
 ```bash
-bun run test:all
+npm run test:all
 ```
 
 ## Release

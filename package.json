@@ -1,71 +1,14 @@
 {
-  "name": "typst-wasm",
-  "version": "0.1.0",
-  "description": "Typst WebAssembly compiler service with worker and JSPI backends",
-  "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./fonts": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./wasm": {
-      "default": "./dist/typst_wasm_bg.wasm"
-    }
-  },
-  "files": [
-    "dist"
+  "name": "typst-wasm-workspace",
+  "private": true,
+  "workspaces": [
+    "packages/typst-wasm"
   ],
   "scripts": {
-    "fonts": "bash scripts/link-fonts.sh",
-    "wasm": "bash scripts/link-wasm.sh",
-    "bundle": "tsdown",
-    "bundle:watch": "tsdown --watch --no-clean",
-    "copy:wasm": "bash scripts/copy-wasm.sh",
-    "build": "npm run fonts && npm run wasm && bun run bundle && bun run copy:wasm",
-    "dev": "npm run fonts && npm run wasm && bun run bundle:watch",
-    "prepublishOnly": "bun run build",
-    "test": "npm run test:unit",
-    "test:unit": "vitest run",
-    "test:e2e:node": "vitest run -c vitest.e2e.config.ts",
-    "test:e2e:bun": "bun test ./tests/e2e/bun.e2e.ts",
-    "test:e2e:deno": "deno test --allow-read --allow-net tests/e2e/deno.e2e.ts",
-    "test:e2e": "npm run test:e2e:node && npm run test:e2e:bun && npm run test:e2e:deno",
-    "test:all": "npm run test:unit && npm run test:e2e",
-    "lint": "eslint src --max-warnings=0",
-    "lint:fix": "eslint src --fix"
-  },
-  "author": "will-lol",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/will-lol/typst-wasm.git"
-  },
-  "bugs": {
-    "url": "https://github.com/will-lol/typst-wasm/issues"
-  },
-  "homepage": "https://github.com/will-lol/typst-wasm#readme",
-  "devDependencies": {
-    "@effect/eslint-plugin": "^0.3.2",
-    "@eslint/js": "^10.0.1",
-    "@types/bun": "^1.3.9",
-    "@types/deno": "^2.5.0",
-    "@types/node": "^25.2.0",
-    "eslint": "^10.0.0",
-    "tsdown": "^0.20.3",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.55.0",
-    "vitest": "^4.0.16"
-  },
-  "dependencies": {
-    "effect": "^3.19.16",
-    "nanotar": "^0.2.0",
-    "tsdown-plugin-worker": "^0.1.6"
+    "build": "npm run -w packages/typst-wasm build",
+    "dev": "npm run -w packages/typst-wasm dev",
+    "lint": "npm run -w packages/typst-wasm lint",
+    "test": "npm run -w packages/typst-wasm test",
+    "test:all": "npm run -w packages/typst-wasm test:all"
   }
 }
