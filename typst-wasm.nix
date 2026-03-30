@@ -7,26 +7,30 @@
 pkgs.buildNpmPackage {
   pname = "typst-wasm";
   version = "0.1.0";
-  src = ./packages/typst-wasm;
+  src = ./.;
 
   npmDepsHash = "sha256-qOOSAHDIuLsgs50LIBfbyKHthnXauecWxtsWo1My6kU=";
 
   nativeBuildInputs = [ pkgs.bun ];
 
-  postPatch = ''
-    rm -rf src/fonts src/wasm
-    ln -s ${fonts} src/fonts
-    ln -s ${wasm} src/wasm
-  '';
+  buildPhase = ''
+    runHook preBuild
 
-  npmBuildScript = "build";
+    mkdir -p packages/fonts/dist packages/engine-wasm/dist
+    cp -R ${fonts}/files packages/fonts/dist/files
+    cp -R ${wasm}/. packages/engine-wasm/dist
+
+    npm run build --workspace packages/typst-wasm
+
+    runHook postBuild
+  '';
 
   installPhase = ''
     runHook preInstall
 
     mkdir -p "$out"
-    cp -r dist "$out/dist"
-    cp package.json "$out/package.json"
+    cp -r packages/typst-wasm/dist "$out/dist"
+    cp packages/typst-wasm/package.json "$out/package.json"
 
     runHook postInstall
   '';

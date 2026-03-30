@@ -1,10 +1,11 @@
+import { wasmBinaryUrl } from "@typst-wasm/engine-wasm";
 import { describe, expect, test } from "bun:test";
 import { WorkerBackendLayer } from "../../dist/index.js";
 import { runCompilerE2eScenario } from "./scenario";
 
 describe("bun e2e (worker backend)", () => {
   test("compiles and supports iterative file operations", async () => {
-    const moduleOrPath = new URL("../../dist/typst_wasm_bg.wasm", import.meta.url).href;
+    const moduleOrPath = wasmBinaryUrl.href;
     const result = await runCompilerE2eScenario({
       runtime: "bun",
       moduleOrPath,

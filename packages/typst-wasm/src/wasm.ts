@@ -1,3 +1,4 @@
+import { loadWasmModule as loadEngineWasmModule } from "@typst-wasm/engine-wasm";
 import type { WasmModuleOrPath } from "./wasm-module";
 
 export interface WasmDiagnostic {
@@ -57,5 +58,4 @@ type WasmModule = {
   TypstCompiler: new () => TypstCompilerInstance;
 };
 
-export const loadWasmModule = (): Promise<WasmModule> =>
-  import("./wasm/typst_wasm.js") as Promise<WasmModule>;
+export const loadWasmModule = (): Promise<WasmModule> => loadEngineWasmModule() as Promise<WasmModule>;

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC_WASM_PATH="${SCRIPT_DIR}/../src/wasm/typst_wasm_bg.wasm"
+SRC_WASM_PATH="${SCRIPT_DIR}/../../engine-wasm/dist/typst_wasm_bg.wasm"
 DIST_WASM_PATH="${SCRIPT_DIR}/../dist/typst_wasm_bg.wasm"
 
 [[ -f "${SRC_WASM_PATH}" ]] || {

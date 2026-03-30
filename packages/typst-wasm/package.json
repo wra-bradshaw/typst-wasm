@@ -23,21 +23,19 @@
     "dist"
   ],
   "scripts": {
-    "prepare:inputs": "bash scripts/ensure-inputs.sh",
-    "fonts": "bash scripts/link-fonts.sh",
-    "wasm": "bash scripts/link-wasm.sh",
+    "build:deps": "npm --prefix ../fonts run build && npm --prefix ../engine-wasm run build",
     "bundle": "tsdown",
     "bundle:watch": "tsdown --watch --no-clean",
     "copy:wasm": "bash scripts/copy-wasm.sh",
-    "build": "npm run prepare:inputs && bun run bundle && bun run copy:wasm",
-    "dev": "npm run prepare:inputs && bun run bundle:watch",
+    "build": "npm run build:deps && bun run bundle && bun run copy:wasm",
+    "dev": "npm run build:deps && bun run bundle:watch",
     "prepublishOnly": "bun run build",
     "test": "npm run test:unit",
     "test:unit": "vitest run",
     "test:e2e:node": "vitest run -c vitest.e2e.config.ts",
     "test:e2e:bun": "bun test ./tests/e2e/bun.e2e.ts",
     "test:e2e:deno": "deno test --allow-read --allow-net tests/e2e/deno.e2e.ts",
-    "test:e2e": "npm run test:e2e:node && npm run test:e2e:bun && npm run test:e2e:deno",
+    "test:e2e": "npm run build && npm run test:e2e:node && npm run test:e2e:bun && npm run test:e2e:deno",
     "test:all": "npm run test:unit && npm run test:e2e",
     "lint": "eslint src --max-warnings=0",
     "lint:fix": "eslint src --fix"
@@ -65,6 +63,8 @@
     "vitest": "^4.0.16"
   },
   "dependencies": {
+    "@typst-wasm/engine-wasm": "0.1.0",
+    "@typst-wasm/fonts": "0.1.0",
     "effect": "^3.19.16",
     "nanotar": "^0.2.0",
     "tsdown-plugin-worker": "^0.1.6"

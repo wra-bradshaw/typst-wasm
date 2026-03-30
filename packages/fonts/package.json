@@ -1,0 +1,21 @@
+{
+  "name": "@typst-wasm/fonts",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "dist"
+  ],
+  "scripts": {
+    "build": "bash scripts/build-from-nix.sh"
+  }
+}

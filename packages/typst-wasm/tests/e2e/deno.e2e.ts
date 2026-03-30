@@ -1,8 +1,9 @@
+import { wasmBinaryUrl } from "@typst-wasm/engine-wasm";
 import { WorkerBackendLayer } from "../../dist/index.js";
 import { runCompilerE2eScenario } from "./scenario.ts";
 
 Deno.test("deno e2e (worker backend) compiles and supports iterative file operations", async () => {
-  const moduleOrPath = new URL("../../dist/typst_wasm_bg.wasm", import.meta.url).href;
+  const moduleOrPath = wasmBinaryUrl.href;
   const result = await runCompilerE2eScenario({
     runtime: "deno",
     moduleOrPath,

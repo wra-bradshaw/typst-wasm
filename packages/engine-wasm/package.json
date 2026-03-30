@@ -1,0 +1,23 @@
+{
+  "name": "@typst-wasm/engine-wasm",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./typst_wasm.js": "./dist/typst_wasm.js",
+    "./typst_wasm_bg.wasm": "./dist/typst_wasm_bg.wasm"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "dist"
+  ],
+  "scripts": {
+    "build": "bash scripts/build-from-nix.sh"
+  }
+}

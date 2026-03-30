@@ -3,11 +3,16 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
     "declaration": true,
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "paths": {
+      "@typst-wasm/fonts": ["../fonts/index.js"],
+      "@typst-wasm/engine-wasm": ["../engine-wasm/index.js"]
+    },
     "types": ["node", "tsdown-plugin-worker/types", "vitest/globals"]
   }
 }

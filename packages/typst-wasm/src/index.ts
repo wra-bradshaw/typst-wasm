@@ -54,7 +54,7 @@ export type TypstCompilerServiceType = {
 export { SharedMemoryCommunication } from "./protocol";
 export type { MainToWorkerMessage, WorkerToMainMessage } from "./messages";
 export type { WasmModuleOrPath } from "./wasm-module";
-export * from "./fonts/index";
+export * from "@typst-wasm/fonts";
 export * from "./errors";
 export { PackageManager } from "./package-manager";
 export { CacheStorageService } from "./cache-abstraction";
