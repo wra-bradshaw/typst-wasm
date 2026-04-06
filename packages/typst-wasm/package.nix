@@ -60,8 +60,9 @@ let
         chmod -R u+w packages/fonts packages/engine-wasm packages/typst-wasm
 
         ${lib.optionalString needsBuildArtifacts prepareBuildArtifacts}
-        cd ${packageDir}
         ${lib.optionalString needsBuildArtifacts buildBundle}
+
+        cd ${packageDir}
 
         ${command}
 
