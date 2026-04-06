@@ -1,0 +1,4 @@
+builds:
+  exclude: []
+  include:
+    - defaultPackage.x86_64-linux
