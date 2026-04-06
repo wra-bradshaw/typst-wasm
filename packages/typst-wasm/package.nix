@@ -17,7 +17,7 @@ let
     src = workspaceRoot;
     pnpm = pkgs.pnpm_10;
     fetcherVersion = 3;
-    hash = "sha256-vK/ELi3zPs2QGihaZmx5uzmf31ac1YKeiDO+NzSkwpA=";
+    hash = "sha256-J/NwBgTuH0r99tiSjdxdNDim7ianQtVSqSy32T16BM4";
   };
 
   pnpmNativeBuildInputs = nativeBuildInputs ++ [
@@ -37,12 +37,6 @@ let
     mkdir -p ${packageDir}/dist
     cp packages/engine-wasm/dist/typst_wasm_bg.wasm ${packageDir}/dist/typst_wasm_bg.wasm
   '';
-
-  lintCommand = "pnpm exec eslint src --max-warnings=0";
-  unitCommand = "pnpm exec vitest run";
-  nodeE2eCommand = "pnpm exec vitest run -c vitest.e2e.config.ts";
-  bunE2eCommand = "bun test ./tests/e2e/bun.e2e.ts";
-  denoE2eCommand = "deno test --allow-read --allow-net tests/e2e/deno.e2e.ts";
 
   mkWorkspaceCheck =
     {
@@ -66,6 +60,8 @@ let
         chmod -R u+w packages/fonts packages/engine-wasm packages/typst-wasm
 
         ${lib.optionalString needsBuildArtifacts prepareBuildArtifacts}
+        cd ${packageDir}
+        ${lib.optionalString needsBuildArtifacts buildBundle}
 
         ${command}
 
@@ -109,44 +105,26 @@ pkgs.stdenvNoCC.mkDerivation {
   passthru.tests = {
     lint = mkWorkspaceCheck {
       name = "lint";
-      command = ''
-        cd ${packageDir}
-        ${lintCommand}
-      '';
+      command = "pnpm exec eslint src --max-warnings=0";
     };
     unit = mkWorkspaceCheck {
       name = "unit";
-      command = ''
-        cd ${packageDir}
-        ${unitCommand}
-      '';
+      command = "pnpm exec vitest run";
     };
     e2e-node = mkWorkspaceCheck {
       name = "e2e-node";
       needsBuildArtifacts = true;
-      command = ''
-        ${buildBundle}
-        cd ${packageDir}
-        ${nodeE2eCommand}
-      '';
+      command = "pnpm exec vitest run -c vitest.e2e.config.ts";
     };
     e2e-bun = mkWorkspaceCheck {
       name = "e2e-bun";
       needsBuildArtifacts = true;
-      command = ''
-        ${buildBundle}
-        cd ${packageDir}
-        ${bunE2eCommand}
-      '';
+      command = "bun test ./tests/e2e/bun.e2e.ts";
     };
     e2e-deno = mkWorkspaceCheck {
       name = "e2e-deno";
       needsBuildArtifacts = true;
-      command = ''
-        ${buildBundle}
-        cd ${packageDir}
-        ${denoE2eCommand}
-      '';
+      command = "deno test --allow-read --allow-net tests/e2e/deno.e2e.ts";
     };
   };
 }
