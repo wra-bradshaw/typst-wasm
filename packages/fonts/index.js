@@ -4,14 +4,21 @@ const fontDefinitions = [
   { file: "NewCMMath-Book.otf", weight: 450, style: "normal" },
 ];
 
+const loadFontBytes = async (url) => {
+  if (url.protocol === "file:") {
+    const { readFile } = await import("node:fs/promises");
+    return new Uint8Array(await readFile(url));
+  }
+
+  const response = await fetch(url);
+  return new Uint8Array(await response.arrayBuffer());
+};
+
 export const newComputerModernMath = fontDefinitions.map((font) => ({
   name: "New Computer Modern Math",
   weight: font.weight,
   style: font.style,
-  load: async () => {
-    const response = await fetch(new URL(`./dist/files/${font.file}`, import.meta.url));
-    return new Uint8Array(await response.arrayBuffer());
-  },
+  load: async () => loadFontBytes(new URL(`./dist/files/${font.file}`, import.meta.url)),
 }));
 
 export const newComputerModernMathRegular = newComputerModernMath.find((font) => font.weight === 400);

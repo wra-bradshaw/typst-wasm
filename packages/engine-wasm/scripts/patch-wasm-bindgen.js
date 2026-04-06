@@ -1,11 +1,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const PATCH_MARKER = "/* __typst_wasm_custom_imports_patch__ */";
 const DEFAULT_WASM_DIR = fileURLToPath(new URL("../out", import.meta.url));
 
-const normalizePatchedSource = (source: string): string => {
+const normalizePatchedSource = (source) => {
   let normalized = source;
 
   normalized = normalized.replace(
@@ -21,33 +21,33 @@ const normalizePatchedSource = (source: string): string => {
   return normalized;
 };
 
-const replaceOnce = (source: string, from: string, to: string): string => {
+const replaceOnce = (source, from, to) => {
   if (!source.includes(from)) {
     throw new Error(`Patch anchor not found: ${from.slice(0, 80)}`);
   }
   return source.replace(from, to);
 };
 
-const replaceWithRegex = (source: string, pattern: RegExp, to: string, label: string): string => {
+const replaceWithRegex = (source, pattern, to, label) => {
   if (!pattern.test(source)) {
     throw new Error(`Patch anchor not found: ${label}`);
   }
   return source.replace(pattern, to);
 };
 
-const replaceIfRegex = (source: string, pattern: RegExp, to: string): string => {
+const replaceIfRegex = (source, pattern, to) => {
   if (!pattern.test(source)) {
     return source;
   }
   return source.replace(pattern, to);
 };
 
-const resolveWasmDir = (): string => {
+const resolveWasmDir = () => {
   const requestedDir = process.env.WASM_OUTPUT_DIR ?? process.argv[2];
   return requestedDir ? resolve(requestedDir) : resolve(DEFAULT_WASM_DIR);
 };
 
-export const applyPatch = (source: string): string => {
+export const applyPatch = (source) => {
   let patched = normalizePatchedSource(source);
 
   patched = patched.replace(/^import \* as import\d+ from "bridge"\n?/gm, "");
@@ -100,6 +100,7 @@ export const applyPatch = (source: string): string => {
     /function initSync\(module, memory\) \{\n    if \(wasm !== undefined\) return wasm;\n\n    let thread_stack_size(?!\n\s*let customImports)/,
     "function initSync(module, memory) {\n    if (wasm !== undefined) return wasm;\n\n    let thread_stack_size\n    let customImports",
   );
+
   if (patched.includes("            ({module_or_path, memory, thread_stack_size} = module_or_path)")) {
     patched = replaceOnce(
       patched,

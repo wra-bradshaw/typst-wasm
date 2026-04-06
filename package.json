@@ -1,16 +1,5 @@
 {
   "name": "typst-wasm-workspace",
   "private": true,
-  "workspaces": [
-    "packages/fonts",
-    "packages/engine-wasm",
-    "packages/typst-wasm"
-  ],
-  "scripts": {
-    "build": "npm run -w packages/typst-wasm build",
-    "dev": "npm run -w packages/typst-wasm dev",
-    "lint": "npm run -w packages/typst-wasm lint",
-    "test": "npm run -w packages/typst-wasm test",
-    "test:all": "npm run -w packages/typst-wasm test:all"
-  }
+  "packageManager": "pnpm"
 }

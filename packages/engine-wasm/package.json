@@ -16,8 +16,5 @@
     "index.js",
     "index.d.ts",
     "dist"
-  ],
-  "scripts": {
-    "build": "bash scripts/build-from-nix.sh"
-  }
+  ]
 }

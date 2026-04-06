@@ -4,10 +4,7 @@
 
 ## Requirements
 
-- [Bun](https://bun.sh)
-- Rust toolchain with `wasm32-unknown-unknown`
-- [`wasm-pack`](https://rustwasm.github.io/wasm-pack/)
-- Optional: [Nix](https://nixos.org) + [direnv](https://direnv.net)
+- [Nix](https://nixos.org) + optional [direnv](https://direnv.net)
 
 ## Local setup
 
@@ -25,21 +22,20 @@ nix develop
 
 ### Option 2: Manual toolchain setup
 
-Install Bun, Rust (`wasm32-unknown-unknown` target), and `wasm-pack` manually.
+Install pnpm 10, Bun, Deno, and a Rust toolchain with `wasm32-unknown-unknown`.
 
 ## Commands
 
 ```bash
-npm install
-npm run lint
-npm run test
-npm run build
+nix build .#typst-wasm
+nix flake check
 ```
 
-Optional full runtime coverage:
+Package-specific shells are also available:
 
 ```bash
-npm run test:all
+nix develop .#engine-wasm
+nix develop .#typst-wasm
 ```
 
 ## Release

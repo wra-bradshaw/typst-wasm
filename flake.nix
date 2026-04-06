@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    crane.url = "github:ipetkov/crane";
     fenix = {
       url = "github:nix-community/fenix/monthly";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -10,82 +12,46 @@
   };
 
   outputs =
-    { self, ... }@inputs:
-    let
-      supportedSystems = [
+    inputs@{
+      flake-parts,
+      ...
+    }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        ./packages/fonts/flake-module.nix
+        ./packages/engine-wasm/flake-module.nix
+        ./packages/typst-wasm/flake-module.nix
+      ];
+
+      systems = [
         "x86_64-linux"
         "aarch64-linux"
         "aarch64-darwin"
       ];
 
-      forEachSupportedSystem =
-        f:
-        inputs.nixpkgs.lib.genAttrs supportedSystems (
-          system:
-          f {
-            inherit system;
-            pkgs = import inputs.nixpkgs {
-              inherit system;
-              overlays = [ inputs.fenix.overlays.default ];
-              config.allowUnfree = true;
-            };
-          }
-        );
-    in
-    {
-      packages = forEachSupportedSystem (
-        { pkgs, ... }:
+      perSystem =
+        {
+          config,
+          system,
+          ...
+        }:
         let
-          fonts = pkgs.callPackage ./fonts.nix { };
-          wasm = pkgs.callPackage ./wasm.nix { };
+          pkgs = import inputs.nixpkgs {
+            inherit system;
+            overlays = [ inputs.fenix.overlays.default ];
+            config.allowUnfree = true;
+          };
         in
         {
-          inherit fonts wasm;
-          typst-wasm = pkgs.callPackage ./typst-wasm.nix {
-            inherit fonts wasm;
-          };
-        }
-      );
+          _module.args.pkgs = pkgs;
 
-      devShells = forEachSupportedSystem (
-        { pkgs, system }:
-        {
-          default = pkgs.mkShell {
-            nativeBuildInputs =
-              with pkgs;
-              [
-                self.formatter.${system}
-                (fenix.combine [
-                  (fenix.complete.withComponents [
-                    "cargo"
-                    "clippy"
-                    "rust-src"
-                    "rustc"
-                    "rustfmt"
-                    "llvm-tools-preview"
-                  ])
-                  fenix.targets.wasm32-unknown-unknown.latest.rust-std
-                ])
-                nodejs_25
-                bun
-                deno
-                wasm-pack
-                wasm-bindgen-cli
-                pkg-config
-                libiconv
-                wasm-tools
-                wabt
-                gnutar
-              ]
-              ++ (lib.optionals stdenv.isDarwin [
-                apple-sdk
-              ]);
+          formatter = pkgs.nixfmt-rfc-style;
 
+          devShells.default = pkgs.mkShell {
+            inputsFrom = [ config.devShells.typst-wasm ];
+            packages = [ config.formatter ];
             shellHook = "";
           };
-        }
-      );
-
-      formatter = forEachSupportedSystem ({ pkgs, ... }: pkgs.nixfmt-rfc-style);
+        };
     };
 }
