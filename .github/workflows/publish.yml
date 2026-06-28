@@ -28,40 +28,18 @@ jobs:
         run: |
           rm -rf .nix-release
           mkdir -p .nix-release
-          nix build .#fonts --out-link .nix-release/fonts
-          nix build .#wasm --out-link .nix-release/engine-wasm
-          nix build .#typst-wasm --out-link .nix-release/typst-wasm
-
-      - name: Prepare package directories
-        run: |
-          set -euo pipefail
-
-          rm -rf .publish
-          mkdir -p \
-            .publish/fonts/dist \
-            .publish/engine-wasm/dist \
-            .publish/typst-wasm
-
-          cp packages/fonts/package.json .publish/fonts/package.json
-          cp packages/fonts/index.js .publish/fonts/index.js
-          cp packages/fonts/index.d.ts .publish/fonts/index.d.ts
-          cp -R .nix-release/fonts/files .publish/fonts/dist/files
-
-          cp packages/engine-wasm/package.json .publish/engine-wasm/package.json
-          cp packages/engine-wasm/index.js .publish/engine-wasm/index.js
-          cp packages/engine-wasm/index.d.ts .publish/engine-wasm/index.d.ts
-          cp -R .nix-release/engine-wasm/. .publish/engine-wasm/dist
-
-          cp -R .nix-release/typst-wasm/. .publish/typst-wasm
+          nix build .#publish-fonts --out-link .nix-release/fonts
+          nix build .#publish-engine-wasm --out-link .nix-release/engine-wasm
+          nix build .#publish-typst-wasm --out-link .nix-release/typst-wasm
 
       - name: Publish @typst-wasm/fonts
-        working-directory: .publish/fonts
+        working-directory: .nix-release/fonts
         run: npm publish --access public --provenance
 
       - name: Publish @typst-wasm/engine-wasm
-        working-directory: .publish/engine-wasm
+        working-directory: .nix-release/engine-wasm
         run: npm publish --access public --provenance
 
       - name: Publish typst-wasm
-        working-directory: .publish/typst-wasm
+        working-directory: .nix-release/typst-wasm
         run: npm publish --access public --provenance

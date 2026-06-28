@@ -45,6 +45,7 @@
     in
     {
       packages.wasm = wasm;
+      packages.publish-engine-wasm = wasm.passthru.npmPackage;
 
       devShells.engine-wasm = pkgs.mkShell {
         packages = engineWasmDevInputs;

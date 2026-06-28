@@ -23,6 +23,7 @@
     in
     {
       packages.typst-wasm = typst-wasm;
+      packages.publish-typst-wasm = typst-wasm;
       packages.default = typst-wasm;
       checks = typst-wasm.passthru.tests;
 

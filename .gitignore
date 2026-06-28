@@ -2,6 +2,7 @@
 node_modules
 .pnpm-store/
 result
+result-*
 
 # outputs
 out

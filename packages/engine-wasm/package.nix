@@ -87,25 +87,46 @@ let
   };
 
   cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+
+  wasmPackage = craneLib.buildPackage (
+    commonArgs
+    // {
+      inherit cargoArtifacts;
+
+      cargoBuildCommand = "cargo build --profile release";
+
+      installPhaseCommand = ''
+        mkdir -p "$out"
+
+        wasm-bindgen \
+          --target web \
+          --out-dir "$out" \
+          "$CARGO_TARGET_DIR/$CARGO_BUILD_TARGET/release/typst_wasm.wasm"
+
+        wasm-opt -O4 "$out/typst_wasm_bg.wasm" -o "$out/typst_wasm_bg.wasm"
+
+        WASM_OUTPUT_DIR="$out" node ${./scripts/patch-wasm-bindgen.js}
+      '';
+
+      passthru.npmPackage = pkgs.stdenvNoCC.mkDerivation {
+        pname = "typst-wasm-engine-wasm-npm-package";
+        version = commonArgs.version;
+
+        dontUnpack = true;
+
+        installPhase = ''
+          runHook preInstall
+
+          mkdir -p "$out/dist"
+          cp ${./package.json} "$out/package.json"
+          cp ${./index.js} "$out/index.js"
+          cp ${./index.d.ts} "$out/index.d.ts"
+          cp -R ${wasmPackage}/. "$out/dist"
+
+          runHook postInstall
+        '';
+      };
+    }
+  );
 in
-craneLib.buildPackage (
-  commonArgs
-  // {
-    inherit cargoArtifacts;
-
-    cargoBuildCommand = "cargo build --profile release";
-
-    installPhaseCommand = ''
-      mkdir -p "$out"
-
-      wasm-bindgen \
-        --target web \
-        --out-dir "$out" \
-        "$CARGO_TARGET_DIR/$CARGO_BUILD_TARGET/release/typst_wasm.wasm"
-
-      wasm-opt -O4 "$out/typst_wasm_bg.wasm" -o "$out/typst_wasm_bg.wasm"
-
-      WASM_OUTPUT_DIR="$out" node ${./scripts/patch-wasm-bindgen.js}
-    '';
-  }
-)
+wasmPackage

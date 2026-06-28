@@ -13,7 +13,7 @@ let
     "NewCMMath-Book.otf"
   ];
 in
-pkgs.stdenvNoCC.mkDerivation {
+pkgs.stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "typst-wasm-fonts";
   inherit version;
 
@@ -29,4 +29,23 @@ pkgs.stdenvNoCC.mkDerivation {
 
     runHook postInstall
   '';
-}
+
+  passthru.npmPackage = pkgs.stdenvNoCC.mkDerivation {
+    pname = "typst-wasm-fonts-npm-package";
+    version = finalAttrs.version;
+
+    dontUnpack = true;
+
+    installPhase = ''
+      runHook preInstall
+
+      mkdir -p "$out/dist"
+      cp ${./package.json} "$out/package.json"
+      cp ${./index.js} "$out/index.js"
+      cp ${./index.d.ts} "$out/index.d.ts"
+      cp -R ${finalAttrs.finalPackage}/files "$out/dist/files"
+
+      runHook postInstall
+    '';
+  };
+})
