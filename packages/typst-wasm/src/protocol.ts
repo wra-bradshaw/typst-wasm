@@ -12,7 +12,8 @@ export const SharedMemoryCommunicationStatus = {
   Success: 3,
 } as const;
 
-export type SharedMemoryCommunicationStatus = (typeof SharedMemoryCommunicationStatus)[keyof typeof SharedMemoryCommunicationStatus];
+export type SharedMemoryCommunicationStatus =
+  (typeof SharedMemoryCommunicationStatus)[keyof typeof SharedMemoryCommunicationStatus];
 
 export class SharedMemoryCommunication {
   dataBuf: SharedArrayBuffer;
@@ -20,13 +21,18 @@ export class SharedMemoryCommunication {
   sizeBuf: SharedArrayBuffer;
 
   constructor() {
-    this.dataBuf = new SharedArrayBuffer(INITIAL_SAB_SIZE, { maxByteLength: MAX_SAB_SIZE });
+    this.dataBuf = new SharedArrayBuffer(INITIAL_SAB_SIZE, {
+      maxByteLength: MAX_SAB_SIZE,
+    });
     this.statusBuf = new SharedArrayBuffer(4);
     this.sizeBuf = new SharedArrayBuffer(4);
   }
 
   getStatus(): SharedMemoryCommunicationStatus {
-    return Atomics.load(new Int32Array(this.statusBuf), 0) as SharedMemoryCommunicationStatus;
+    return Atomics.load(
+      new Int32Array(this.statusBuf),
+      0,
+    ) as SharedMemoryCommunicationStatus;
   }
 
   setStatus(status: SharedMemoryCommunicationStatus): void {
@@ -38,7 +44,9 @@ export class SharedMemoryCommunication {
   setBuffer(buf: Uint8Array): void {
     const needed = buf.byteLength;
     if (needed > MAX_SAB_SIZE) {
-      throw new Error(`File too large: ${needed} bytes. Maximum allowed: ${MAX_SAB_SIZE} bytes.`);
+      throw new Error(
+        `File too large: ${needed} bytes. Maximum allowed: ${MAX_SAB_SIZE} bytes.`,
+      );
     }
 
     if (needed > this.dataBuf.byteLength) {
@@ -54,8 +62,18 @@ export class SharedMemoryCommunication {
     return new Uint8Array(this.dataBuf, 0, size);
   }
 
-  waitForStatusChange(expectedStatus: SharedMemoryCommunicationStatus, timeoutMs = DEFAULT_FETCH_TIMEOUT): boolean {
-    return Atomics.wait(new Int32Array(this.statusBuf), 0, expectedStatus, timeoutMs) === "ok";
+  waitForStatusChange(
+    expectedStatus: SharedMemoryCommunicationStatus,
+    timeoutMs = DEFAULT_FETCH_TIMEOUT,
+  ): boolean {
+    return (
+      Atomics.wait(
+        new Int32Array(this.statusBuf),
+        0,
+        expectedStatus,
+        timeoutMs,
+      ) === "ok"
+    );
   }
 
   static hydrateObj(obj: SharedMemoryCommunication): SharedMemoryCommunication {
@@ -72,7 +90,10 @@ export class SharedMemoryCommunication {
 
 export interface TypstWorkerProtocol {
   init: {
-    request: { sharedMemoryCommunication: SharedMemoryCommunication; moduleOrPath: WasmModuleOrPath };
+    request: {
+      sharedMemoryCommunication: SharedMemoryCommunication;
+      moduleOrPath: WasmModuleOrPath;
+    };
     response: void;
   };
   add_file: {
@@ -115,13 +136,19 @@ export interface TypstWorkerProtocol {
 
 type NoPayload = Record<never, never>;
 
-export type ExcludePayloadIfEmpty<P> = P extends void ? NoPayload : { payload: P };
+export type ExcludePayloadIfEmpty<P> = P extends void
+  ? NoPayload
+  : { payload: P };
 
 export type RpcRequestMessage<T> = {
   [K in keyof T]: {
     kind: K;
     requestId: number;
-  } & (T[K] extends { request: infer P } ? ExcludePayloadIfEmpty<P> : NoPayload);
+  } & (T[K] extends { request: infer P }
+    ? ExcludePayloadIfEmpty<P>
+    : NoPayload);
 }[keyof T];
 
-export type RpcResponseMessage<TResult = unknown, TError = unknown> = { requestId: number; result: TResult } | { requestId: number; error: TError };
+export type RpcResponseMessage<TResult = unknown, TError = unknown> =
+  | { requestId: number; result: TResult }
+  | { requestId: number; error: TError };

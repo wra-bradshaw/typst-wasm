@@ -18,12 +18,19 @@ export const newComputerModernMath = fontDefinitions.map((font) => ({
   name: "New Computer Modern Math",
   weight: font.weight,
   style: font.style,
-  load: async () => loadFontBytes(new URL(`./dist/files/${font.file}`, import.meta.url)),
+  load: async () =>
+    loadFontBytes(new URL(`./dist/files/${font.file}`, import.meta.url)),
 }));
 
-export const newComputerModernMathRegular = newComputerModernMath.find((font) => font.weight === 400);
-export const newComputerModernMathBold = newComputerModernMath.find((font) => font.weight === 700);
-export const newComputerModernMathBook = newComputerModernMath.find((font) => font.weight === 450);
+export const newComputerModernMathRegular = newComputerModernMath.find(
+  (font) => font.weight === 400,
+);
+export const newComputerModernMathBold = newComputerModernMath.find(
+  (font) => font.weight === 700,
+);
+export const newComputerModernMathBook = newComputerModernMath.find(
+  (font) => font.weight === 450,
+);
 
 export const defaultFonts = [
   newComputerModernMathRegular,

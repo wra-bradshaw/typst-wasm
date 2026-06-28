@@ -66,4 +66,6 @@ export const makeMemoryCacheStorage = (capacity: number): PackageCache => {
 };
 
 export const makeDefaultPackageCache = (capacity = 400): PackageCache =>
-  typeof caches !== "undefined" ? makeBrowserCacheStorage() : makeMemoryCacheStorage(capacity);
+  typeof caches !== "undefined"
+    ? makeBrowserCacheStorage()
+    : makeMemoryCacheStorage(capacity);

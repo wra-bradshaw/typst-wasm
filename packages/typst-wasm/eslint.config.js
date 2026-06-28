@@ -63,5 +63,5 @@ export default tseslint.config(
       "**/wasm/*.js",
       "**/wasm/*.d.ts",
     ],
-  }
+  },
 );

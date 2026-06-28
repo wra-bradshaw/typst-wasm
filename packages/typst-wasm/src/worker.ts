@@ -73,7 +73,9 @@ const pathFromWasm = (pathPtr: number, pathLen: number): string => {
     throw new Error("WASM exports not initialized");
   }
 
-  return textDecoder.decode(new Uint8Array(wasmExports.memory.buffer, pathPtr, pathLen));
+  return textDecoder.decode(
+    new Uint8Array(wasmExports.memory.buffer, pathPtr, pathLen),
+  );
 };
 
 const copyIntoWasm = (bytes: Uint8Array, resultLenPtr: number): number => {
@@ -99,7 +101,9 @@ const hostFetch = (
   const path = pathFromWasm(pathPtr, pathLen);
 
   for (let attempt = 0; attempt < MAX_FETCH_ATTEMPTS; attempt += 1) {
-    sharedMemoryCommunication.setStatus(SharedMemoryCommunicationStatus.Pending);
+    sharedMemoryCommunication.setStatus(
+      SharedMemoryCommunicationStatus.Pending,
+    );
     self.postMessage({
       kind: "web_fetch",
       payload: { path },
@@ -113,7 +117,10 @@ const hostFetch = (
       continue;
     }
 
-    if (sharedMemoryCommunication.getStatus() === SharedMemoryCommunicationStatus.Success) {
+    if (
+      sharedMemoryCommunication.getStatus() ===
+      SharedMemoryCommunicationStatus.Success
+    ) {
       return copyIntoWasm(sharedMemoryCommunication.getBuffer(), resultLenPtr);
     }
   }
@@ -122,7 +129,10 @@ const hostFetch = (
   return 0;
 };
 
-const successResponse = (requestId: number, result: unknown): WorkerRpcResponse => ({
+const successResponse = (
+  requestId: number,
+  result: unknown,
+): WorkerRpcResponse => ({
   requestId,
   result,
 });
@@ -139,7 +149,11 @@ const errorResponse = (
 
 const ensureCompiler = (requestId: number): TypstCompilerInstance => {
   if (compiler) return compiler;
-  throw new WorkerCommandError(requestId, "COMPILER_NOT_INITIALIZED", "Compiler not initialized");
+  throw new WorkerCommandError(
+    requestId,
+    "COMPILER_NOT_INITIALIZED",
+    "Compiler not initialized",
+  );
 };
 
 const runCompilerCommand = <T>(
@@ -151,19 +165,33 @@ const runCompilerCommand = <T>(
   try {
     return run(readyCompiler);
   } catch (cause) {
-    throw new WorkerCommandError(requestId, "COMMAND_FAILED", `Worker command failed: ${commandName}`, cause);
+    throw new WorkerCommandError(
+      requestId,
+      "COMMAND_FAILED",
+      `Worker command failed: ${commandName}`,
+      cause,
+    );
   }
 };
 
-const handleRequest = async (request: MainToWorkerMessage): Promise<WorkerRpcResponse> => {
+const handleRequest = async (
+  request: MainToWorkerMessage,
+): Promise<WorkerRpcResponse> => {
   switch (request.kind) {
     case "init": {
-      sharedMemoryCommunication = SharedMemoryCommunication.hydrateObj(request.payload.sharedMemoryCommunication);
+      sharedMemoryCommunication = SharedMemoryCommunication.hydrateObj(
+        request.payload.sharedMemoryCommunication,
+      );
       let wasmModule: Awaited<ReturnType<typeof loadWasmModule>>;
       try {
         wasmModule = await loadWasmModule();
       } catch (cause) {
-        throw new WorkerCommandError(request.requestId, "INIT_FAILED", "Failed to load WASM module", cause);
+        throw new WorkerCommandError(
+          request.requestId,
+          "INIT_FAILED",
+          "Failed to load WASM module",
+          cause,
+        );
       }
 
       try {
@@ -177,7 +205,12 @@ const handleRequest = async (request: MainToWorkerMessage): Promise<WorkerRpcRes
         });
         compiler = new wasmModule.TypstCompiler();
       } catch (cause) {
-        throw new WorkerCommandError(request.requestId, "INIT_FAILED", "Failed to initialize WASM worker", cause);
+        throw new WorkerCommandError(
+          request.requestId,
+          "INIT_FAILED",
+          "Failed to initialize WASM worker",
+          cause,
+        );
       }
 
       return successResponse(request.requestId, undefined);
@@ -215,17 +248,23 @@ const handleRequest = async (request: MainToWorkerMessage): Promise<WorkerRpcRes
     case "compile":
       return successResponse(
         request.requestId,
-        runCompilerCommand(request.requestId, "compile", (readyCompiler) => readyCompiler.compile(request.payload.options)),
+        runCompilerCommand(request.requestId, "compile", (readyCompiler) =>
+          readyCompiler.compile(request.payload.options),
+        ),
       );
     case "list_files":
       return successResponse(
         request.requestId,
-        runCompilerCommand(request.requestId, "list_files", (readyCompiler) => readyCompiler.list_files()),
+        runCompilerCommand(request.requestId, "list_files", (readyCompiler) =>
+          readyCompiler.list_files(),
+        ),
       );
     case "has_file":
       return successResponse(
         request.requestId,
-        runCompilerCommand(request.requestId, "has_file", (readyCompiler) => readyCompiler.has_file(request.payload.path)),
+        runCompilerCommand(request.requestId, "has_file", (readyCompiler) =>
+          readyCompiler.has_file(request.payload.path),
+        ),
       );
   }
 };

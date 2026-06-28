@@ -1,5 +1,8 @@
 import { FetchError } from "./errors";
-import { SharedMemoryCommunication, SharedMemoryCommunicationStatus } from "./protocol";
+import {
+  SharedMemoryCommunication,
+  SharedMemoryCommunicationStatus,
+} from "./protocol";
 
 type PackageFileLoader = {
   getFile(spec: string): Promise<Uint8Array>;
@@ -21,14 +24,20 @@ export const makeFetchBridge = (
     if (isDisposed()) return;
 
     try {
-      const bytes = path.startsWith("@") ? await packageLoader.getFile(path) : await fetchPath(path, fetchImpl);
+      const bytes = path.startsWith("@")
+        ? await packageLoader.getFile(path)
+        : await fetchPath(path, fetchImpl);
       if (isDisposed()) return;
 
       sharedMemoryCommunication.setBuffer(bytes);
-      sharedMemoryCommunication.setStatus(SharedMemoryCommunicationStatus.Success);
+      sharedMemoryCommunication.setStatus(
+        SharedMemoryCommunicationStatus.Success,
+      );
     } catch {
       if (!isDisposed()) {
-        sharedMemoryCommunication.setStatus(SharedMemoryCommunicationStatus.Error);
+        sharedMemoryCommunication.setStatus(
+          SharedMemoryCommunicationStatus.Error,
+        );
       }
     }
   };
@@ -39,7 +48,10 @@ export const makeFetchBridge = (
   };
 };
 
-const fetchPath = async (path: string, fetchImpl: typeof fetch): Promise<Uint8Array> => {
+const fetchPath = async (
+  path: string,
+  fetchImpl: typeof fetch,
+): Promise<Uint8Array> => {
   try {
     const response = await fetchImpl(path);
     if (!response.ok) throw new Error(`Status ${response.status}`);

@@ -48,11 +48,41 @@ export interface DependencyInfo {
 }
 
 export type CompileResult =
-  | { format: "pdf"; output: Uint8Array; diagnostics: WasmDiagnostic[]; deps?: DependencyInfo; timings?: unknown }
-  | { format: "png"; pages: PageOutput<Uint8Array>[]; diagnostics: WasmDiagnostic[]; deps?: DependencyInfo; timings?: unknown }
-  | { format: "svg"; pages: PageOutput<string>[]; diagnostics: WasmDiagnostic[]; deps?: DependencyInfo; timings?: unknown }
-  | { format: "html"; output: string; diagnostics: WasmDiagnostic[]; deps?: DependencyInfo; timings?: unknown }
-  | { format: "bundle"; files: BundleFile[]; diagnostics: WasmDiagnostic[]; deps?: DependencyInfo; timings?: unknown };
+  | {
+      format: "pdf";
+      output: Uint8Array;
+      diagnostics: WasmDiagnostic[];
+      deps?: DependencyInfo;
+      timings?: unknown;
+    }
+  | {
+      format: "png";
+      pages: PageOutput<Uint8Array>[];
+      diagnostics: WasmDiagnostic[];
+      deps?: DependencyInfo;
+      timings?: unknown;
+    }
+  | {
+      format: "svg";
+      pages: PageOutput<string>[];
+      diagnostics: WasmDiagnostic[];
+      deps?: DependencyInfo;
+      timings?: unknown;
+    }
+  | {
+      format: "html";
+      output: string;
+      diagnostics: WasmDiagnostic[];
+      deps?: DependencyInfo;
+      timings?: unknown;
+    }
+  | {
+      format: "bundle";
+      files: BundleFile[];
+      diagnostics: WasmDiagnostic[];
+      deps?: DependencyInfo;
+      timings?: unknown;
+    };
 
 export interface PackageCache {
   get(key: string): Promise<Uint8Array | null>;

@@ -10,7 +10,10 @@ export class TypstError extends Error {
 export class CompileError extends TypstError {
   readonly diagnostics: WasmDiagnostic[];
 
-  constructor(message: string, options: { diagnostics?: WasmDiagnostic[]; cause?: unknown } = {}) {
+  constructor(
+    message: string,
+    options: { diagnostics?: WasmDiagnostic[]; cause?: unknown } = {},
+  ) {
     super(message, { cause: options.cause });
     this.diagnostics = options.diagnostics ?? [];
   }

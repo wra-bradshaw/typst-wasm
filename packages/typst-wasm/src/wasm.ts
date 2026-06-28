@@ -31,7 +31,9 @@ export type WasmCompileOutput = EngineCompileOutput;
 export { wasmBinaryUrl };
 export default wasmBinaryUrl;
 
-export const toWasmCompileOptions = (options: CompileOptions = {}): WasmCompileOptions => ({
+export const toWasmCompileOptions = (
+  options: CompileOptions = {},
+): WasmCompileOptions => ({
   format: options.format ?? "pdf",
   main: options.main,
   root: options.root,

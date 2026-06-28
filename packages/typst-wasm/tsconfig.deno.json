@@ -5,5 +5,10 @@
     "noEmit": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["src/**/*", "scripts/**/*", "tests/e2e/scenario.ts", "tests/e2e/deno.e2e.ts"]
+  "include": [
+    "src/**/*",
+    "scripts/**/*",
+    "tests/e2e/scenario.ts",
+    "tests/e2e/deno.e2e.ts"
+  ]
 }

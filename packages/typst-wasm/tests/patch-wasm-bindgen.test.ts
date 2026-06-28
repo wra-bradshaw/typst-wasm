@@ -41,6 +41,8 @@ describe("patch-wasm-bindgen", () => {
   });
 
   it("fails loudly when expected anchors are missing", () => {
-    expect(() => applyPatch("function nope() {}")).toThrowError("Patch anchor not found");
+    expect(() => applyPatch("function nope() {}")).toThrowError(
+      "Patch anchor not found",
+    );
   });
 });

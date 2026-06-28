@@ -8,7 +8,9 @@ import { runCompilerE2eScenario } from "./scenario";
 describe("node e2e (jspi backend)", () => {
   it("compiles and supports iterative file operations", async () => {
     if (!supportsJspiBackend()) {
-      throw new Error("Node E2E requires JSPI support (WebAssembly.Suspending and WebAssembly.promising).");
+      throw new Error(
+        "Node E2E requires JSPI support (WebAssembly.Suspending and WebAssembly.promising).",
+      );
     }
 
     const wasmBytes = await readFile(wasmBinaryUrl);

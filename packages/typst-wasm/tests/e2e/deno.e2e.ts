@@ -1,24 +1,27 @@
 import { wasmBinaryUrl } from "@typst-wasm/engine-wasm";
 import { runCompilerE2eScenario } from "./scenario.ts";
 
-Deno.test("deno e2e (worker backend) compiles and supports iterative file operations", async () => {
-  const moduleOrPath = wasmBinaryUrl.href;
-  const result = await runCompilerE2eScenario({
-    runtime: "deno",
-    moduleOrPath,
-    backend: "worker",
-  });
+Deno.test(
+  "deno e2e (worker backend) compiles and supports iterative file operations",
+  async () => {
+    const moduleOrPath = wasmBinaryUrl.href;
+    const result = await runCompilerE2eScenario({
+      runtime: "deno",
+      moduleOrPath,
+      backend: "worker",
+    });
 
-  if (!(result.firstOutputLength > 0)) {
-    throw new Error("Expected first compile SVG length to be > 0");
-  }
-  if (!(result.secondOutputLength > 0)) {
-    throw new Error("Expected second compile SVG length to be > 0");
-  }
-  if (!result.filesBeforeClear.includes("main.typ")) {
-    throw new Error("Expected filesBeforeClear to include main.typ");
-  }
-  if (!(result.filesAfterClear.length === 0)) {
-    throw new Error("Expected filesAfterClear to be empty");
-  }
-});
+    if (!(result.firstOutputLength > 0)) {
+      throw new Error("Expected first compile SVG length to be > 0");
+    }
+    if (!(result.secondOutputLength > 0)) {
+      throw new Error("Expected second compile SVG length to be > 0");
+    }
+    if (!result.filesBeforeClear.includes("main.typ")) {
+      throw new Error("Expected filesBeforeClear to include main.typ");
+    }
+    if (!(result.filesAfterClear.length === 0)) {
+      throw new Error("Expected filesAfterClear to be empty");
+    }
+  },
+);

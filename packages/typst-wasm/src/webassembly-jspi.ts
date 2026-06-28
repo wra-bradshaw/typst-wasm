@@ -10,11 +10,9 @@ export type JspiCompileThunk<TOptions> = (
 ) => [number, number, number];
 
 export type JspiWebAssembly<TOptions = unknown> = typeof WebAssembly & {
-  Suspending?: new (fn: JspiHostFetch) => (
-    pathPtr: number,
-    pathLen: number,
-    resultLenPtr: number,
-  ) => number;
+  Suspending?: new (
+    fn: JspiHostFetch,
+  ) => (pathPtr: number, pathLen: number, resultLenPtr: number) => number;
   promising?: (
     fn: JspiCompileThunk<TOptions>,
   ) => (
@@ -23,5 +21,6 @@ export type JspiWebAssembly<TOptions = unknown> = typeof WebAssembly & {
   ) => Promise<[number, number, number]>;
 };
 
-export const getJspiWebAssembly = <TOptions = unknown>(): JspiWebAssembly<TOptions> =>
-  WebAssembly as JspiWebAssembly<TOptions>;
+export const getJspiWebAssembly = <
+  TOptions = unknown,
+>(): JspiWebAssembly<TOptions> => WebAssembly as JspiWebAssembly<TOptions>;

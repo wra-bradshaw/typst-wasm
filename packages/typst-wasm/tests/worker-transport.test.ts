@@ -18,7 +18,11 @@ class FakeWorker {
 describe("worker transport", () => {
   it("forwards outbound messages to worker", () => {
     const worker = new FakeWorker();
-    const transport = makeWorkerTransport(worker, () => undefined, () => undefined);
+    const transport = makeWorkerTransport(
+      worker,
+      () => undefined,
+      () => undefined,
+    );
 
     transport.post({ kind: "compile", requestId: 1 });
 
@@ -28,17 +32,27 @@ describe("worker transport", () => {
   it("forwards only valid inbound worker messages", () => {
     const worker = new FakeWorker();
     const messages: unknown[] = [];
-    makeWorkerTransport(worker, (message) => messages.push(message), () => undefined);
+    makeWorkerTransport(
+      worker,
+      (message) => messages.push(message),
+      () => undefined,
+    );
 
     worker.emit({ kind: "unknown_event" });
     worker.emit({ kind: "web_fetch", payload: { path: "main.typ" } });
 
-    expect(messages).toEqual([{ kind: "web_fetch", payload: { path: "main.typ" } }]);
+    expect(messages).toEqual([
+      { kind: "web_fetch", payload: { path: "main.typ" } },
+    ]);
   });
 
   it("clears worker handlers on close", () => {
     const worker = new FakeWorker();
-    const transport = makeWorkerTransport(worker, () => undefined, () => undefined);
+    const transport = makeWorkerTransport(
+      worker,
+      () => undefined,
+      () => undefined,
+    );
 
     transport.close();
 

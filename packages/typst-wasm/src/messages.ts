@@ -1,26 +1,34 @@
-import type { RpcRequestMessage, RpcResponseMessage, TypstWorkerProtocol } from "./protocol";
+import type {
+  RpcRequestMessage,
+  RpcResponseMessage,
+  TypstWorkerProtocol,
+} from "./protocol";
 
 export type MainToWorkerMessage = RpcRequestMessage<TypstWorkerProtocol>;
 
-export type WorkerEventMessage =
-  {
-    kind: "web_fetch";
-    payload: {
-      path: string;
-    };
+export type WorkerEventMessage = {
+  kind: "web_fetch";
+  payload: {
+    path: string;
   };
+};
 
 export type WorkerToMainMessage = RpcResponseMessage | WorkerEventMessage;
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
 
-export const isMainToWorkerMessage = (value: unknown): value is MainToWorkerMessage => {
+export const isMainToWorkerMessage = (
+  value: unknown,
+): value is MainToWorkerMessage => {
   if (!isRecord(value)) return false;
   if (typeof value.kind !== "string") return false;
   return typeof value.requestId === "number";
 };
 
-export const isRpcResponseMessage = (value: unknown): value is RpcResponseMessage => {
+export const isRpcResponseMessage = (
+  value: unknown,
+): value is RpcResponseMessage => {
   if (!isRecord(value)) return false;
   if (typeof value.requestId !== "number") return false;
 
@@ -29,7 +37,9 @@ export const isRpcResponseMessage = (value: unknown): value is RpcResponseMessag
   return hasResult !== hasError;
 };
 
-export const isWorkerEventMessage = (value: unknown): value is WorkerEventMessage => {
+export const isWorkerEventMessage = (
+  value: unknown,
+): value is WorkerEventMessage => {
   if (!isRecord(value)) return false;
   if (typeof value.kind !== "string") return false;
 
@@ -41,4 +51,7 @@ export const isWorkerEventMessage = (value: unknown): value is WorkerEventMessag
   return false;
 };
 
-export const isWorkerToMainMessage = (value: unknown): value is WorkerToMainMessage => isRpcResponseMessage(value) || isWorkerEventMessage(value);
+export const isWorkerToMainMessage = (
+  value: unknown,
+): value is WorkerToMainMessage =>
+  isRpcResponseMessage(value) || isWorkerEventMessage(value);

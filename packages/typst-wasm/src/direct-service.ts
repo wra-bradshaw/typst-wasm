@@ -4,7 +4,7 @@ import {
   CompilerNotInitializedError,
   WorkerError,
 } from "./errors";
-import { PackageManager } from "./package-manager";
+import type { PackageManager } from "./package-manager";
 import type { WasmModuleOrPath } from "./wasm-module";
 import {
   loadWasmModule,

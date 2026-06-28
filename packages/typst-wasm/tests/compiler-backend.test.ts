@@ -10,8 +10,14 @@ describe("compiler backend selection", () => {
 
     class FakeWorker {}
 
-    Object.defineProperty(globalThis, "Worker", { configurable: true, value: FakeWorker });
-    Object.defineProperty(globalThis, "SharedArrayBuffer", { configurable: true, value: class {} });
+    Object.defineProperty(globalThis, "Worker", {
+      configurable: true,
+      value: FakeWorker,
+    });
+    Object.defineProperty(globalThis, "SharedArrayBuffer", {
+      configurable: true,
+      value: class {},
+    });
     Object.defineProperty(globalThis, "Atomics", {
       configurable: true,
       value: {
@@ -30,10 +36,22 @@ describe("compiler backend selection", () => {
     try {
       expect(selectAutomaticBackendKind()).toBe("worker");
     } finally {
-      Object.defineProperty(globalThis, "Worker", { configurable: true, value: originalWorker });
-      Object.defineProperty(globalThis, "SharedArrayBuffer", { configurable: true, value: originalSAB });
-      Object.defineProperty(globalThis, "Atomics", { configurable: true, value: originalAtomics });
-      Object.defineProperty(globalThis, "WebAssembly", { configurable: true, value: originalWebAssembly });
+      Object.defineProperty(globalThis, "Worker", {
+        configurable: true,
+        value: originalWorker,
+      });
+      Object.defineProperty(globalThis, "SharedArrayBuffer", {
+        configurable: true,
+        value: originalSAB,
+      });
+      Object.defineProperty(globalThis, "Atomics", {
+        configurable: true,
+        value: originalAtomics,
+      });
+      Object.defineProperty(globalThis, "WebAssembly", {
+        configurable: true,
+        value: originalWebAssembly,
+      });
     }
   });
 
@@ -43,9 +61,18 @@ describe("compiler backend selection", () => {
     const originalAtomics = globalThis.Atomics;
     const originalWebAssembly = globalThis.WebAssembly;
 
-    Object.defineProperty(globalThis, "Worker", { configurable: true, value: undefined });
-    Object.defineProperty(globalThis, "SharedArrayBuffer", { configurable: true, value: undefined });
-    Object.defineProperty(globalThis, "Atomics", { configurable: true, value: undefined });
+    Object.defineProperty(globalThis, "Worker", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(globalThis, "SharedArrayBuffer", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(globalThis, "Atomics", {
+      configurable: true,
+      value: undefined,
+    });
     Object.defineProperty(globalThis, "WebAssembly", {
       configurable: true,
       value: {
@@ -58,10 +85,22 @@ describe("compiler backend selection", () => {
     try {
       expect(selectAutomaticBackendKind()).toBe("jspi");
     } finally {
-      Object.defineProperty(globalThis, "Worker", { configurable: true, value: originalWorker });
-      Object.defineProperty(globalThis, "SharedArrayBuffer", { configurable: true, value: originalSAB });
-      Object.defineProperty(globalThis, "Atomics", { configurable: true, value: originalAtomics });
-      Object.defineProperty(globalThis, "WebAssembly", { configurable: true, value: originalWebAssembly });
+      Object.defineProperty(globalThis, "Worker", {
+        configurable: true,
+        value: originalWorker,
+      });
+      Object.defineProperty(globalThis, "SharedArrayBuffer", {
+        configurable: true,
+        value: originalSAB,
+      });
+      Object.defineProperty(globalThis, "Atomics", {
+        configurable: true,
+        value: originalAtomics,
+      });
+      Object.defineProperty(globalThis, "WebAssembly", {
+        configurable: true,
+        value: originalWebAssembly,
+      });
     }
   });
 
@@ -71,9 +110,18 @@ describe("compiler backend selection", () => {
     const originalAtomics = globalThis.Atomics;
     const originalWebAssembly = globalThis.WebAssembly;
 
-    Object.defineProperty(globalThis, "Worker", { configurable: true, value: undefined });
-    Object.defineProperty(globalThis, "SharedArrayBuffer", { configurable: true, value: undefined });
-    Object.defineProperty(globalThis, "Atomics", { configurable: true, value: undefined });
+    Object.defineProperty(globalThis, "Worker", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(globalThis, "SharedArrayBuffer", {
+      configurable: true,
+      value: undefined,
+    });
+    Object.defineProperty(globalThis, "Atomics", {
+      configurable: true,
+      value: undefined,
+    });
     Object.defineProperty(globalThis, "WebAssembly", {
       configurable: true,
       value: {
@@ -86,10 +134,22 @@ describe("compiler backend selection", () => {
     try {
       expect(selectAutomaticBackendKind()).toBe("none");
     } finally {
-      Object.defineProperty(globalThis, "Worker", { configurable: true, value: originalWorker });
-      Object.defineProperty(globalThis, "SharedArrayBuffer", { configurable: true, value: originalSAB });
-      Object.defineProperty(globalThis, "Atomics", { configurable: true, value: originalAtomics });
-      Object.defineProperty(globalThis, "WebAssembly", { configurable: true, value: originalWebAssembly });
+      Object.defineProperty(globalThis, "Worker", {
+        configurable: true,
+        value: originalWorker,
+      });
+      Object.defineProperty(globalThis, "SharedArrayBuffer", {
+        configurable: true,
+        value: originalSAB,
+      });
+      Object.defineProperty(globalThis, "Atomics", {
+        configurable: true,
+        value: originalAtomics,
+      });
+      Object.defineProperty(globalThis, "WebAssembly", {
+        configurable: true,
+        value: originalWebAssembly,
+      });
     }
   });
 });

@@ -11,8 +11,12 @@ describe("fetch bridge", () => {
 
     await bridge.handleFetchRequest("@preview/test:0.1.0/file.typ");
 
-    expect(bridge.sharedMemoryCommunication.getStatus()).toBe(SharedMemoryCommunicationStatus.Success);
-    expect([...bridge.sharedMemoryCommunication.getBuffer()]).toEqual([1, 2, 3]);
+    expect(bridge.sharedMemoryCommunication.getStatus()).toBe(
+      SharedMemoryCommunicationStatus.Success,
+    );
+    expect([...bridge.sharedMemoryCommunication.getBuffer()]).toEqual([
+      1, 2, 3,
+    ]);
   });
 
   it("sets error status on loader failure", async () => {
@@ -27,7 +31,9 @@ describe("fetch bridge", () => {
 
     await bridge.handleFetchRequest("@preview/test:0.1.0/file.typ");
 
-    expect(bridge.sharedMemoryCommunication.getStatus()).toBe(SharedMemoryCommunicationStatus.Error);
+    expect(bridge.sharedMemoryCommunication.getStatus()).toBe(
+      SharedMemoryCommunicationStatus.Error,
+    );
   });
 
   it("does not publish results after disposal", async () => {
@@ -40,11 +46,15 @@ describe("fetch bridge", () => {
     disposed = true;
     await bridge.handleFetchRequest("@preview/test:0.1.0/file.typ");
 
-    expect(bridge.sharedMemoryCommunication.getStatus()).toBe(SharedMemoryCommunicationStatus.None);
+    expect(bridge.sharedMemoryCommunication.getStatus()).toBe(
+      SharedMemoryCommunicationStatus.None,
+    );
   });
 
   it("uses the provided fetch implementation for non-package paths", async () => {
-    const fetchImpl: typeof fetch = vi.fn(async () => new Response(new Uint8Array([4, 5])));
+    const fetchImpl: typeof fetch = vi.fn(
+      async () => new Response(new Uint8Array([4, 5])),
+    );
     const bridge = makeFetchBridge(
       { getFile: async () => new Uint8Array() },
       () => false,

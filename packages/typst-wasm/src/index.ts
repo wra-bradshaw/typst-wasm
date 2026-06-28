@@ -1,8 +1,16 @@
-import { createCompilerBackend, type CompilerBackendService } from "./compiler-backend";
+import {
+  createCompilerBackend,
+  type CompilerBackendService,
+} from "./compiler-backend";
 import { CompileError } from "./errors";
 import { PackageManager } from "./package-manager";
 import { toWasmCompileOptions, type WasmCompileOutput } from "./wasm";
-import type { CompileOptions, CompileResult, TypstCompiler, TypstCompilerOptions } from "./types";
+import type {
+  CompileOptions,
+  CompileResult,
+  TypstCompiler,
+  TypstCompilerOptions,
+} from "./types";
 
 const hasErrorDiagnostics = (diagnostics: { severity: string }[]): boolean =>
   diagnostics.some((diagnostic) => diagnostic.severity === "error");
@@ -138,7 +146,9 @@ class PromiseTypstCompiler implements TypstCompiler {
   }
 }
 
-export const createTypstCompiler = async (options: TypstCompilerOptions): Promise<TypstCompiler> => {
+export const createTypstCompiler = async (
+  options: TypstCompilerOptions,
+): Promise<TypstCompiler> => {
   const packageManager = new PackageManager({
     fetch: options.fetch,
     packageBaseUrl: options.packageBaseUrl,
@@ -158,9 +168,27 @@ export { SharedMemoryCommunication } from "./protocol";
 export type { MainToWorkerMessage, WorkerToMainMessage } from "./messages";
 export type { WasmModuleOrPath } from "./wasm-module";
 export type { WasmDiagnostic } from "./wasm";
-export type { BundleFile, CompileFormat, CompileOptions, CompileResult, DependencyInfo, PageOutput, PackageCache, TypstCompiler, TypstCompilerOptions } from "./types";
+export type {
+  BundleFile,
+  CompileFormat,
+  CompileOptions,
+  CompileResult,
+  DependencyInfo,
+  PageOutput,
+  PackageCache,
+  TypstCompiler,
+  TypstCompilerOptions,
+} from "./types";
 export * from "@typst-wasm/fonts";
 export * from "./errors";
 export { PackageManager } from "./package-manager";
-export { makeBrowserCacheStorage, makeDefaultPackageCache, makeMemoryCacheStorage } from "./cache-abstraction";
-export { supportsWorkerBackend, supportsJspiBackend, selectAutomaticBackendKind } from "./compiler-backend";
+export {
+  makeBrowserCacheStorage,
+  makeDefaultPackageCache,
+  makeMemoryCacheStorage,
+} from "./cache-abstraction";
+export {
+  supportsWorkerBackend,
+  supportsJspiBackend,
+  selectAutomaticBackendKind,
+} from "./compiler-backend";

@@ -33,7 +33,10 @@ class MockTypstWorker {
       queueMicrotask(() => {
         if (payload.moduleOrPath === "bad.wasm") {
           this.onmessage?.({
-            data: { requestId: msg.requestId, error: { message: "init failed" } },
+            data: {
+              requestId: msg.requestId,
+              error: { message: "init failed" },
+            },
           } as MessageEvent);
           return;
         }
@@ -96,7 +99,9 @@ describe("worker service lifecycle", () => {
   it("surfaces init failures and allows a later retry", async () => {
     const workerService = await makeService();
 
-    await expect(workerService.init("bad.wasm")).rejects.toThrow("Worker command failed: init");
+    await expect(workerService.init("bad.wasm")).rejects.toThrow(
+      "Worker command failed: init",
+    );
     await expect(workerService.init("good.wasm")).resolves.toBeUndefined();
 
     expect(workerState.initMessages).toHaveLength(2);

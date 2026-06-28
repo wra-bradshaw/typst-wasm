@@ -33,8 +33,12 @@ describe("message guards", () => {
 
   it("accepts valid rpc responses and rejects ambiguous ones", () => {
     expect(isRpcResponseMessage({ requestId: 2, result: {} })).toBe(true);
-    expect(isRpcResponseMessage({ requestId: 2, error: { message: "failed" } })).toBe(true);
-    expect(isRpcResponseMessage({ requestId: 2, result: {}, error: {} })).toBe(false);
+    expect(
+      isRpcResponseMessage({ requestId: 2, error: { message: "failed" } }),
+    ).toBe(true);
+    expect(isRpcResponseMessage({ requestId: 2, result: {}, error: {} })).toBe(
+      false,
+    );
   });
 
   it("accepts worker->main union and rejects unknown messages", () => {

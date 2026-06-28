@@ -8,5 +8,8 @@ export const supportsWorkerBackend = (): boolean =>
 
 export const supportsJspiBackend = (): boolean => {
   const wasm = getJspiWebAssembly();
-  return typeof wasm.Suspending === "function" && typeof wasm.promising === "function";
+  return (
+    typeof wasm.Suspending === "function" &&
+    typeof wasm.promising === "function"
+  );
 };

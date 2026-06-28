@@ -1,5 +1,5 @@
 import { DirectService } from "./direct-service";
-import { PackageManager } from "./package-manager";
+import type { PackageManager } from "./package-manager";
 import { WorkerService } from "./worker-service";
 import type { WasmModuleOrPath } from "./wasm-module";
 import type { WasmCompileOptions, WasmCompileOutput } from "./wasm";
@@ -43,6 +43,8 @@ export const createCompilerBackend = (
     case "jspi":
       return new DirectService(options.packageManager, options.fetch);
     case "none":
-      throw new Error("No compatible typst-wasm backend available. Requires Worker+SharedArrayBuffer+Atomics.wait or JSPI.");
+      throw new Error(
+        "No compatible typst-wasm backend available. Requires Worker+SharedArrayBuffer+Atomics.wait or JSPI.",
+      );
   }
 };

@@ -1,5 +1,5 @@
 import type { TypstWorkerProtocol } from "./protocol";
-import { PackageManager } from "./package-manager";
+import type { PackageManager } from "./package-manager";
 import TypstWorker from "./worker.ts?worker";
 import { makeRpcClient, type RpcClient } from "./rpc";
 import { isRpcResponseMessage, type WorkerToMainMessage } from "./messages";
@@ -16,12 +16,13 @@ export class WorkerService {
   private readonly rpcClient: RpcClient<TypstWorkerProtocol>;
   private readonly transport: WorkerTransport;
 
-  constructor(
-    packageManager: PackageManager,
-    fetchImpl: typeof fetch = fetch,
-  ) {
+  constructor(packageManager: PackageManager, fetchImpl: typeof fetch = fetch) {
     this.worker = new TypstWorker() as Worker;
-    const fetchBridge = makeFetchBridge(packageManager, () => this.disposed, fetchImpl);
+    const fetchBridge = makeFetchBridge(
+      packageManager,
+      () => this.disposed,
+      fetchImpl,
+    );
 
     this.rpcClient = makeRpcClient<TypstWorkerProtocol>((msg) => {
       this.transport.post(msg);
@@ -45,7 +46,9 @@ export class WorkerService {
     };
   }
 
-  private readonly initWorker: (moduleOrPath: WasmModuleOrPath) => Promise<void>;
+  private readonly initWorker: (
+    moduleOrPath: WasmModuleOrPath,
+  ) => Promise<void>;
 
   async init(moduleOrPath: WasmModuleOrPath): Promise<void> {
     this.assertNotDisposed();
@@ -61,7 +64,9 @@ export class WorkerService {
   async dispose(): Promise<void> {
     if (this.disposed) return;
     this.disposed = true;
-    this.rpcClient.rejectAll(new CompilerDisposedError("Compiler has been disposed"));
+    this.rpcClient.rejectAll(
+      new CompilerDisposedError("Compiler has been disposed"),
+    );
     this.transport.close();
     this.worker.terminate();
   }
@@ -102,7 +107,10 @@ export class WorkerService {
     return this.rpcClient.call("compile", { options });
   }
 
-  private async handleMessage(msg: WorkerToMainMessage, handleFetchRequest: (path: string) => Promise<void>): Promise<void> {
+  private async handleMessage(
+    msg: WorkerToMainMessage,
+    handleFetchRequest: (path: string) => Promise<void>,
+  ): Promise<void> {
     if (isRpcResponseMessage(msg)) {
       this.rpcClient.receive(msg);
       return;

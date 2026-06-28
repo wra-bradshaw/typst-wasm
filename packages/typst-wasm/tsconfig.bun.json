@@ -3,5 +3,10 @@
   "compilerOptions": {
     "types": ["node", "tsdown-plugin-worker/types", "bun"]
   },
-  "include": ["src/**/*", "scripts/**/*", "tests/e2e/scenario.ts", "tests/e2e/bun.e2e.ts"]
+  "include": [
+    "src/**/*",
+    "scripts/**/*",
+    "tests/e2e/scenario.ts",
+    "tests/e2e/bun.e2e.ts"
+  ]
 }
