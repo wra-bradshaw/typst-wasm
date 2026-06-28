@@ -1,6 +1,6 @@
 # typst-wasm
 
-`typst-wasm` is published as a single npm package and developed in a workspace with separate internal packages for the TypeScript runtime and Rust/WASM engine.
+`typst-wasm` is the primary npm package. The WASM engine and bundled default fonts are published as scoped runtime dependencies for users who want to import those assets directly.
 
 ## Usage
 

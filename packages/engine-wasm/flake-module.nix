@@ -29,7 +29,7 @@
         [
           rustToolchain
           binaryen
-          nodejs_25
+          nodejs_26
           wasm-bindgen-cli_0_2_108
         ]
         ++ (lib.optionals stdenv.isDarwin [
@@ -45,7 +45,7 @@
     in
     {
       packages.wasm = wasm;
-      packages.publish-engine-wasm = wasm.passthru.npmPackage;
+      packages.publish-engine-wasm = wasm;
 
       devShells.engine-wasm = pkgs.mkShell {
         packages = engineWasmDevInputs;

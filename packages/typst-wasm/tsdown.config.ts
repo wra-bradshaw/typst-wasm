@@ -2,7 +2,7 @@ import { defineConfig } from "tsdown";
 import workerPlugins from "tsdown-plugin-worker";
 
 export default defineConfig({
-  entry: ["./src/index.ts"],
+  entry: ["./src/index.ts", "./src/wasm.ts"],
   platform: "neutral",
   plugins: [
     workerPlugins({

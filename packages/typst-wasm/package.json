@@ -16,7 +16,8 @@
       "default": "./dist/index.js"
     },
     "./wasm": {
-      "default": "./dist/typst_wasm_bg.wasm"
+      "types": "./dist/wasm.d.ts",
+      "default": "./dist/wasm.js"
     }
   },
   "files": [

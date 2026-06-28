@@ -10,10 +10,10 @@
     in
     {
       packages.fonts = fonts;
-      packages.publish-fonts = fonts.passthru.npmPackage;
+      packages.publish-fonts = fonts;
 
       devShells.fonts = pkgs.mkShell {
-        packages = [ pkgs.nodejs_25 ];
+        packages = [ pkgs.nodejs_26 ];
         shellHook = "";
       };
     };

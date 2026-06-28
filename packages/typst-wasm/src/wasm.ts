@@ -1,5 +1,6 @@
 import {
   loadWasmModule as loadEngineWasmModule,
+  wasmBinaryUrl,
   type BundleFile as WasmBundleFile,
   type CompileOptions as EngineCompileOptions,
   type CompileOutput as EngineCompileOutput,
@@ -26,6 +27,9 @@ export type WasmCompileOptions = EngineCompileOptions & {
 };
 
 export type WasmCompileOutput = EngineCompileOutput;
+
+export { wasmBinaryUrl };
+export default wasmBinaryUrl;
 
 export const toWasmCompileOptions = (options: CompileOptions = {}): WasmCompileOptions => ({
   format: options.format ?? "pdf",

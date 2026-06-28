@@ -8,7 +8,7 @@
     }:
     let
       typstWasmNativeBuildInputs = with pkgs; [
-        nodejs_25
+        nodejs_26
         bun
         deno
         gnutar

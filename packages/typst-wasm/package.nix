@@ -17,25 +17,24 @@ let
     src = workspaceRoot;
     pnpm = pkgs.pnpm_10;
     fetcherVersion = 3;
-    hash = "sha256-J/NwBgTuH0r99tiSjdxdNDim7ianQtVSqSy32T16BM4";
+    hash = "sha256-HQdWCUE+qUTBd97UHV0gAU0QcJKVy1OlLS6cAy7Q7gg=";
   };
 
   pnpmNativeBuildInputs = nativeBuildInputs ++ [
-    pkgs.nodejs_25
+    pkgs.jq
+    pkgs.nodejs_26
     pkgs.pnpmConfigHook
     pkgs.pnpm_10
   ];
 
   prepareBuildArtifacts = ''
     mkdir -p packages/fonts/dist packages/engine-wasm/dist
-    cp -R ${fonts}/files packages/fonts/dist/files
-    cp -R ${wasm}/. packages/engine-wasm/dist
+    cp -R ${fonts}/dist/files packages/fonts/dist/files
+    cp -R ${wasm}/dist/. packages/engine-wasm/dist
   '';
 
   buildBundle = ''
     pnpm --dir ${packageDir} exec tsdown
-    mkdir -p ${packageDir}/dist
-    cp packages/engine-wasm/dist/typst_wasm_bg.wasm ${packageDir}/dist/typst_wasm_bg.wasm
   '';
 
   mkWorkspaceCheck =
@@ -98,7 +97,10 @@ pkgs.stdenvNoCC.mkDerivation {
 
     mkdir -p "$out"
     cp -r packages/typst-wasm/dist "$out/dist"
-    cp packages/typst-wasm/package.json "$out/package.json"
+    jq \
+      --arg version "${version}" \
+      '.dependencies["@typst-wasm/engine-wasm"] = $version | .dependencies["@typst-wasm/fonts"] = $version' \
+      packages/typst-wasm/package.json > "$out/package.json"
 
     runHook postInstall
   '';
