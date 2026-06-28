@@ -1,19 +1,23 @@
-import { Effect } from "effect";
-import { defaultFonts, TypstCompilerService } from "../../dist/index.js";
+import { createTypstCompiler, defaultFonts } from "../../dist/index.js";
 
 type RuntimeName = "bun" | "node" | "deno";
 
 type E2eScenarioOptions = {
   runtime: RuntimeName;
-  moduleOrPath: RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
+  moduleOrPath:
+    | RequestInfo
+    | URL
+    | Response
+    | BufferSource
+    | WebAssembly.Module;
   fontData?: Uint8Array[];
-  backendLayer: unknown;
+  backend?: "auto" | "worker" | "jspi";
 };
 
 type E2eScenarioResult = {
   runtime: RuntimeName;
-  firstSvgLength: number;
-  secondSvgLength: number;
+  firstOutputLength: number;
+  secondOutputLength: number;
   filesBeforeClear: string[];
   filesAfterClear: string[];
 };
@@ -38,57 +42,77 @@ const finalSource = `#set page(width: auto, height: auto, margin: 10pt)
 = Final pass
 The compiler still works after clear_files().`;
 
-export const runCompilerE2eScenario = async (options: E2eScenarioOptions): Promise<E2eScenarioResult> => {
-  const program = Effect.gen(function* () {
-    const compiler = yield* TypstCompilerService;
-    yield* compiler.init({ moduleOrPath: options.moduleOrPath });
-    yield* compiler.ready;
+export const runCompilerE2eScenario = async (
+  options: E2eScenarioOptions,
+): Promise<E2eScenarioResult> => {
+  const compiler = await createTypstCompiler({
+    moduleOrPath: options.moduleOrPath,
+    backend: options.backend,
+  });
 
+  try {
     const fontData = options.fontData
       ? options.fontData
-      : yield* Effect.forEach(defaultFonts, (font) => Effect.tryPromise(() => font.load()));
+      : await Promise.all(defaultFonts.map((font) => font.load()));
 
     for (const data of fontData) {
-      yield* compiler.addFont(data);
+      await compiler.addFont(data);
     }
 
-    yield* compiler.addSource(mainPath, initialSource);
-    const hasMainBeforeCompile = yield* compiler.hasFile(mainPath);
-    assert(hasMainBeforeCompile, `[${options.runtime}] expected ${mainPath} to exist after addSource`);
+    await compiler.addSource(mainPath, initialSource);
+    const hasMainBeforeCompile = await compiler.hasFile(mainPath);
+    assert(
+      hasMainBeforeCompile,
+      `[${options.runtime}] expected ${mainPath} to exist after addSource`,
+    );
 
-    const listedFilesBefore = yield* compiler.listFiles;
-    assert(listedFilesBefore.includes(mainPath), `[${options.runtime}] expected listFiles to include ${mainPath}`);
+    const listedFilesBefore = await compiler.listFiles();
+    assert(
+      listedFilesBefore.includes(mainPath),
+      `[${options.runtime}] expected listFiles to include ${mainPath}`,
+    );
 
-    yield* compiler.setMain(mainPath);
-    const firstResult = yield* compiler.compile();
-    assert(!!firstResult.svg, `[${options.runtime}] expected first compile to return SVG`);
+    const firstResult = await compiler.compile({
+      main: mainPath,
+      format: "svg",
+    });
+    assert(
+      firstResult.format === "svg" && firstResult.pages.length > 0,
+      `[${options.runtime}] expected first compile to return SVG pages`,
+    );
 
-    yield* compiler.addSource(mainPath, editedSource);
-    const secondResult = yield* compiler.compile();
-    assert(!!secondResult.svg, `[${options.runtime}] expected second compile to return SVG`);
+    await compiler.addSource(mainPath, editedSource);
+    const secondResult = await compiler.compile({ format: "svg" });
+    assert(
+      secondResult.format === "svg" && secondResult.pages.length > 0,
+      `[${options.runtime}] expected second compile to return SVG pages`,
+    );
 
-    yield* compiler.clearFiles;
-    const listedFilesAfterClear = yield* compiler.listFiles;
-    assert(listedFilesAfterClear.length === 0, `[${options.runtime}] expected no files after clearFiles`);
+    await compiler.clearFiles();
+    const listedFilesAfterClear = await compiler.listFiles();
+    assert(
+      listedFilesAfterClear.length === 0,
+      `[${options.runtime}] expected no files after clearFiles`,
+    );
 
-    yield* compiler.addSource(mainPath, finalSource);
-    yield* compiler.setMain(mainPath);
-    const finalResult = yield* compiler.compile();
-    assert(!!finalResult.svg, `[${options.runtime}] expected final compile to return SVG`);
+    await compiler.addSource(mainPath, finalSource);
+    const finalResult = await compiler.compile({
+      main: mainPath,
+      format: "svg",
+    });
+    assert(
+      finalResult.format === "svg" && finalResult.pages.length > 0,
+      `[${options.runtime}] expected final compile to return SVG pages`,
+    );
 
     return {
       runtime: options.runtime,
-      firstSvgLength: firstResult.svg?.length ?? 0,
-      secondSvgLength: secondResult.svg?.length ?? 0,
+      firstOutputLength: firstResult.pages[0]?.output.length ?? 0,
+      secondOutputLength: secondResult.pages[0]?.output.length ?? 0,
       filesBeforeClear: listedFilesBefore,
       filesAfterClear: listedFilesAfterClear,
-    } satisfies E2eScenarioResult;
-  });
-
-  const providedProgram = program.pipe(
-    Effect.provide(TypstCompilerService.Default),
-    Effect.provide(options.backendLayer as never),
-  ) as any;
-
-  return await Effect.runPromise(providedProgram);
+    };
+  } finally {
+    await compiler.dispose();
+  }
 };

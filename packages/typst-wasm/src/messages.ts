@@ -3,15 +3,12 @@ import type { RpcRequestMessage, RpcResponseMessage, TypstWorkerProtocol } from 
 export type MainToWorkerMessage = RpcRequestMessage<TypstWorkerProtocol>;
 
 export type WorkerEventMessage =
-  | {
-      kind: "web_fetch";
-      payload: {
-        path: string;
-      };
-    }
-  | {
-      kind: "ready";
+  {
+    kind: "web_fetch";
+    payload: {
+      path: string;
     };
+  };
 
 export type WorkerToMainMessage = RpcResponseMessage | WorkerEventMessage;
 
@@ -35,10 +32,6 @@ export const isRpcResponseMessage = (value: unknown): value is RpcResponseMessag
 export const isWorkerEventMessage = (value: unknown): value is WorkerEventMessage => {
   if (!isRecord(value)) return false;
   if (typeof value.kind !== "string") return false;
-
-  if (value.kind === "ready") {
-    return true;
-  }
 
   if (value.kind === "web_fetch") {
     if (!("payload" in value) || !isRecord(value.payload)) return false;

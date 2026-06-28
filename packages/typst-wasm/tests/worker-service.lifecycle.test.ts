@@ -1,5 +1,5 @@
-import { Effect } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { PackageManager } from "../src/package-manager";
 
 type WorkerMessage =
   | {
@@ -9,7 +9,11 @@ type WorkerMessage =
         moduleOrPath: string;
       };
     }
-  | { kind: string; requestId: number; payload?: unknown };
+  | {
+      kind: Exclude<string, "init">;
+      requestId: number;
+      payload?: unknown;
+    };
 
 const workerState = {
   initMessages: [] as WorkerMessage[],
@@ -18,21 +22,22 @@ const workerState = {
 
 class MockTypstWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((event: ErrorEvent) => void) | null = null;
 
   postMessage(message: unknown) {
     const msg = message as WorkerMessage;
 
     if (msg.kind === "init") {
+      const payload = msg.payload as { moduleOrPath: string };
       workerState.initMessages.push(msg);
       queueMicrotask(() => {
-        if (msg.payload.moduleOrPath === "bad.wasm") {
+        if (payload.moduleOrPath === "bad.wasm") {
           this.onmessage?.({
             data: { requestId: msg.requestId, error: { message: "init failed" } },
           } as MessageEvent);
           return;
         }
 
-        this.onmessage?.({ data: { kind: "ready" } } as MessageEvent);
         this.onmessage?.({
           data: { requestId: msg.requestId, result: undefined },
         } as MessageEvent);
@@ -56,6 +61,11 @@ vi.mock("../src/worker.ts?worker", () => ({
   default: MockTypstWorker,
 }));
 
+const makeService = async () => {
+  const { WorkerService } = await import("../src/worker-service");
+  return new WorkerService(new PackageManager());
+};
+
 describe("worker service lifecycle", () => {
   beforeEach(() => {
     workerState.initMessages = [];
@@ -63,63 +73,33 @@ describe("worker service lifecycle", () => {
   });
 
   it("treats repeated init as idempotent", async () => {
-    const { WorkerService } = await import("../src/worker-service");
+    const workerService = await makeService();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const workerService = yield* WorkerService;
-          yield* workerService.init("first.wasm");
-          yield* workerService.ready;
-          yield* workerService.init("second.wasm");
-        }).pipe(Effect.provide(WorkerService.Default)),
-      ),
-    );
+    await workerService.init("first.wasm");
+    await workerService.init("second.wasm");
 
     expect(workerState.initMessages).toHaveLength(1);
     expect(workerState.initMessages[0]?.kind).toBe("init");
+    await workerService.dispose();
   });
 
   it("makes dispose idempotent", async () => {
-    const { WorkerService } = await import("../src/worker-service");
+    const workerService = await makeService();
 
-    await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const workerService = yield* WorkerService;
-          yield* workerService.init("first.wasm");
-          yield* workerService.ready;
-          yield* workerService.dispose;
-          yield* workerService.dispose;
-        }).pipe(Effect.provide(WorkerService.Default)),
-      ),
-    );
+    await workerService.init("first.wasm");
+    await workerService.dispose();
+    await workerService.dispose();
 
     expect(workerState.terminateCount).toBe(1);
   });
 
   it("surfaces init failures and allows a later retry", async () => {
-    const { WorkerService } = await import("../src/worker-service");
+    const workerService = await makeService();
 
-    const result = await Effect.runPromise(
-      Effect.scoped(
-        Effect.gen(function* () {
-          const workerService = yield* WorkerService;
-          const firstAttempt = yield* Effect.either(workerService.init("bad.wasm"));
-          const secondAttempt = yield* Effect.either(workerService.init("good.wasm"));
-          yield* workerService.ready;
-          return { firstAttempt, secondAttempt };
-        }).pipe(Effect.provide(WorkerService.Default)),
-      ),
-    );
+    await expect(workerService.init("bad.wasm")).rejects.toThrow("Worker command failed: init");
+    await expect(workerService.init("good.wasm")).resolves.toBeUndefined();
 
-    expect(result.firstAttempt._tag).toBe("Left");
-    if (result.firstAttempt._tag === "Left") {
-      expect(result.firstAttempt.left._tag).toBe("RpcError");
-      expect(result.firstAttempt.left.kind).toBe("init");
-    }
-
-    expect(result.secondAttempt._tag).toBe("Right");
     expect(workerState.initMessages).toHaveLength(2);
+    await workerService.dispose();
   });
 });

@@ -1,5 +1,4 @@
 import { wasmBinaryUrl } from "@typst-wasm/engine-wasm";
-import { WorkerBackendLayer } from "../../dist/index.js";
 import { runCompilerE2eScenario } from "./scenario.ts";
 
 Deno.test("deno e2e (worker backend) compiles and supports iterative file operations", async () => {
@@ -7,13 +6,13 @@ Deno.test("deno e2e (worker backend) compiles and supports iterative file operat
   const result = await runCompilerE2eScenario({
     runtime: "deno",
     moduleOrPath,
-    backendLayer: WorkerBackendLayer,
+    backend: "worker",
   });
 
-  if (!(result.firstSvgLength > 0)) {
+  if (!(result.firstOutputLength > 0)) {
     throw new Error("Expected first compile SVG length to be > 0");
   }
-  if (!(result.secondSvgLength > 0)) {
+  if (!(result.secondOutputLength > 0)) {
     throw new Error("Expected second compile SVG length to be > 0");
   }
   if (!result.filesBeforeClear.includes("main.typ")) {

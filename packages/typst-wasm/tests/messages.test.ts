@@ -23,7 +23,6 @@ describe("message guards", () => {
   });
 
   it("accepts worker event messages", () => {
-    expect(isWorkerEventMessage({ kind: "ready" })).toBe(true);
     expect(
       isWorkerEventMessage({
         kind: "web_fetch",
@@ -40,7 +39,6 @@ describe("message guards", () => {
 
   it("accepts worker->main union and rejects unknown messages", () => {
     expect(isWorkerToMainMessage({ requestId: 3, result: true })).toBe(true);
-    expect(isWorkerToMainMessage({ kind: "ready" })).toBe(true);
     expect(isWorkerToMainMessage({ kind: "unknown" })).toBe(false);
   });
 });

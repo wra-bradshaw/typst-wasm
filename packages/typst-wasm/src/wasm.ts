@@ -1,61 +1,48 @@
-import { loadWasmModule as loadEngineWasmModule } from "@typst-wasm/engine-wasm";
-import type { WasmModuleOrPath } from "./wasm-module";
+import {
+  loadWasmModule as loadEngineWasmModule,
+  type BundleFile as WasmBundleFile,
+  type CompileOptions as EngineCompileOptions,
+  type CompileOutput as EngineCompileOutput,
+  type InitOutput,
+  type PageOutput as WasmPageOutput,
+  type TypstCompilerInstance,
+  type WasmDiagnostic,
+  type WasmModule,
+} from "@typst-wasm/engine-wasm";
+import type { CompileOptions } from "./types";
 
-export interface WasmDiagnostic {
-  message: string;
-  severity: string;
-  file: string | null;
-  line: number | null;
-  column: number | null;
-  start: number | null;
-  end: number | null;
-  formatted: string;
-  hints: string[];
-  trace: string[];
-}
-
-export interface CompileOutput {
-  success: boolean;
-  svg: string | null;
-  diagnostics: WasmDiagnostic[];
-  internal_error: string | null;
-}
-
-export interface InitOutput {
-  readonly memory: WebAssembly.Memory;
-  readonly __wbindgen_externrefs: WebAssembly.Table;
-  readonly __wbindgen_malloc: (size: number, align: number) => number;
-  readonly __externref_table_dealloc: (index: number) => void;
-  readonly typstcompiler_compile: (compilerPtr: number) => [number, number, number];
-}
-
-export interface TypstCompilerInstance {
-  readonly __wbg_ptr: number;
-  free(): void;
-  add_file(path: string, data: Uint8Array): void;
-  add_font(data: Uint8Array): string;
-  add_source(path: string, text: string): void;
-  clear_files(): void;
-  compile(): CompileOutput;
-  has_file(path: string): boolean;
-  list_files(): string[];
-  remove_file(path: string): void;
-  set_main(path: string): void;
-}
-
-type WasmInitArgument =
-  | {
-      module_or_path: WasmModuleOrPath | Promise<WasmModuleOrPath>;
-      memory?: WebAssembly.Memory;
-      imports?: Record<string, unknown>;
-      thread_stack_size?: number;
-    }
-  | WasmModuleOrPath
-  | Promise<WasmModuleOrPath>;
-
-type WasmModule = {
-  default: (moduleOrPath?: WasmInitArgument, memory?: WebAssembly.Memory) => Promise<InitOutput>;
-  TypstCompiler: new () => TypstCompilerInstance;
+export type {
+  InitOutput,
+  TypstCompilerInstance,
+  WasmBundleFile,
+  WasmDiagnostic,
+  WasmPageOutput,
+  WasmModule,
 };
 
-export const loadWasmModule = (): Promise<WasmModule> => loadEngineWasmModule() as Promise<WasmModule>;
+export type WasmCompileOptions = EngineCompileOptions & {
+  main?: string;
+  root?: string;
+};
+
+export type WasmCompileOutput = EngineCompileOutput;
+
+export const toWasmCompileOptions = (options: CompileOptions = {}): WasmCompileOptions => ({
+  format: options.format ?? "pdf",
+  main: options.main,
+  root: options.root,
+  inputs: options.inputs,
+  features: options.features,
+  creation_timestamp: options.creationTimestamp,
+  jobs: options.jobs,
+  diagnostic_format: options.diagnosticFormat,
+  pages: options.pages,
+  pdf_standards: options.pdfStandards,
+  pdf_tags: options.pdfTags,
+  ppi: options.ppi,
+  deps: options.deps,
+  deps_format: options.depsFormat,
+  timings: options.timings,
+});
+
+export const loadWasmModule = (): Promise<WasmModule> => loadEngineWasmModule();

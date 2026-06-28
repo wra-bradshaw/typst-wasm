@@ -1,11 +1,5 @@
-import { Data, Deferred, Effect, Queue, Ref } from "effect";
+import { WorkerError } from "./errors";
 import { isRpcResponseMessage } from "./messages";
-
-export class RpcError extends Data.TaggedError("RpcError")<{
-  readonly kind: string;
-  readonly requestId: number;
-  readonly message: string;
-}> {}
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
 
@@ -21,89 +15,64 @@ const extractRpcErrorMessage = (error: unknown): string => {
 };
 
 export interface RpcClient<Protocol> {
-  readonly call: <K extends keyof Protocol>(kind: K, ...args: Protocol[K] extends { request: infer P } ? (P extends void ? [] : [payload: P]) : []) => Effect.Effect<Protocol[K] extends { response: infer R } ? R : void, RpcError>;
-  readonly notify: (message: unknown) => Effect.Effect<void>;
-  readonly receive: (response: unknown) => Effect.Effect<void>;
+  call<K extends keyof Protocol>(
+    kind: K,
+    ...args: Protocol[K] extends { request: infer P } ? (P extends void ? [] : [payload: P]) : []
+  ): Promise<Protocol[K] extends { response: infer R } ? R : void>;
+  notify(message: unknown): void;
+  receive(response: unknown): void;
+  rejectAll(cause: unknown): void;
 }
 
-export const makeRpcClient = <Protocol>(sender: (message: unknown) => void): Effect.Effect<RpcClient<Protocol>> =>
-  Effect.gen(function* () {
-    const requestIdCounter = yield* Ref.make(0);
-    const pendingDeferreds = yield* Ref.make(new Map<number, { deferred: Deferred.Deferred<unknown, RpcError>; kind: string }>());
-    const outgoingQueue = yield* Queue.bounded<unknown>(32);
+export const makeRpcClient = <Protocol>(sender: (message: unknown) => void): RpcClient<Protocol> => {
+  let requestIdCounter = 0;
+  const pending = new Map<number, { resolve: (value: unknown) => void; reject: (reason?: unknown) => void; kind: string }>();
 
-    yield* Effect.gen(function* () {
-      while (true) {
-        const msg = yield* Queue.take(outgoingQueue);
-        sender(msg);
+  const call = <K extends keyof Protocol>(
+    kind: K,
+    ...args: Protocol[K] extends { request: infer P } ? (P extends void ? [] : [payload: P]) : []
+  ): Promise<Protocol[K] extends { response: infer R } ? R : void> => {
+    const requestId = requestIdCounter;
+    requestIdCounter += 1;
+
+    return new Promise((resolve, reject) => {
+      pending.set(requestId, { resolve: resolve as (value: unknown) => void, reject, kind: kind as string });
+
+      const payload = args[0];
+      try {
+        sender(payload === undefined ? { kind, requestId } : { kind, requestId, payload });
+      } catch (cause) {
+        pending.delete(requestId);
+        reject(new WorkerError(`Failed to send worker command "${String(kind)}"`, { cause }));
       }
-    }).pipe(Effect.forkScoped);
+    });
+  };
 
-    const receive = (response: unknown) =>
-      Effect.gen(function* () {
-        if (!isRpcResponseMessage(response)) {
-          return;
-        }
+  const receive = (response: unknown): void => {
+    if (!isRpcResponseMessage(response)) return;
 
-        const deferreds = yield* Ref.get(pendingDeferreds);
-        const resp = response;
+    const req = pending.get(response.requestId);
+    if (!req) return;
 
-        const req = deferreds.get(resp.requestId);
-        if (req) {
-          if ("result" in resp) {
-            yield* Deferred.succeed(req.deferred, resp.result);
-          } else if ("error" in resp) {
-            yield* Deferred.fail(
-              req.deferred,
-              new RpcError({
-                kind: req.kind,
-                requestId: resp.requestId,
-                message: extractRpcErrorMessage(resp.error),
-              }),
-            );
-          }
-          yield* Ref.update(pendingDeferreds, (m) => {
-            const newMap = new Map(m);
-            newMap.delete(resp.requestId);
-            return newMap;
-          });
-        }
-      });
+    pending.delete(response.requestId);
+    if ("result" in response) {
+      req.resolve(response.result);
+    } else {
+      req.reject(new WorkerError(`Worker command failed: ${req.kind}`, { cause: response.error ?? extractRpcErrorMessage(response.error) }));
+    }
+  };
 
-    const call = <K extends keyof Protocol>(kind: K, ...args: Protocol[K] extends { request: infer P } ? (P extends void ? [] : [payload: P]) : []): Effect.Effect<Protocol[K] extends { response: infer R } ? R : void, RpcError> =>
-      Effect.gen(function* () {
-        const requestId = yield* Ref.getAndUpdate(requestIdCounter, (n) => n + 1);
-        const deferred = yield* Deferred.make<unknown, RpcError>();
+  const rejectAll = (cause: unknown): void => {
+    for (const [requestId, req] of pending) {
+      pending.delete(requestId);
+      req.reject(new WorkerError(`Worker command failed: ${req.kind}`, { cause }));
+    }
+  };
 
-        yield* Ref.update(pendingDeferreds, (m) => {
-          const newMap = new Map(m);
-          newMap.set(requestId, { deferred, kind: kind as string });
-          return newMap;
-        });
-
-        const payload = args[0];
-
-        if (payload !== undefined) {
-          yield* Queue.offer(outgoingQueue, {
-            kind,
-            requestId,
-            payload,
-          });
-        } else {
-          yield* Queue.offer(outgoingQueue, {
-            kind,
-            requestId,
-          });
-        }
-
-        return (yield* Deferred.await(deferred)) as Protocol[K] extends { response: infer R } ? R : void;
-      });
-
-    const notify = (message: unknown) => Queue.offer(outgoingQueue, message);
-
-    return {
-      call,
-      notify,
-      receive,
-    };
-  }) as unknown as Effect.Effect<RpcClient<Protocol>>;
+  return {
+    call,
+    notify: sender,
+    receive,
+    rejectAll,
+  };
+};

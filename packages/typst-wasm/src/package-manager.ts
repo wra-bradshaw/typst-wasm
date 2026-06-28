@@ -1,7 +1,11 @@
-import { Effect } from "effect";
 import { parseTarGzip } from "nanotar";
-import { CacheStorageService } from "./cache-abstraction";
-import { FileNotFoundError, PackageFetchError, PackageParseError } from "./errors";
+import {
+  FileNotFoundError,
+  PackageFetchError,
+  PackageParseError,
+} from "./errors";
+import { makeDefaultPackageCache } from "./cache-abstraction";
+import type { PackageCache } from "./types";
 
 interface PackageSpec {
   readonly namespace: string;
@@ -10,112 +14,124 @@ interface PackageSpec {
   readonly filePath: string;
 }
 
-const parseSpec = (spec: string): Effect.Effect<PackageSpec, PackageParseError> =>
-  Effect.gen(function* () {
-    const match = spec.match(/^@([a-z0-9-]+)\/([a-z0-9_-]+):([0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9.-]+)?)\/(.+)$/);
+export interface PackageManagerOptions {
+  fetch?: typeof fetch;
+  packageBaseUrl?: string;
+  cache?: PackageCache;
+  memoryPackageCacheCapacity?: number;
+}
 
-    if (!match) {
-      return yield* Effect.fail(
-        new PackageParseError({
-          spec,
-          message: "Expected format: @namespace/name:version/path where namespace is lowercase alphanumeric with hyphens, name is lowercase alphanumeric with hyphens/underscores, version is semver (e.g., 0.4.2), and path is the file path.",
-        }),
-      );
-    }
+const parseSpec = (spec: string): PackageSpec => {
+  const match = spec.match(
+    /^@([a-z0-9-]+)\/([a-z0-9_-]+):([0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9.-]+)?)\/(.+)$/,
+  );
 
-    const [, namespace, name, version, filePath] = match;
+  if (!match) {
+    throw new PackageParseError(
+      spec,
+      "Expected format: @namespace/name:version/path where namespace is lowercase alphanumeric with hyphens, name is lowercase alphanumeric with hyphens/underscores, version is semver, and path is the file path.",
+    );
+  }
 
-    if (namespace.startsWith("-") || namespace.endsWith("-")) {
-      return yield* Effect.fail(
-        new PackageParseError({
-          spec,
-          message: `Invalid package namespace: "${namespace}" cannot start or end with hyphen`,
-        }),
-      );
-    }
+  const [, namespace, name, version, filePath] = match;
 
-    if (name.startsWith("_") || name.endsWith("_")) {
-      return yield* Effect.fail(
-        new PackageParseError({
-          spec,
-          message: `Invalid package name: "${name}" cannot start or end with underscore`,
-        }),
-      );
-    }
+  if (namespace.startsWith("-") || namespace.endsWith("-")) {
+    throw new PackageParseError(
+      spec,
+      `Invalid package namespace: "${namespace}" cannot start or end with hyphen`,
+    );
+  }
 
-    return { namespace, name, version, filePath };
-  });
+  if (name.startsWith("_") || name.endsWith("_")) {
+    throw new PackageParseError(
+      spec,
+      `Invalid package name: "${name}" cannot start or end with underscore`,
+    );
+  }
 
-const getCacheKey = (spec: PackageSpec): string => `@${spec.namespace}/${spec.name}:${spec.version}/${spec.filePath}`;
-
-const getFileCacheKey = (spec: PackageSpec, filePath: string): string => `@${spec.namespace}/${spec.name}:${spec.version}/${filePath}`;
-
-const getPackageKey = (spec: PackageSpec): string => `@${spec.namespace}/${spec.name}:${spec.version}`;
-
-export type PackageManagerService = {
-  readonly getFile: (spec: string) => Effect.Effect<Uint8Array, PackageParseError | PackageFetchError | FileNotFoundError>;
+  return { namespace, name, version, filePath };
 };
 
-export class PackageManager extends Effect.Service<PackageManagerService>()("PackageManager", {
-  accessors: true,
-  effect: Effect.gen(function* () {
-    const cache = yield* CacheStorageService;
-    const loadedPackages = new Set<string>();
+const getFileCacheKey = (spec: PackageSpec, filePath: string): string =>
+  `@${spec.namespace}/${spec.name}:${spec.version}/${filePath}`;
+const getCacheKey = (spec: PackageSpec): string =>
+  getFileCacheKey(spec, spec.filePath);
+const getPackageKey = (spec: PackageSpec): string =>
+  `@${spec.namespace}/${spec.name}:${spec.version}`;
 
-    const loadPackage = (spec: PackageSpec): Effect.Effect<void, PackageFetchError> =>
-      Effect.gen(function* () {
-        const packageKey = getPackageKey(spec);
-        const url = `https://packages.typst.org/${spec.namespace}/${spec.name}-${spec.version}.tar.gz`;
+export class PackageManager {
+  private readonly fetchImpl: typeof fetch;
+  private readonly packageBaseUrl: string;
+  private readonly cache: PackageCache;
+  private readonly loadedPackages = new Set<string>();
+  private readonly loadingPackages = new Map<string, Promise<void>>();
 
-        const tarData = yield* Effect.tryPromise({
-          try: async () => {
-            const response = await fetch(url);
-            if (!response.ok) {
-              throw new Error(`Failed to fetch package: ${url}`);
-            }
-            return new Uint8Array(await response.arrayBuffer());
-          },
-          catch: (cause) => new PackageFetchError({ url, cause }),
-        });
+  constructor(options: PackageManagerOptions = {}) {
+    this.fetchImpl = options.fetch ?? fetch;
+    this.packageBaseUrl =
+      options.packageBaseUrl ?? "https://packages.typst.org";
+    this.cache =
+      options.cache ??
+      makeDefaultPackageCache(options.memoryPackageCacheCapacity);
+  }
 
-        const files = yield* Effect.tryPromise({
-          try: () => parseTarGzip(tarData),
-          catch: (cause) => new PackageFetchError({ url, cause }),
-        });
+  async getFile(spec: string): Promise<Uint8Array> {
+    const parsed = parseSpec(spec);
+    const cacheKey = getCacheKey(parsed);
+    const cached = await this.cache.get(cacheKey);
+    if (cached) return cached;
 
-        for (const file of files) {
+    const packageKey = getPackageKey(parsed);
+    if (!this.loadedPackages.has(packageKey)) {
+      await this.loadPackageDeduped(parsed);
+    }
+
+    const file = await this.cache.get(cacheKey);
+    if (!file) {
+      throw new FileNotFoundError(parsed.filePath);
+    }
+    return file;
+  }
+
+  private async loadPackageDeduped(spec: PackageSpec): Promise<void> {
+    const packageKey = getPackageKey(spec);
+    const existing = this.loadingPackages.get(packageKey);
+    if (existing) {
+      await existing;
+      return;
+    }
+
+    const load = this.loadPackage(spec);
+    this.loadingPackages.set(packageKey, load);
+    try {
+      await load;
+      this.loadedPackages.add(packageKey);
+    } finally {
+      this.loadingPackages.delete(packageKey);
+    }
+  }
+
+  private async loadPackage(spec: PackageSpec): Promise<void> {
+    const url = `${this.packageBaseUrl}/${spec.namespace}/${spec.name}-${spec.version}.tar.gz`;
+
+    try {
+      const response = await this.fetchImpl(url);
+      if (!response.ok) {
+        throw new Error(`Status ${response.status}`);
+      }
+
+      const tarData = new Uint8Array(await response.arrayBuffer());
+      const files = await parseTarGzip(tarData);
+
+      await Promise.all(
+        files.map(async (file) => {
           if (file.type === "file" && file.data) {
-            const cacheKey = getFileCacheKey(spec, file.name);
-            yield* cache.set(cacheKey, file.data);
+            await this.cache.set(getFileCacheKey(spec, file.name), file.data);
           }
-        }
-
-        loadedPackages.add(packageKey);
-      });
-
-    return {
-      getFile: (spec: string): Effect.Effect<Uint8Array, PackageParseError | PackageFetchError | FileNotFoundError> =>
-        Effect.gen(function* () {
-          const parsed = yield* parseSpec(spec);
-          const cacheKey = getCacheKey(parsed);
-
-          const cached = yield* cache.get(cacheKey);
-          if (cached) {
-            return cached;
-          }
-
-          const packageKey = getPackageKey(parsed);
-          if (!loadedPackages.has(packageKey)) {
-            yield* loadPackage(parsed);
-          }
-
-          const file = yield* cache.get(cacheKey);
-          if (!file) {
-            return yield* Effect.fail(new FileNotFoundError({ filePath: parsed.filePath }));
-          }
-          return file;
         }),
-    };
-  }),
-  dependencies: [CacheStorageService.Default],
-}) {}
+      );
+    } catch (cause) {
+      throw new PackageFetchError(url, cause);
+    }
+  }
+}

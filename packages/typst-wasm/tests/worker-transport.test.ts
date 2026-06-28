@@ -1,8 +1,9 @@
-import { Effect, Queue } from "effect";
+import { describe, expect, it } from "vitest";
 import { makeWorkerTransport } from "../src/worker-transport";
 
 class FakeWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((event: ErrorEvent) => void) | null = null;
   messages: unknown[] = [];
 
   postMessage(message: unknown) {
@@ -15,31 +16,33 @@ class FakeWorker {
 }
 
 describe("worker transport", () => {
-  it("forwards outbound messages to worker", async () => {
+  it("forwards outbound messages to worker", () => {
     const worker = new FakeWorker();
+    const transport = makeWorkerTransport(worker, () => undefined, () => undefined);
 
-    await Effect.runPromise(
-      Effect.gen(function* () {
-        const transport = yield* makeWorkerTransport(worker);
-        transport.post({ kind: "compile", requestId: 1 });
-      }),
-    );
+    transport.post({ kind: "compile", requestId: 1 });
 
     expect(worker.messages).toEqual([{ kind: "compile", requestId: 1 }]);
   });
 
-  it("queues only valid inbound worker messages", async () => {
+  it("forwards only valid inbound worker messages", () => {
     const worker = new FakeWorker();
+    const messages: unknown[] = [];
+    makeWorkerTransport(worker, (message) => messages.push(message), () => undefined);
 
-    const msg = await Effect.runPromise(
-      Effect.gen(function* () {
-        const transport = yield* makeWorkerTransport(worker);
-        worker.emit({ kind: "unknown_event" });
-        worker.emit({ kind: "ready" });
-        return yield* Queue.take(transport.incoming);
-      }),
-    );
+    worker.emit({ kind: "unknown_event" });
+    worker.emit({ kind: "web_fetch", payload: { path: "main.typ" } });
 
-    expect(msg).toEqual({ kind: "ready" });
+    expect(messages).toEqual([{ kind: "web_fetch", payload: { path: "main.typ" } }]);
+  });
+
+  it("clears worker handlers on close", () => {
+    const worker = new FakeWorker();
+    const transport = makeWorkerTransport(worker, () => undefined, () => undefined);
+
+    transport.close();
+
+    expect(worker.onmessage).toBeNull();
+    expect(worker.onerror).toBeNull();
   });
 });

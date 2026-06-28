@@ -1,9 +1,9 @@
-import type { WasmDiagnostic } from "./wasm";
+import type { WasmCompileOptions, WasmCompileOutput } from "./wasm";
 import type { WasmModuleOrPath } from "./wasm-module";
 
-const INITIAL_SAB_SIZE = 1024 * 1024; // 1MB
-const MAX_SAB_SIZE = 4 * 1024 * 1024 * 1024; // 4GB
-const DEFAULT_FETCH_TIMEOUT = 30000; // 30 seconds
+const INITIAL_SAB_SIZE = 1024 * 1024;
+const MAX_SAB_SIZE = 4 * 1024 * 1024 * 1024;
+const DEFAULT_FETCH_TIMEOUT = 30000;
 
 export const SharedMemoryCommunicationStatus = {
   None: 0,
@@ -26,61 +26,42 @@ export class SharedMemoryCommunication {
   }
 
   getStatus(): SharedMemoryCommunicationStatus {
-    const uint8view = new Int32Array(this.statusBuf);
-    return uint8view[0] as SharedMemoryCommunicationStatus;
+    return Atomics.load(new Int32Array(this.statusBuf), 0) as SharedMemoryCommunicationStatus;
   }
 
-  setStatus(status: SharedMemoryCommunicationStatus) {
-    const uint8view = new Int32Array(this.statusBuf);
-    Atomics.store(uint8view, 0, status);
-    Atomics.notify(uint8view, 0, 1);
-    return;
+  setStatus(status: SharedMemoryCommunicationStatus): void {
+    const statusView = new Int32Array(this.statusBuf);
+    Atomics.store(statusView, 0, status);
+    Atomics.notify(statusView, 0, 1);
   }
 
-  setBuffer(buf: Uint8Array) {
+  setBuffer(buf: Uint8Array): void {
     const needed = buf.byteLength;
-    const current = this.dataBuf.byteLength;
-
-    // Validate against maximum size
     if (needed > MAX_SAB_SIZE) {
-      throw new Error(`File too large: ${needed} bytes. Maximum allowed: ${MAX_SAB_SIZE} bytes (4GB).`);
+      throw new Error(`File too large: ${needed} bytes. Maximum allowed: ${MAX_SAB_SIZE} bytes.`);
     }
 
-    if (needed > current) {
+    if (needed > this.dataBuf.byteLength) {
       this.dataBuf.grow(needed);
     }
 
-    const bufView = new Uint8Array(this.dataBuf);
-    bufView.set(buf);
-
-    // Store the actual data size
-    const sizeView = new Int32Array(this.sizeBuf);
-    Atomics.store(sizeView, 0, needed);
+    new Uint8Array(this.dataBuf).set(buf);
+    Atomics.store(new Int32Array(this.sizeBuf), 0, needed);
   }
 
-  getBuffer() {
-    // Read the actual data size and return only that portion
-    const sizeView = new Int32Array(this.sizeBuf);
-    const size = Atomics.load(sizeView, 0);
+  getBuffer(): Uint8Array {
+    const size = Atomics.load(new Int32Array(this.sizeBuf), 0);
     return new Uint8Array(this.dataBuf, 0, size);
   }
 
-  /**
-   * Wait for status change with timeout
-   * @param expectedStatus - The status value to wait for
-   * @param timeoutMs - Timeout in milliseconds (default: 30000ms)
-   * @returns true if status changed, false if timed out
-   */
-  waitForStatusChange(expectedStatus: SharedMemoryCommunicationStatus, timeoutMs: number = DEFAULT_FETCH_TIMEOUT): boolean {
-    const statusView = new Int32Array(this.statusBuf);
-
-    // Atomics.wait returns "ok" | "not-equal" | "timed-out"
-    const result = Atomics.wait(statusView, 0, expectedStatus, timeoutMs);
-
-    return result === "ok";
+  waitForStatusChange(expectedStatus: SharedMemoryCommunicationStatus, timeoutMs = DEFAULT_FETCH_TIMEOUT): boolean {
+    return Atomics.wait(new Int32Array(this.statusBuf), 0, expectedStatus, timeoutMs) === "ok";
   }
 
-  static hydrateObj(obj: SharedMemoryCommunication) {
+  static hydrateObj(obj: SharedMemoryCommunication): SharedMemoryCommunication {
+    // Structured cloning preserves the SharedArrayBuffers but drops the class
+    // prototype, so the worker rehydrates the plain cloned object before using
+    // the SharedMemoryCommunication methods.
     const instantiation = new SharedMemoryCommunication();
     instantiation.dataBuf = obj.dataBuf;
     instantiation.statusBuf = obj.statusBuf;
@@ -119,8 +100,8 @@ export interface TypstWorkerProtocol {
     response: void;
   };
   compile: {
-    request: void;
-    response: { svg: string; diagnostics: WasmDiagnostic[] };
+    request: { options: WasmCompileOptions };
+    response: WasmCompileOutput;
   };
   list_files: {
     request: void;

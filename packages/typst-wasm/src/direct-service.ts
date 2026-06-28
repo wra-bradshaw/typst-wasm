@@ -1,31 +1,27 @@
-import { Data, Deferred, Effect, Ref } from "effect";
+import { supportsJspiBackend } from "./backend-support";
+import {
+  CompilerDisposedError,
+  CompilerNotInitializedError,
+  WorkerError,
+} from "./errors";
 import { PackageManager } from "./package-manager";
 import type { WasmModuleOrPath } from "./wasm-module";
 import {
   loadWasmModule,
   type InitOutput,
   type TypstCompilerInstance,
-  type WasmDiagnostic,
+  type WasmCompileOptions,
+  type WasmCompileOutput,
 } from "./wasm";
-
-class DirectServiceError extends Data.TaggedError("DirectServiceError")<{
-  readonly message: string;
-  readonly cause?: unknown;
-}> {}
+import { getJspiWebAssembly } from "./webassembly-jspi";
 
 const MAX_FETCH_ATTEMPTS = 3;
 const textDecoder = new TextDecoder();
 
-const hasJspiSupport = (): boolean => {
-  const wasm = WebAssembly as unknown as {
-    Suspending?: unknown;
-    promising?: unknown;
-  };
-
-  return typeof wasm.Suspending === "function" && typeof wasm.promising === "function";
-};
-
-const retry = async <T>(task: () => Promise<T>, maxAttempts: number): Promise<T> => {
+const retry = async <T>(
+  task: () => Promise<T>,
+  maxAttempts: number,
+): Promise<T> => {
   let lastError: unknown;
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
@@ -39,184 +35,205 @@ const retry = async <T>(task: () => Promise<T>, maxAttempts: number): Promise<T>
   throw lastError ?? new Error("Unknown host fetch error");
 };
 
-export class DirectService extends Effect.Service<DirectService>()("DirectService", {
-  scoped: Effect.gen(function* () {
-    const packageManager = yield* PackageManager;
-    let wasmExportsRuntime: InitOutput | null = null;
+export class DirectService {
+  private disposed = false;
+  private initPromise: Promise<void> | null = null;
+  private compiler: TypstCompilerInstance | null = null;
+  private wasmExports: InitOutput | null = null;
+  private compileAsync:
+    | ((
+        compilerPtr: number,
+        options: WasmCompileOptions,
+      ) => Promise<[number, number, number]>)
+    | null = null;
 
-    const disposed = yield* Ref.make(false);
-    const initialized = yield* Ref.make(false);
-    const readyDeferred = yield* Deferred.make<void>();
-    const compilerRef = yield* Ref.make<TypstCompilerInstance | null>(null);
-    const wasmExportsRef = yield* Ref.make<InitOutput | null>(null);
-    const compileRef = yield* Ref.make<((compilerPtr: number) => Promise<[number, number, number]>) | null>(null);
+  constructor(
+    private readonly packageManager: PackageManager,
+    private readonly fetchImpl: typeof fetch = fetch,
+  ) {}
 
-    const ensureCompiler = <T>(run: (compiler: TypstCompilerInstance) => T, name: string): Effect.Effect<T, DirectServiceError> =>
-      Effect.gen(function* () {
-        const compiler = yield* Ref.get(compilerRef);
-        if (!compiler) {
-          return yield* Effect.fail(new DirectServiceError({ message: "Compiler not initialized" }));
-        }
+  async init(moduleOrPath: WasmModuleOrPath): Promise<void> {
+    this.assertNotDisposed();
+    this.initPromise ??= this.initDirect(moduleOrPath);
+    await this.initPromise;
+  }
 
-        return yield* Effect.try({
-          try: () => run(compiler),
-          catch: (cause) => new DirectServiceError({ message: `Direct command failed: ${name}`, cause }),
-        });
-      });
+  async dispose(): Promise<void> {
+    this.disposed = true;
+    if (this.compiler) {
+      this.compiler.free();
+    }
+    this.compiler = null;
+    this.wasmExports = null;
+    this.compileAsync = null;
+  }
 
-    const pathFromWasm = (wasmExports: InitOutput, pathPtr: number, pathLen: number): string => textDecoder.decode(new Uint8Array(wasmExports.memory.buffer, pathPtr, pathLen));
+  async addFont(data: Uint8Array): Promise<void> {
+    this.withCompiler((compiler) => void compiler.add_font(data), "add_font");
+  }
 
-    const writeResultLength = (wasmExports: InitOutput, resultLenPtr: number, len: number) => {
-      new DataView(wasmExports.memory.buffer).setUint32(resultLenPtr, len, true);
-    };
+  async addFile(path: string, data: Uint8Array): Promise<void> {
+    this.withCompiler(
+      (compiler) => void compiler.add_file(path, data),
+      "add_file",
+    );
+  }
 
-    const copyIntoWasm = (wasmExports: InitOutput, bytes: Uint8Array, resultLenPtr: number): number => {
-      const resultPtr = wasmExports.__wbindgen_malloc(bytes.length, 1);
-      new Uint8Array(wasmExports.memory.buffer, resultPtr, bytes.length).set(bytes);
-      writeResultLength(wasmExports, resultLenPtr, bytes.length);
-      return resultPtr;
-    };
+  async addSource(path: string, text: string): Promise<void> {
+    this.withCompiler(
+      (compiler) => void compiler.add_source(path, text),
+      "add_source",
+    );
+  }
 
-    const fetchBytes = async (path: string): Promise<Uint8Array> => {
-      if (path.startsWith("@")) {
-        return await Effect.runPromise(packageManager.getFile(path));
-      }
+  async removeFile(path: string): Promise<void> {
+    this.withCompiler(
+      (compiler) => void compiler.remove_file(path),
+      "remove_file",
+    );
+  }
 
-      const response = await fetch(path);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch "${path}" with status ${response.status}`);
-      }
+  async clearFiles(): Promise<void> {
+    this.withCompiler((compiler) => void compiler.clear_files(), "clear_files");
+  }
 
-      return new Uint8Array(await response.arrayBuffer());
-    };
+  async listFiles(): Promise<string[]> {
+    return this.withCompiler((compiler) => compiler.list_files(), "list_files");
+  }
 
-    const hostFetch = async (pathPtr: number, pathLen: number, resultLenPtr: number): Promise<number> => {
-      const wasmExports = wasmExportsRuntime;
-      if (!wasmExports) {
-        throw new Error("WASM exports not initialized");
-      }
+  async hasFile(path: string): Promise<boolean> {
+    return this.withCompiler((compiler) => compiler.has_file(path), "has_file");
+  }
 
-      const path = pathFromWasm(wasmExports, pathPtr, pathLen);
+  async setMain(path: string): Promise<void> {
+    this.withCompiler((compiler) => void compiler.set_main(path), "set_main");
+  }
 
-      try {
-        const bytes = await retry(() => fetchBytes(path), MAX_FETCH_ATTEMPTS);
-        return copyIntoWasm(wasmExports, bytes, resultLenPtr);
-      } catch {
-        writeResultLength(wasmExports, resultLenPtr, 0);
-        return 0;
-      }
-    };
+  async compile(options: WasmCompileOptions): Promise<WasmCompileOutput> {
+    this.assertNotDisposed();
+    const compiler = this.compiler;
+    const wasmExports = this.wasmExports;
+    const compile = this.compileAsync;
 
-    const initDirect = (moduleOrPath: WasmModuleOrPath) =>
-      Effect.gen(function* () {
-        if (!hasJspiSupport()) {
-          return yield* Effect.fail(new DirectServiceError({ message: "JSPI is unavailable in this runtime" }));
-        }
+    if (!compiler || !wasmExports || !compile) {
+      throw new CompilerNotInitializedError("Compiler not initialized");
+    }
 
-        if (yield* Ref.get(disposed)) return;
-        if (yield* Ref.get(initialized)) return;
+    let ret: [number, number, number];
+    try {
+      ret = await compile(compiler.__wbg_ptr, options);
+    } catch (cause) {
+      throw new WorkerError("Direct command failed: compile", { cause });
+    }
 
-        const initializedCompiler = yield* Effect.tryPromise({
-          try: async () => {
-            const wasmModule = await loadWasmModule();
-            const suspending = new (
-              WebAssembly as unknown as {
-                Suspending: new (fn: (pathPtr: number, pathLen: number, resultLenPtr: number) => Promise<number>) => (pathPtr: number, pathLen: number, resultLenPtr: number) => number;
-              }
-            ).Suspending(hostFetch);
+    if (ret[2]) {
+      throw this.takeExternref(wasmExports, ret[1]);
+    }
 
-            const wasmExports = await wasmModule.default({
-              module_or_path: moduleOrPath,
-              imports: {
-                bridge: {
-                  host_fetch: suspending,
-                },
-              },
-            });
+    return this.takeExternref(wasmExports, ret[0]) as WasmCompileOutput;
+  }
 
-            const promising = (
-              WebAssembly as unknown as {
-                promising: (fn: (compilerPtr: number) => [number, number, number]) => (compilerPtr: number) => Promise<[number, number, number]>;
-              }
-            ).promising;
+  private async initDirect(moduleOrPath: WasmModuleOrPath): Promise<void> {
+    if (!supportsJspiBackend()) {
+      throw new WorkerError("JSPI is unavailable in this runtime");
+    }
 
-            return {
-              wasmExports,
-              compile: promising(wasmExports.typstcompiler_compile as (compilerPtr: number) => [number, number, number]),
-              compiler: new wasmModule.TypstCompiler(),
-            };
-          },
-          catch: (cause) =>
-            new DirectServiceError({
-              message: "Failed to initialize direct JSPI compiler",
-              cause,
-            }),
-        });
+    const wasmModule = await loadWasmModule();
+    const { Suspending, promising } = getJspiWebAssembly<WasmCompileOptions>();
+    if (!Suspending || !promising) {
+      throw new WorkerError("JSPI is unavailable in this runtime");
+    }
+    const suspending = new Suspending(this.hostFetch);
 
-        yield* Ref.set(initialized, true);
-        yield* Ref.set(wasmExportsRef, initializedCompiler.wasmExports);
-        wasmExportsRuntime = initializedCompiler.wasmExports;
-        yield* Ref.set(compileRef, initializedCompiler.compile);
-        yield* Ref.set(compilerRef, initializedCompiler.compiler);
-        yield* Deferred.succeed(readyDeferred, undefined);
-      });
-
-    const takeExternref = (wasmExports: InitOutput, idx: number): unknown => {
-      const value = wasmExports.__wbindgen_externrefs.get(idx);
-      wasmExports.__externref_table_dealloc(idx);
-      return value;
-    };
-
-    const dispose = Effect.gen(function* () {
-      yield* Ref.set(disposed, true);
-      const compiler = yield* Ref.get(compilerRef);
-      if (compiler) {
-        yield* Effect.sync(() => compiler.free());
-      }
-      yield* Ref.set(compilerRef, null);
-      yield* Ref.set(compileRef, null);
-      yield* Ref.set(wasmExportsRef, null);
-      wasmExportsRuntime = null;
+    const wasmExports = await wasmModule.default({
+      module_or_path: moduleOrPath,
+      imports: {
+        bridge: {
+          host_fetch: suspending,
+        },
+      },
     });
 
-    return {
-      ready: Deferred.await(readyDeferred),
-      init: initDirect,
-      dispose,
-      addFont: (data: Uint8Array) => ensureCompiler((compiler) => void compiler.add_font(data), "add_font"),
-      addFile: (path: string, data: Uint8Array) => ensureCompiler((compiler) => void compiler.add_file(path, data), "add_file"),
-      addSource: (path: string, text: string) => ensureCompiler((compiler) => void compiler.add_source(path, text), "add_source"),
-      removeFile: (path: string) => ensureCompiler((compiler) => void compiler.remove_file(path), "remove_file"),
-      clearFiles: ensureCompiler((compiler) => void compiler.clear_files(), "clear_files"),
-      listFiles: ensureCompiler((compiler) => compiler.list_files(), "list_files"),
-      hasFile: (path: string) => ensureCompiler((compiler) => compiler.has_file(path), "has_file"),
-      setMain: (path: string) => ensureCompiler((compiler) => void compiler.set_main(path), "set_main"),
-      compile: () =>
-        Effect.gen(function* () {
-          const compiler = yield* Ref.get(compilerRef);
-          const wasmExports = yield* Ref.get(wasmExportsRef);
-          const compile = yield* Ref.get(compileRef);
+    this.wasmExports = wasmExports;
+    this.compileAsync = promising(wasmExports.typstcompiler_compile);
+    this.compiler = new wasmModule.TypstCompiler();
+  }
 
-          if (!compiler || !wasmExports || !compile) {
-            return yield* Effect.fail(new DirectServiceError({ message: "Compiler not initialized" }));
-          }
+  private readonly hostFetch = async (
+    pathPtr: number,
+    pathLen: number,
+    resultLenPtr: number,
+  ): Promise<number> => {
+    const wasmExports = this.wasmExports;
+    if (!wasmExports) {
+      throw new Error("WASM exports not initialized");
+    }
 
-          const ret = yield* Effect.tryPromise({
-            try: () => compile(compiler.__wbg_ptr),
-            catch: (cause) => new DirectServiceError({ message: "Direct command failed: compile", cause }),
-          });
+    const path = textDecoder.decode(
+      new Uint8Array(wasmExports.memory.buffer, pathPtr, pathLen),
+    );
 
-          if (ret[2]) {
-            throw takeExternref(wasmExports, ret[1]);
-          }
+    try {
+      const bytes = await retry(
+        () => this.fetchBytes(path),
+        MAX_FETCH_ATTEMPTS,
+      );
+      const resultPtr = wasmExports.__wbindgen_malloc(bytes.length, 1);
+      new Uint8Array(wasmExports.memory.buffer, resultPtr, bytes.length).set(
+        bytes,
+      );
+      new DataView(wasmExports.memory.buffer).setUint32(
+        resultLenPtr,
+        bytes.length,
+        true,
+      );
+      return resultPtr;
+    } catch {
+      new DataView(wasmExports.memory.buffer).setUint32(resultLenPtr, 0, true);
+      return 0;
+    }
+  };
 
-          const result = takeExternref(wasmExports, ret[0]) as { svg?: string | null; diagnostics: WasmDiagnostic[] };
-          return {
-            svg: result.svg ?? "",
-            diagnostics: result.diagnostics,
-          };
-        }),
-    };
-  }),
-  dependencies: [PackageManager.Default],
-}) {}
+  private async fetchBytes(path: string): Promise<Uint8Array> {
+    if (path.startsWith("@")) {
+      return this.packageManager.getFile(path);
+    }
+
+    const response = await this.fetchImpl(path);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch "${path}" with status ${response.status}`,
+      );
+    }
+
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
+  private withCompiler<T>(
+    run: (compiler: TypstCompilerInstance) => T,
+    name: string,
+  ): T {
+    this.assertNotDisposed();
+    if (!this.compiler) {
+      throw new CompilerNotInitializedError("Compiler not initialized");
+    }
+
+    try {
+      return run(this.compiler);
+    } catch (cause) {
+      throw new WorkerError(`Direct command failed: ${name}`, { cause });
+    }
+  }
+
+  private assertNotDisposed(): void {
+    if (this.disposed) {
+      throw new CompilerDisposedError("Compiler has been disposed");
+    }
+  }
+
+  private takeExternref(wasmExports: InitOutput, idx: number): unknown {
+    const value = wasmExports.__wbindgen_externrefs.get(idx);
+    wasmExports.__externref_table_dealloc(idx);
+    return value;
+  }
+}

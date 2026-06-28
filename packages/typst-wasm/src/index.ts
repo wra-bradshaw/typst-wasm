@@ -1,24 +1,15 @@
-import { Deferred, Effect } from "effect";
-import { CompileError, HasFileError, ListFilesError } from "./errors";
-import type { WasmDiagnostic } from "./wasm";
-import type { WasmModuleOrPath } from "./wasm-module";
-import { AutomaticBackendLayer, CompilerBackend } from "./compiler-backend";
+import { createCompilerBackend, type CompilerBackendService } from "./compiler-backend";
+import { CompileError } from "./errors";
+import { PackageManager } from "./package-manager";
+import { toWasmCompileOptions, type WasmCompileOutput } from "./wasm";
+import type { CompileOptions, CompileResult, TypstCompiler, TypstCompilerOptions } from "./types";
 
-export interface CompileResult {
-  svg?: string;
-  diagnostics: WasmDiagnostic[];
-  internalError?: string;
-}
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
-
-const extractRequestId = (error: unknown): number =>
-  isRecord(error) && typeof error.requestId === "number" ? error.requestId : -1;
+const hasErrorDiagnostics = (diagnostics: { severity: string }[]): boolean =>
+  diagnostics.some((diagnostic) => diagnostic.severity === "error");
 
 const extractErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
-  if (isRecord(error) && typeof error.message === "string") return error.message;
 
   try {
     return JSON.stringify(error);
@@ -27,106 +18,149 @@ const extractErrorMessage = (error: unknown): string => {
   }
 };
 
-const hasErrorDiagnostics = (diagnostics: WasmDiagnostic[]): boolean =>
-  diagnostics.some((diagnostic) => diagnostic.severity === "error");
+const normalizeCompileResult = (result: WasmCompileOutput): CompileResult => {
+  const diagnostics = result.diagnostics;
+  const deps = result.deps ?? undefined;
+  const timings = result.timings;
 
-export interface TypstCompilerOptions {
-  moduleOrPath: WasmModuleOrPath;
-  debug?: boolean;
-  memoryPackageCacheCapacity?: number;
+  switch (result.format) {
+    case "pdf":
+      return {
+        format: "pdf",
+        output: result.output_bytes ?? new Uint8Array(),
+        diagnostics,
+        deps,
+        timings,
+      };
+    case "png":
+      return {
+        format: "png",
+        pages: result.pages.map((page) => ({
+          page: page.page,
+          output: page.output_bytes ?? new Uint8Array(),
+        })),
+        diagnostics,
+        deps,
+        timings,
+      };
+    case "svg":
+      return {
+        format: "svg",
+        pages: result.pages.map((page) => ({
+          page: page.page,
+          output: page.output_text ?? "",
+        })),
+        diagnostics,
+        deps,
+        timings,
+      };
+    case "html":
+      return {
+        format: "html",
+        output: result.output_text ?? "",
+        diagnostics,
+        deps,
+        timings,
+      };
+    case "bundle":
+      return {
+        format: "bundle",
+        files: result.files.map((file) => ({
+          path: file.path,
+          data: file.data,
+          mediaType: file.media_type ?? undefined,
+        })),
+        diagnostics,
+        deps,
+        timings,
+      };
+  }
+};
+
+class PromiseTypstCompiler implements TypstCompiler {
+  constructor(private readonly backend: CompilerBackendService) {}
+
+  addFont(data: Uint8Array): Promise<void> {
+    return this.backend.addFont(data);
+  }
+
+  addFile(path: string, data: Uint8Array): Promise<void> {
+    return this.backend.addFile(path, data);
+  }
+
+  addSource(path: string, text: string): Promise<void> {
+    return this.backend.addSource(path, text);
+  }
+
+  removeFile(path: string): Promise<void> {
+    return this.backend.removeFile(path);
+  }
+
+  clearFiles(): Promise<void> {
+    return this.backend.clearFiles();
+  }
+
+  listFiles(): Promise<string[]> {
+    return this.backend.listFiles();
+  }
+
+  hasFile(path: string): Promise<boolean> {
+    return this.backend.hasFile(path);
+  }
+
+  setMain(path: string): Promise<void> {
+    return this.backend.setMain(path);
+  }
+
+  async compile(options: CompileOptions = {}): Promise<CompileResult> {
+    if (options.main) {
+      await this.setMain(options.main);
+    }
+
+    let rawResult: WasmCompileOutput;
+    try {
+      rawResult = await this.backend.compile(toWasmCompileOptions(options));
+    } catch (cause) {
+      throw new CompileError(extractErrorMessage(cause), { cause });
+    }
+
+    if (hasErrorDiagnostics(rawResult.diagnostics) || !rawResult.success) {
+      throw new CompileError(rawResult.internal_error ?? "Compilation failed", {
+        diagnostics: rawResult.diagnostics,
+      });
+    }
+
+    return normalizeCompileResult(rawResult);
+  }
+
+  dispose(): Promise<void> {
+    return this.backend.dispose();
+  }
 }
 
-export type TypstCompilerServiceType = {
-  readonly ready: Effect.Effect<void>;
-  readonly init: (options: TypstCompilerOptions) => Effect.Effect<void>;
-  readonly dispose: Effect.Effect<void>;
-  readonly addFont: (data: Uint8Array) => Effect.Effect<void>;
-  readonly addFile: (path: string, data: Uint8Array) => Effect.Effect<void>;
-  readonly addSource: (path: string, text: string) => Effect.Effect<void>;
-  readonly removeFile: (path: string) => Effect.Effect<void>;
-  readonly clearFiles: Effect.Effect<void>;
-  readonly listFiles: Effect.Effect<string[], ListFilesError>;
-  readonly hasFile: (path: string) => Effect.Effect<boolean, HasFileError>;
-  readonly setMain: (path: string) => Effect.Effect<void>;
-  readonly compile: () => Effect.Effect<CompileResult, CompileError>;
+export const createTypstCompiler = async (options: TypstCompilerOptions): Promise<TypstCompiler> => {
+  const packageManager = new PackageManager({
+    fetch: options.fetch,
+    packageBaseUrl: options.packageBaseUrl,
+    cache: options.packageCache,
+    memoryPackageCacheCapacity: options.memoryPackageCacheCapacity,
+  });
+  const backend = createCompilerBackend(options.backend ?? "auto", {
+    packageManager,
+    fetch: options.fetch,
+  });
+
+  await backend.init(options.moduleOrPath);
+  return new PromiseTypstCompiler(backend);
 };
 
 export { SharedMemoryCommunication } from "./protocol";
 export type { MainToWorkerMessage, WorkerToMainMessage } from "./messages";
 export type { WasmModuleOrPath } from "./wasm-module";
+export type { WasmDiagnostic } from "./wasm";
+export type { BundleFile, CompileFormat, CompileOptions, CompileResult, DependencyInfo, PageOutput, PackageCache, TypstCompiler, TypstCompilerOptions } from "./types";
 export * from "@typst-wasm/fonts";
 export * from "./errors";
 export { PackageManager } from "./package-manager";
-export { CacheStorageService } from "./cache-abstraction";
-export { WorkerService } from "./worker-service";
-export { DirectService } from "./direct-service";
-export { CompilerBackend, WorkerBackendLayer, JspiBackendLayer, AutomaticBackendLayer, supportsWorkerBackend, supportsJspiBackend, selectAutomaticBackendKind } from "./compiler-backend";
-
-export class TypstCompilerService extends Effect.Service<TypstCompilerServiceType>()("TypstCompilerService", {
-  accessors: true,
-  scoped: Effect.gen(function* () {
-    const backend = yield* CompilerBackend;
-    const readyDeferred = yield* Deferred.make<void>();
-
-    return {
-      ready: Deferred.await(readyDeferred),
-
-      init: (options: TypstCompilerOptions) =>
-        Effect.gen(function* () {
-          yield* backend.init(options.moduleOrPath);
-          yield* backend.ready;
-          yield* Deferred.succeed(readyDeferred, undefined);
-        }),
-
-      dispose: backend.dispose,
-      addFont: backend.addFont,
-      addFile: backend.addFile,
-      addSource: backend.addSource,
-      removeFile: backend.removeFile,
-      clearFiles: backend.clearFiles,
-      listFiles: backend.listFiles.pipe(
-        Effect.mapError(
-          (error) =>
-            new ListFilesError({
-              requestId: extractRequestId(error),
-              message: extractErrorMessage(error),
-            }),
-        ),
-      ),
-      hasFile: (path: string) =>
-        backend.hasFile(path).pipe(
-          Effect.mapError(
-            (error) =>
-              new HasFileError({
-                requestId: extractRequestId(error),
-                path,
-                message: extractErrorMessage(error),
-              }),
-          ),
-        ),
-      setMain: backend.setMain,
-      compile: () =>
-        backend.compile().pipe(
-          Effect.mapError(
-            (error) =>
-              new CompileError({
-                diagnostics: [],
-                message: extractErrorMessage(error),
-                cause: error,
-              }),
-          ),
-          Effect.flatMap((result) =>
-            hasErrorDiagnostics(result.diagnostics)
-              ? Effect.fail(
-                  new CompileError({
-                    diagnostics: result.diagnostics,
-                    message: result.internalError ?? "Compilation produced error diagnostics",
-                  }),
-                )
-              : Effect.succeed(result),
-          ),
-        ),
-    };
-  }),
-  dependencies: [AutomaticBackendLayer],
-}) {}
+export { makeBrowserCacheStorage, makeDefaultPackageCache, makeMemoryCacheStorage } from "./cache-abstraction";
+export { supportsWorkerBackend, supportsJspiBackend, selectAutomaticBackendKind } from "./compiler-backend";
