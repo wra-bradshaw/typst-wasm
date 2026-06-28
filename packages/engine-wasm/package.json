@@ -12,6 +12,12 @@
     "./typst_wasm.js": "./dist/typst_wasm.js",
     "./typst_wasm_bg.wasm": "./dist/typst_wasm_bg.wasm"
   },
+  "scripts": {
+    "fix": "cargo fmt --all && cargo clippy --fix --allow-dirty --allow-staged --target wasm32-unknown-unknown -Z build-std=std,panic_abort",
+    "lint": "cargo clippy --target wasm32-unknown-unknown -Z build-std=std,panic_abort -- -D warnings",
+    "format": "cargo fmt --all -- --check",
+    "format:fix": "cargo fmt --all"
+  },
   "files": [
     "index.js",
     "index.d.ts",
