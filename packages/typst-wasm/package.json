@@ -32,13 +32,21 @@
     "url": "https://github.com/will-lol/typst-wasm/issues"
   },
   "homepage": "https://github.com/will-lol/typst-wasm#readme",
+  "scripts": {
+    "fix": "pnpm run format:fix && pnpm exec eslint . --fix",
+    "lint": "pnpm exec eslint . --max-warnings=0",
+    "format": "pnpm exec prettier . --check",
+    "format:fix": "pnpm exec prettier . --write",
+    "knip": "pnpm exec knip"
+  },
   "devDependencies": {
-    "@effect/eslint-plugin": "^0.3.2",
     "@eslint/js": "^10.0.1",
     "@types/bun": "^1.3.9",
     "@types/deno": "^2.5.0",
     "@types/node": "^25.2.0",
     "eslint": "^10.0.0",
+    "knip": "^6.17.1",
+    "prettier": "^3.8.4",
     "tsdown": "^0.20.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.55.0",
@@ -47,7 +55,6 @@
   "dependencies": {
     "@typst-wasm/engine-wasm": "workspace:*",
     "@typst-wasm/fonts": "workspace:*",
-    "effect": "^3.19.16",
     "nanotar": "^0.2.0",
     "tsdown-plugin-worker": "^0.1.6"
   }

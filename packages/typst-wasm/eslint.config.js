@@ -1,19 +1,9 @@
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
-import * as effectPlugin from "@effect/eslint-plugin/plugin";
 
 export default tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommended,
-  {
-    plugins: {
-      "@effect": effectPlugin,
-    },
-    rules: {
-      // Effect-specific rules
-      "@effect/no-import-from-barrel-package": "error",
-    },
-  },
   {
     languageOptions: {
       globals: {

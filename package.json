@@ -1,5 +1,8 @@
 {
   "name": "typst-wasm-workspace",
   "private": true,
-  "packageManager": "pnpm"
+  "packageManager": "pnpm",
+  "scripts": {
+    "fix": "pnpm -r --if-present fix"
+  }
 }

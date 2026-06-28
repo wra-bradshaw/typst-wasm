@@ -10,8 +10,8 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "paths": {
-      "@typst-wasm/fonts": ["../fonts/index.js"],
-      "@typst-wasm/engine-wasm": ["../engine-wasm/index.js"]
+      "@typst-wasm/fonts": ["../fonts"],
+      "@typst-wasm/engine-wasm": ["../engine-wasm"]
     },
     "types": ["node", "tsdown-plugin-worker/types", "vitest/globals"]
   }

@@ -10,9 +10,17 @@
       "default": "./index.js"
     }
   },
+  "scripts": {
+    "fix": "pnpm exec prettier . --write",
+    "format": "pnpm exec prettier . --check",
+    "format:fix": "pnpm exec prettier . --write"
+  },
   "files": [
     "index.js",
     "index.d.ts",
     "dist"
-  ]
+  ],
+  "devDependencies": {
+    "prettier": "^3.8.4"
+  }
 }
