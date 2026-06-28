@@ -22,7 +22,10 @@ type E2eScenarioResult = {
   filesAfterClear: string[];
 };
 
-const assert = (condition: boolean, message: string): void => {
+const assert: (condition: unknown, message: string) => asserts condition = (
+  condition,
+  message,
+) => {
   if (!condition) {
     throw new Error(message);
   }
@@ -77,14 +80,18 @@ export const runCompilerE2eScenario = async (
       format: "svg",
     });
     assert(
-      firstResult.format === "svg" && firstResult.pages.length > 0,
+      firstResult !== undefined &&
+        firstResult.format === "svg" &&
+        firstResult.pages.length > 0,
       `[${options.runtime}] expected first compile to return SVG pages`,
     );
 
     await compiler.addSource(mainPath, editedSource);
     const secondResult = await compiler.compile({ format: "svg" });
     assert(
-      secondResult.format === "svg" && secondResult.pages.length > 0,
+      secondResult !== undefined &&
+        secondResult.format === "svg" &&
+        secondResult.pages.length > 0,
       `[${options.runtime}] expected second compile to return SVG pages`,
     );
 
@@ -101,7 +108,9 @@ export const runCompilerE2eScenario = async (
       format: "svg",
     });
     assert(
-      finalResult.format === "svg" && finalResult.pages.length > 0,
+      finalResult !== undefined &&
+        finalResult.format === "svg" &&
+        finalResult.pages.length > 0,
       `[${options.runtime}] expected final compile to return SVG pages`,
     );
 
