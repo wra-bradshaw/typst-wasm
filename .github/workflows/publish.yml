@@ -7,13 +7,26 @@ on:
 
 permissions:
   contents: read
-  id-token: write
+
+concurrency:
+  group: npm-publish-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  publish:
-    name: Publish npm packages
+  build:
+    name: Build ${{ matrix.package.out }}
     runs-on: ubuntu-latest
-    environment: npm
+
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - out: fonts
+            attr: publish-fonts
+          - out: engine-wasm
+            attr: publish-engine-wasm
+          - out: typst-wasm
+            attr: publish-typst-wasm
 
     steps:
       - name: Checkout
@@ -30,26 +43,61 @@ jobs:
         with:
           use-flakehub: false
 
-      - name: Build release artifacts
+      - name: Build release artifact
         run: |
-          rm -rf .nix-release
-          mkdir -p .nix-release
+          set -euo pipefail
 
-          nix build .#publish-fonts --out-link .nix-release/fonts
-          nix build .#publish-engine-wasm --out-link .nix-release/engine-wasm
-          nix build .#publish-typst-wasm --out-link .nix-release/typst-wasm
+          out_path="$(nix build ".#${{ matrix.package.attr }}" --no-link --print-out-paths)"
 
-      - name: Publish @typst-wasm/fonts
-        working-directory: .nix-release/fonts
+          mkdir -p "artifact/${{ matrix.package.out }}"
+          cp -R "$out_path"/. "artifact/${{ matrix.package.out }}/"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.package.out }}
+          path: artifact/${{ matrix.package.out }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish npm packages
+    runs-on: ubuntu-latest
+    needs: build
+    environment: npm
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: .nix-release
+
+      - name: Publish npm packages
         run: |
-          nix develop "$GITHUB_WORKSPACE#ci" --command npm publish --access public --provenance
+          set -euo pipefail
 
-      - name: Publish @typst-wasm/engine-wasm
-        working-directory: .nix-release/engine-wasm
-        run: |
-          nix develop "$GITHUB_WORKSPACE#ci" --command npm publish --access public --provenance
+          publish_package() {
+            package_dir="$1"
 
-      - name: Publish typst-wasm
-        working-directory: .nix-release/typst-wasm
-        run: |
-          nix develop "$GITHUB_WORKSPACE#ci" --command npm publish --access public --provenance
+            version="$(node -p "require('./${package_dir}/package.json').version")"
+
+            tag="latest"
+            if [[ "$version" == *-* ]]; then
+              tag="next"
+            fi
+
+            echo "Publishing ${package_dir} with npm tag '${tag}'"
+
+            npm publish "$package_dir" \
+              --access public \
+              --provenance \
+              --tag "$tag"
+          }
+
+          # Publish in dependency order.
+          publish_package ".nix-release/package-fonts"
+          publish_package ".nix-release/package-engine-wasm"
+          publish_package ".nix-release/package-typst-wasm"
