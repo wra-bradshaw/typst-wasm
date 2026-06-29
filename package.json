@@ -1,49 +1,21 @@
 {
   "name": "typst-wasm-workspace",
   "private": true,
-  "packageManager": "pnpm",
+  "packageManager": "pnpm@11.5.2",
   "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "e2e": "turbo run e2e",
     "fix": "pnpm -r --if-present fix",
-    "format": "pnpm -r --if-present format",
-    "lint": "pnpm -r --if-present lint",
-    "release": "release-it"
+    "format": "turbo run format",
+    "changeset": "changeset",
+    "lint": "turbo run lint",
+    "version-packages": "changeset version && pnpm install --lockfile-only",
+    "release": "pnpm turbo run build && changeset publish"
   },
   "devDependencies": {
-    "@release-it/bumper": "^7.0.6",
-    "release-it": "^19.0.5"
-  },
-  "release-it": {
-    "git": {
-      "commitMessage": "chore: release v${version}",
-      "tagName": "v${version}",
-      "requireCleanWorkingDir": true
-    },
-    "github": {
-      "release": false
-    },
-    "npm": false,
-    "plugins": {
-      "@release-it/bumper": {
-        "in": "packages/typst-wasm/package.json",
-        "out": [
-          "packages/fonts/package.json",
-          {
-            "file": "packages/engine-wasm/package.json",
-            "path": "version"
-          },
-          {
-            "file": "packages/engine-wasm/Cargo.toml",
-            "path": "package.version"
-          },
-          {
-            "file": "packages/typst-wasm/package.json",
-            "path": "version"
-          }
-        ]
-      }
-    },
-    "hooks": {
-      "after:bump": "cargo generate-lockfile --manifest-path packages/engine-wasm/Cargo.toml && pnpm install --lockfile-only"
-    }
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.7",
+    "turbo": "^2.6.3"
   }
 }
