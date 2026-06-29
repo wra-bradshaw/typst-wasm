@@ -1,6 +1,3 @@
-[build]
-target-dir = "/Users/will/.cache/typst-wasm-target"
-
 [target.wasm32-unknown-unknown]
 rustflags = [
     "-C", "target-feature=+atomics,+bulk-memory,+mutable-globals",
