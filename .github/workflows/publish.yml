@@ -17,7 +17,7 @@ jobs:
 
     defaults:
       run:
-        shell: nix develop .#ci --command bash -euo pipefail {0}
+        shell: nix develop "$GITHUB_WORKSPACE#ci" --command bash -euo pipefail {0}
 
     steps:
       - name: Checkout
