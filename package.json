@@ -4,6 +4,8 @@
   "packageManager": "pnpm",
   "scripts": {
     "fix": "pnpm -r --if-present fix",
+    "format": "pnpm -r --if-present format",
+    "lint": "pnpm -r --if-present lint",
     "release": "release-it"
   },
   "devDependencies": {
