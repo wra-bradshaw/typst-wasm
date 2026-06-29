@@ -17,8 +17,9 @@ let
     version = "deps";
     src = workspaceRoot;
     pnpm = pkgs.pnpm;
+    pnpmWorkspaces = [ pname ];
     fetcherVersion = 3;
-    hash = pkgs.lib.fakeHash;
+    hash = "sha256-ADM7OyBIXfjGYyDBMSsDWR6E/ZzLiTp6favSGqG1Wi8=";
   };
 
   pnpmNativeBuildInputs = nativeBuildInputs ++ [
