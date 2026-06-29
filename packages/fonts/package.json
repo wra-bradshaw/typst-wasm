@@ -19,6 +19,7 @@
     }
   },
   "scripts": {
+    "build": "out_path=$(nix build ../..#fonts --no-link --print-out-paths) && rm -rf dist/files && mkdir -p dist/files && cp -R \"$out_path/dist/files/.\" dist/files",
     "fix": "pnpm exec prettier . --write",
     "format": "pnpm exec prettier . --check",
     "format:fix": "pnpm exec prettier . --write"

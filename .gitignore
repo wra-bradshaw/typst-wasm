@@ -7,6 +7,7 @@ result-*
 # outputs
 out
 dist
+.release/
 *.tgz
 target
 
@@ -21,6 +22,7 @@ logs
 # caches
 .eslintcache
 .cache
+.turbo
 *.tsbuildinfo
 
 # rust/wasm build metadata

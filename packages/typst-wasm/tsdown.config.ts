@@ -4,9 +4,13 @@ import workerPlugins from "tsdown-plugin-worker";
 export default defineConfig({
   entry: ["./src/index.ts", "./src/wasm.ts"],
   platform: "neutral",
+  external: ["@typst-wasm/engine-wasm"],
   plugins: [
     workerPlugins({
       format: "es",
+      rolldownOptions: {
+        external: ["@typst-wasm/engine-wasm"],
+      },
     }),
   ],
   format: ["esm"],

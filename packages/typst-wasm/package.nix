@@ -1,8 +1,8 @@
 {
   pkgs,
   fonts,
-  wasm,
   nativeBuildInputs ? [ ],
+  wasm ? null,
 }:
 
 let
@@ -19,19 +19,22 @@ let
     pnpm = pkgs.pnpm;
     pnpmWorkspaces = [ pname ];
     fetcherVersion = 3;
-    hash = "sha256-ADM7OyBIXfjGYyDBMSsDWR6E/ZzLiTp6favSGqG1Wi8=";
+    hash = "sha256-DMxDsxE//esMOvOjEDM713FUV+0e3lIS0bxQ2ZlUm5o=";
   };
 
   pnpmNativeBuildInputs = nativeBuildInputs ++ [
-    pkgs.jq
     pkgs.nodejs
     pkgs.pnpmConfigHook
     pkgs.pnpm
   ];
 
-  prepareBuildArtifacts = ''
-    mkdir -p packages/fonts/dist packages/engine-wasm/dist
+  prepareFontArtifacts = ''
+    mkdir -p packages/fonts/dist
     cp -R ${fonts}/dist/files packages/fonts/dist/files
+  '';
+
+  prepareWasmArtifacts = ''
+    mkdir -p packages/engine-wasm/dist
     cp -R ${wasm}/dist/. packages/engine-wasm/dist
   '';
 
@@ -44,7 +47,11 @@ let
       name,
       command,
       needsBuildArtifacts ? false,
+      needsWasmArtifacts ? false,
     }:
+    assert lib.assertMsg (
+      !needsWasmArtifacts || wasm != null
+    ) "typst-wasm check ${name} requires a wasm package";
     pkgs.stdenvNoCC.mkDerivation {
       pname = "typst-wasm-${name}";
       inherit version;
@@ -60,8 +67,9 @@ let
         mkdir -p "$HOME"
         chmod -R u+w packages/fonts packages/engine-wasm packages/typst-wasm
 
-        ${lib.optionalString needsBuildArtifacts prepareBuildArtifacts}
-        ${lib.optionalString needsBuildArtifacts buildBundle}
+        ${lib.optionalString needsBuildArtifacts prepareFontArtifacts}
+        ${lib.optionalString needsWasmArtifacts prepareWasmArtifacts}
+        ${lib.optionalString (needsBuildArtifacts || needsWasmArtifacts) buildBundle}
 
         cd ${packageDir}
 
@@ -87,7 +95,7 @@ pkgs.stdenvNoCC.mkDerivation {
   buildPhase = ''
     runHook preBuild
 
-    ${prepareBuildArtifacts}
+    ${prepareFontArtifacts}
 
     ${buildBundle}
 
@@ -99,10 +107,6 @@ pkgs.stdenvNoCC.mkDerivation {
 
     mkdir -p "$out"
     cp -r packages/typst-wasm/dist "$out/dist"
-    jq \
-      --arg version "${version}" \
-      '.dependencies["@typst-wasm/engine-wasm"] = $version | .dependencies["@typst-wasm/fonts"] = $version' \
-      packages/typst-wasm/package.json > "$out/package.json"
 
     runHook postInstall
   '';
@@ -119,17 +123,20 @@ pkgs.stdenvNoCC.mkDerivation {
     e2e-node = mkWorkspaceCheck {
       name = "e2e-node";
       needsBuildArtifacts = true;
-      command = "pnpm exec vitest run -c vitest.e2e.config.ts";
+      needsWasmArtifacts = true;
+      command = "pnpm run e2e:node";
     };
     e2e-bun = mkWorkspaceCheck {
       name = "e2e-bun";
       needsBuildArtifacts = true;
-      command = "bun test ./tests/e2e/bun.e2e.ts";
+      needsWasmArtifacts = true;
+      command = "pnpm run e2e:bun";
     };
     e2e-deno = mkWorkspaceCheck {
       name = "e2e-deno";
       needsBuildArtifacts = true;
-      command = "deno test --allow-read --allow-net tests/e2e/deno.e2e.ts";
+      needsWasmArtifacts = true;
+      command = "pnpm run e2e:deno";
     };
   };
 }

@@ -15,7 +15,7 @@ let
   ];
 in
 pkgs.stdenvNoCC.mkDerivation {
-  pname = "typst-wasm-fonts-npm-package";
+  pname = "typst-wasm-fonts-artifacts";
   inherit version;
 
   dontUnpack = true;
@@ -23,10 +23,6 @@ pkgs.stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p "$out/dist"
-    cp ${./package.json} "$out/package.json"
-    cp ${./index.js} "$out/index.js"
-    cp ${./index.d.ts} "$out/index.d.ts"
     mkdir -p "$out/dist/files"
     for font_file in ${builtins.concatStringsSep " " fontFiles}; do
       cp ${fontSource}/otf/$font_file "$out/dist/files/$font_file"

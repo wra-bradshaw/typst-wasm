@@ -34,8 +34,14 @@
   },
   "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
   "scripts": {
+    "build": "tsdown",
     "fix": "pnpm run format:fix && pnpm exec eslint . --fix",
     "lint": "pnpm exec eslint . --max-warnings=0",
+    "test": "pnpm exec vitest run",
+    "e2e": "pnpm run e2e:node && pnpm run e2e:bun && pnpm run e2e:deno",
+    "e2e:node": "node --experimental-wasm-stack-switching ./node_modules/vitest/vitest.mjs run -c vitest.e2e.config.ts --pool vmThreads",
+    "e2e:bun": "bun test ./tests/e2e/bun.e2e.ts",
+    "e2e:deno": "deno test --no-check --allow-read --allow-net tests/e2e/deno.e2e.ts",
     "format": "pnpm exec prettier . --check",
     "format:fix": "pnpm exec prettier . --write",
     "knip": "pnpm exec knip"

@@ -45,7 +45,6 @@
     in
     {
       packages.wasm = wasm;
-      packages.publish-engine-wasm = wasm;
 
       devShells.engine-wasm = pkgs.mkShell {
         packages = engineWasmDevInputs;

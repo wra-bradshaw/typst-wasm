@@ -91,7 +91,9 @@
           };
 
           devShells.ci = pkgs.mkShell {
+            inputsFrom = [ config.devShells.typst-wasm ];
             packages = [
+              config.formatter
               pkgs.nodejs
               pkgs.pnpm
             ];

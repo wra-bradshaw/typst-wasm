@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Turbo CI
+    runs-on: ubuntu-latest
+
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+
+      - name: Install dependencies
+        run: nix develop .#ci -c pnpm install --frozen-lockfile
+
+      - name: Lint, build, test, and e2e
+        run: nix develop .#ci -c pnpm turbo run lint build test e2e

@@ -9,45 +9,15 @@ let
   lib = pkgs.lib;
   stdenv = pkgs.stdenv;
   packageVersion = (builtins.fromJSON (builtins.readFile ./package.json)).version;
-  cacheVersion = "0.0.0+nix-cache";
-  tomlFormat = pkgs.formats.toml { };
-  cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
-  cargoLock = builtins.fromTOML (builtins.readFile ./Cargo.lock);
-  normalizedCargoToml = tomlFormat.generate "Cargo.toml" (
-    lib.recursiveUpdate cargoToml { package.version = cacheVersion; }
-  );
-  normalizedCargoLock = tomlFormat.generate "Cargo.lock" (
-    cargoLock
-    // {
-      package = map (
-        package:
-        if package.name == cargoToml.package.name && !(package ? source) then
-          package // { version = cacheVersion; }
-        else
-          package
-      ) cargoLock.package;
-    }
-  );
-  sourceWithoutVersionedManifests = lib.cleanSourceWith {
+  src = lib.cleanSourceWith {
     src = lib.cleanSource ./.;
-    name = "typst-wasm-engine-wasm-source";
-    filter =
-      path: type:
-      let
-        base = baseNameOf path;
-      in
-      craneLib.filterCargoSources path type && base != "Cargo.toml" && base != "Cargo.lock";
+    filter = path: type: craneLib.filterCargoSources path type;
   };
-  src = pkgs.runCommand "typst-wasm-engine-wasm-cache-src" { } ''
-    cp -R --no-preserve=mode,ownership ${sourceWithoutVersionedManifests}/. "$out"
-    cp ${normalizedCargoToml} "$out/Cargo.toml"
-    cp ${normalizedCargoLock} "$out/Cargo.lock"
-  '';
   cargoVendorDir = craneLib.vendorMultipleCargoDeps {
     inherit (craneLib.findCargoFiles src) cargoConfigs;
 
     cargoLockList = [
-      normalizedCargoLock
+      ./Cargo.lock
       "${rustSrc}/lib/rustlib/src/rust/library/Cargo.lock"
     ];
   };
@@ -122,7 +92,7 @@ let
   );
 in
 pkgs.stdenvNoCC.mkDerivation {
-  pname = "typst-wasm-engine-wasm-npm-package";
+  pname = "typst-wasm-engine-wasm-artifacts";
   version = packageVersion;
 
   dontUnpack = true;
@@ -131,15 +101,8 @@ pkgs.stdenvNoCC.mkDerivation {
     runHook preInstall
 
     mkdir -p "$out"
-    cp ${./package.json} "$out/package.json"
-    cp ${./index.js} "$out/index.js"
-    cp ${./index.d.ts} "$out/index.d.ts"
     cp -R ${wasmArtifacts}/dist "$out/dist"
 
     runHook postInstall
   '';
-
-  passthru = {
-    inherit cargoArtifacts wasmArtifacts;
-  };
 }

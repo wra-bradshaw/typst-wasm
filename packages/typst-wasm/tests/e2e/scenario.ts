@@ -1,4 +1,4 @@
-import { createTypstCompiler, defaultFonts } from "../../dist/index.js";
+import { createTypstCompiler, defaultFonts } from "typst-wasm";
 
 type RuntimeName = "bun" | "node" | "deno";
 
