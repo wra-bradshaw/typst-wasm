@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use typst::Library;
 use typst::foundations::Bytes;
-use typst::syntax::{FileId, Source, VirtualPath};
+use typst::syntax::{FileId, RootedPath, Source, VirtualPath, VirtualRoot};
 use typst::text::{Font, FontBook};
 use typst::utils::LazyHash;
+use typst::{Library, LibraryExt};
 use wasm_bindgen::prelude::*;
 
 use crate::exports::ExportFormat;
@@ -50,7 +50,7 @@ impl TypstCompiler {
     }
 
     pub fn add_source(&mut self, path: &str, text: &str) -> Result<(), String> {
-        let id = FileId::new(None, VirtualPath::new(path));
+        let id = file_id(path)?;
         let source = Source::new(id, text.to_string());
         self.files
             .write()
@@ -64,7 +64,7 @@ impl TypstCompiler {
     }
 
     pub fn add_file(&mut self, path: &str, data: &[u8]) -> Result<(), String> {
-        let id = FileId::new(None, VirtualPath::new(path));
+        let id = file_id(path)?;
         let bytes = Bytes::new(data.to_vec());
         self.sources
             .write()
@@ -77,14 +77,15 @@ impl TypstCompiler {
         Ok(())
     }
 
-    pub fn set_main(&mut self, path: &str) {
-        let id = FileId::new(None, VirtualPath::new(path));
+    pub fn set_main(&mut self, path: &str) -> Result<(), String> {
+        let id = file_id(path)?;
         self.main_id = Some(id);
+        Ok(())
     }
 
     pub fn compile(&mut self, options: CompileOptions) -> Result<CompileOutput, String> {
         if let Some(main) = options.main.as_ref() {
-            self.set_main(main);
+            self.set_main(main)?;
         }
 
         if self.main_id.is_none() {
@@ -104,7 +105,7 @@ impl TypstCompiler {
     }
 
     pub fn remove_file(&mut self, path: &str) -> Result<(), String> {
-        let id = FileId::new(None, VirtualPath::new(path));
+        let id = file_id(path)?;
         self.sources
             .write()
             .map_err(|_| "Failed to acquire write lock on sources".to_string())?
@@ -141,8 +142,7 @@ impl TypstCompiler {
         let mut paths: Vec<String> = sources
             .keys()
             .chain(files.keys())
-            .filter_map(|id| id.vpath().as_rootless_path().to_str())
-            .map(|s| s.to_string())
+            .map(|id| id.vpath().get_without_slash().to_string())
             .collect();
         paths.sort();
         paths.dedup();
@@ -150,7 +150,7 @@ impl TypstCompiler {
     }
 
     pub fn has_file(&self, path: &str) -> Result<bool, String> {
-        let id = FileId::new(None, VirtualPath::new(path));
+        let id = file_id(path)?;
         Ok(self
             .sources
             .read()
@@ -162,6 +162,11 @@ impl TypstCompiler {
                 .map_err(|_| "Failed to acquire read lock on files".to_string())?
                 .contains_key(&id))
     }
+}
+
+fn file_id(path: &str) -> Result<FileId, String> {
+    let path = VirtualPath::new(path).map_err(|err| err.to_string())?;
+    Ok(RootedPath::new(VirtualRoot::Project, path).intern())
 }
 
 impl Default for TypstCompiler {

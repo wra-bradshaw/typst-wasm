@@ -1,9 +1,12 @@
-use typst::Library;
 use typst::diag::{SourceDiagnostic, Warned};
 use typst::foundations::{Dict, Str, Value};
-use typst::html::HtmlDocument;
-use typst::layout::{PageRanges, PagedDocument};
+use typst::layout::PageRanges;
 use typst::utils::LazyHash;
+use typst::{Library, LibraryExt};
+use typst_html::{HtmlDocument, HtmlOptions};
+use typst_layout::{Page, PagedDocument};
+use typst_render::RenderOptions;
+use typst_svg::SvgOptions;
 
 use crate::compiler::TypstCompiler;
 use crate::diagnostics::{WasmDiagnostic, format_diagnostics};
@@ -131,10 +134,14 @@ impl TypstCompiler {
         diagnostics: Vec<WasmDiagnostic>,
     ) -> Result<CompileOutput, String> {
         let pixel_per_pt = options.ppi.unwrap_or(144.0) / 72.0;
+        let render_options = RenderOptions {
+            pixel_per_pt: typst::utils::Scalar::new(pixel_per_pt.into()),
+            ..Default::default()
+        };
         let pages = selected_pages(document, options.pages.as_deref())
             .into_iter()
             .map(|(page_number, page)| {
-                let data = typst_render::render(page, pixel_per_pt)
+                let data = typst_render::render(page, &render_options)
                     .encode_png()
                     .map_err(|err| err.to_string())?;
                 Ok(PageOutput {
@@ -165,11 +172,12 @@ impl TypstCompiler {
         options: CompileOptions,
         diagnostics: Vec<WasmDiagnostic>,
     ) -> Result<CompileOutput, String> {
+        let svg_options = SvgOptions::default();
         let pages = selected_pages(document, options.pages.as_deref())
             .into_iter()
             .map(|(page_number, page)| PageOutput {
                 page: page_number,
-                output_text: Some(typst_svg::svg(page)),
+                output_text: Some(typst_svg::svg(page, &svg_options)),
                 output_bytes: None,
             })
             .collect();
@@ -200,7 +208,7 @@ impl ExportFormat {
 }
 
 fn html(document: &HtmlDocument) -> Result<String, String> {
-    typst_html::html(document).map_err(format_export_errors)
+    typst_html::html(document, &HtmlOptions::default()).map_err(format_export_errors)
 }
 
 fn format_export_errors(errors: impl IntoIterator<Item = SourceDiagnostic>) -> String {
@@ -226,7 +234,7 @@ fn parse_pdf_standards(standards: Option<&[String]>) -> Result<typst_pdf::PdfSta
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    typst_pdf::PdfStandards::new(&parsed).map_err(|err| err.to_string())
+    typst_pdf::PdfStandards::new(&parsed).map_err(|err| err.message().to_string())
 }
 
 fn parse_page_ranges(pages: Option<&str>) -> Option<PageRanges> {
@@ -258,14 +266,11 @@ fn parse_page_bound(value: &str) -> Option<std::num::NonZeroUsize> {
     value.parse::<std::num::NonZeroUsize>().ok()
 }
 
-fn selected_pages<'a>(
-    document: &'a PagedDocument,
-    pages: Option<&str>,
-) -> Vec<(usize, &'a typst::layout::Page)> {
+fn selected_pages<'a>(document: &'a PagedDocument, pages: Option<&str>) -> Vec<(usize, &'a Page)> {
     let ranges = parse_page_ranges(pages);
 
     document
-        .pages
+        .pages()
         .iter()
         .enumerate()
         .filter_map(|(index, page)| {

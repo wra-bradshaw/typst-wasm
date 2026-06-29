@@ -1,7 +1,7 @@
 use js_sys::Date;
 use typst::diag::{FileError, FileResult, eco_format};
-use typst::foundations::{Bytes, Datetime};
-use typst::syntax::{FileId, Source};
+use typst::foundations::{Bytes, Datetime, Duration};
+use typst::syntax::{FileId, Source, VirtualRoot};
 use typst::text::{Font, FontBook};
 use typst::utils::LazyHash;
 use typst::{Library, World};
@@ -61,16 +61,16 @@ impl World for TypstCompiler {
             return Ok(bytes.clone());
         }
 
-        let path = if let Some(package) = id.package() {
+        let path = if let VirtualRoot::Package(package) = id.root() {
             format!(
                 "@{}/{}:{}/{}",
                 package.namespace,
                 package.name,
                 package.version,
-                id.vpath().as_rootless_path().to_string_lossy()
+                id.vpath().get_without_slash()
             )
         } else {
-            id.vpath().as_rootless_path().to_string_lossy().to_string()
+            id.vpath().get_without_slash().to_string()
         };
 
         match ResourceBridge::request_file(&path) {
@@ -92,11 +92,11 @@ impl World for TypstCompiler {
         self.fonts.get(id).cloned()
     }
 
-    fn today(&self, offset: Option<i64>) -> Option<Datetime> {
+    fn today(&self, offset: Option<Duration>) -> Option<Datetime> {
         let date = Date::new_0();
 
         let (year, month, day) = if let Some(offset) = offset {
-            let offset_ms = (offset as f64) * 60.0 * 60.0 * 1000.0;
+            let offset_ms = offset.seconds() * 1000.0;
             let time = date.get_time() + offset_ms;
             let date = Date::new(&JsValue::from_f64(time));
             (

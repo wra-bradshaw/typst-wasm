@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
-use typst::World;
 use typst::diag::{Severity, SourceDiagnostic, Warned};
+use typst::{World, WorldExt};
 
 #[derive(Tsify, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -28,14 +28,14 @@ impl WasmDiagnostic {
 
         if let Some(span) = diag.span.id() {
             if let Some(source) = world.source(span).ok()
-                && let Some(range) = source.range(diag.span)
+                && let Some(range) = world.range(diag.span)
             {
                 start = Some(range.start);
                 end = Some(range.end);
-                line = Some(source.byte_to_line(range.start).unwrap_or(0) + 1);
-                column = Some(source.byte_to_column(range.start).unwrap_or(0) + 1);
+                line = Some(source.lines().byte_to_line(range.start).unwrap_or(0) + 1);
+                column = Some(source.lines().byte_to_column(range.start).unwrap_or(0) + 1);
             }
-            file = Some(span.vpath().as_rooted_path().display().to_string());
+            file = Some(span.vpath().get_with_slash().to_string());
         }
 
         let severity = match diag.severity {
@@ -43,7 +43,7 @@ impl WasmDiagnostic {
             Severity::Warning => "warning",
         };
 
-        let hints: Vec<String> = diag.hints.iter().map(|h| h.to_string()).collect();
+        let hints: Vec<String> = diag.hints.iter().map(|h| h.v.to_string()).collect();
 
         let trace: Vec<String> = diag
             .trace
@@ -52,10 +52,10 @@ impl WasmDiagnostic {
                 let span = t.span;
                 if let Some(file_id) = span.id()
                     && let Some(source) = world.source(file_id).ok()
-                    && let Some(range) = source.range(span)
+                    && let Some(range) = world.range(span)
                 {
-                    let line_num = source.byte_to_line(range.start).unwrap_or(0) + 1;
-                    let file_name = file_id.vpath().as_rooted_path().display().to_string();
+                    let line_num = source.lines().byte_to_line(range.start).unwrap_or(0) + 1;
+                    let file_name = file_id.vpath().get_with_slash().to_string();
                     return Some(format!("{} ({}:{})", t.v, file_name, line_num));
                 }
                 None
@@ -119,7 +119,7 @@ fn format_single_diagnostic(world: &dyn World, diag: &SourceDiagnostic) -> Strin
     }
 
     for hint in &diag.hints {
-        lines.push(format!("   = hint: {}", hint));
+        lines.push(format!("   = hint: {}", hint.v));
     }
 
     if !diag.trace.is_empty() {
@@ -141,15 +141,15 @@ fn extract_location(
 ) -> Option<(String, usize, usize, String, usize)> {
     let file_id = diag.span.id()?;
     let source = world.source(file_id).ok()?;
-    let range = source.range(diag.span)?;
+    let range = world.range(diag.span)?;
 
-    let line_idx = source.byte_to_line(range.start)?;
+    let line_idx = source.lines().byte_to_line(range.start)?;
     let line_num = line_idx + 1;
-    let col = source.byte_to_column(range.start)? + 1;
-    let file = file_id.vpath().as_rooted_path().display().to_string();
+    let col = source.lines().byte_to_column(range.start)? + 1;
+    let file = file_id.vpath().get_with_slash().to_string();
 
-    let line_range = source.line_to_range(line_idx)?;
-    let line_text = source.get(line_range)?;
+    let line_range = source.lines().line_to_range(line_idx)?;
+    let line_text = source.text().get(line_range)?;
 
     let display_text = line_text.replace('\t', "    ");
     let tab_before = line_text[..col.saturating_sub(1)].matches('\t').count();
@@ -163,8 +163,8 @@ fn extract_location(
 fn span_to_location(world: &dyn World, span: typst::syntax::Span) -> Option<(String, usize)> {
     let file_id = span.id()?;
     let source = world.source(file_id).ok()?;
-    let range = source.range(span)?;
-    let line = source.byte_to_line(range.start)? + 1;
-    let file = file_id.vpath().as_rooted_path().display().to_string();
+    let range = world.range(span)?;
+    let line = source.lines().byte_to_line(range.start)? + 1;
+    let file = file_id.vpath().get_with_slash().to_string();
     Some((file, line))
 }
