@@ -1,6 +1,6 @@
 {
   "name": "@typst-wasm/fonts",
-  "version": "0.0.2-alpha.3",
+  "version": "0.0.2-alpha.4",
   "type": "module",
   "main": "./index.js",
   "types": "./index.d.ts",
