@@ -27,12 +27,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/will-lol/typst-wasm.git"
+    "url": "git+https://github.com/wra-bradshaw/typst-wasm.git"
   },
   "bugs": {
-    "url": "https://github.com/will-lol/typst-wasm/issues"
+    "url": "https://github.com/wra-bradshaw/typst-wasm/issues"
   },
-  "homepage": "https://github.com/will-lol/typst-wasm#readme",
+  "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
   "scripts": {
     "fix": "pnpm run format:fix && pnpm exec eslint . --fix",
     "lint": "pnpm exec eslint . --max-warnings=0",

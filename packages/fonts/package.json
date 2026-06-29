@@ -4,6 +4,14 @@
   "type": "module",
   "main": "./index.js",
   "types": "./index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wra-bradshaw/typst-wasm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wra-bradshaw/typst-wasm/issues"
+  },
+  "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
   "exports": {
     ".": {
       "types": "./index.d.ts",
