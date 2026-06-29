@@ -77,6 +77,8 @@ jobs:
 
       - name: Publish npm packages
         run: |
+          npm -v
+
           set -euo pipefail
 
           publish_package() {
