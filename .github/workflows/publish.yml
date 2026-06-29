@@ -15,10 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm
 
-    defaults:
-      run:
-        shell: nix develop "$GITHUB_WORKSPACE#ci" --command bash -euo pipefail {0}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,7 +24,9 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-      - uses: DeterminateSystems/magic-nix-cache-action@v13
+
+      - name: Setup Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
         with:
           use-flakehub: false
 
@@ -36,18 +34,22 @@ jobs:
         run: |
           rm -rf .nix-release
           mkdir -p .nix-release
+
           nix build .#publish-fonts --out-link .nix-release/fonts
           nix build .#publish-engine-wasm --out-link .nix-release/engine-wasm
           nix build .#publish-typst-wasm --out-link .nix-release/typst-wasm
 
       - name: Publish @typst-wasm/fonts
         working-directory: .nix-release/fonts
-        run: npm publish --access public --provenance
+        run: |
+          nix develop "$GITHUB_WORKSPACE#ci" --command npm publish --access public --provenance
 
       - name: Publish @typst-wasm/engine-wasm
         working-directory: .nix-release/engine-wasm
-        run: npm publish --access public --provenance
+        run: |
+          nix develop "$GITHUB_WORKSPACE#ci" --command npm publish --access public --provenance
 
       - name: Publish typst-wasm
         working-directory: .nix-release/typst-wasm
-        run: npm publish --access public --provenance
+        run: |
+          nix develop "$GITHUB_WORKSPACE#ci" --command npm publish --access public --provenance
