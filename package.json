@@ -35,11 +35,7 @@
           },
           {
             "file": "packages/typst-wasm/package.json",
-            "path": [
-              "version",
-              "dependencies.@typst-wasm/engine-wasm",
-              "dependencies.@typst-wasm/fonts"
-            ]
+            "path": "version"
           }
         ]
       }
