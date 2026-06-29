@@ -37,7 +37,7 @@
         }:
         let
           nodeOverlay = final: prev: {
-            nodejs = prev.nodejs_26;
+            nodejs = prev.nodejs_24;
             pnpm = prev.pnpm_11;
           };
 
@@ -57,7 +57,11 @@
 
           devShells.default = pkgs.mkShell {
             inputsFrom = [ config.devShells.typst-wasm ];
-            packages = [ config.formatter ];
+            packages = [
+              config.formatter
+              pkgs.nodejs
+              pkgs.pnpm
+            ];
             shellHook = "";
           };
 
