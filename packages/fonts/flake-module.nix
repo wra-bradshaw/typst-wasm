@@ -13,7 +13,7 @@
       packages.publish-fonts = fonts;
 
       devShells.fonts = pkgs.mkShell {
-        packages = [ pkgs.nodejs_26 ];
+        packages = [ pkgs.nodejs ];
         shellHook = "";
       };
     };

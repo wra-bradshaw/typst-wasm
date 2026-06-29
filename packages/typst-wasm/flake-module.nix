@@ -8,11 +8,11 @@
     }:
     let
       typstWasmNativeBuildInputs = with pkgs; [
-        nodejs_26
+        nodejs
         bun
         deno
         gnutar
-        pnpm_10
+        pnpm
       ];
 
       typst-wasm = pkgs.callPackage ./package.nix {

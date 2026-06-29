@@ -29,7 +29,7 @@
         [
           rustToolchain
           binaryen
-          nodejs_26
+          nodejs
           wasm-bindgen-cli_0_2_121
         ]
         ++ (lib.optionals stdenv.isDarwin [

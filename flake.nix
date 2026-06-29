@@ -36,9 +36,17 @@
           ...
         }:
         let
+          nodeOverlay = final: prev: {
+            nodejs = prev.nodejs_26;
+            pnpm = prev.pnpm_11;
+          };
+
           pkgs = import inputs.nixpkgs {
             inherit system;
-            overlays = [ inputs.fenix.overlays.default ];
+            overlays = [
+              inputs.fenix.overlays.default
+              nodeOverlay
+            ];
             config.allowUnfree = true;
           };
         in
@@ -51,6 +59,13 @@
             inputsFrom = [ config.devShells.typst-wasm ];
             packages = [ config.formatter ];
             shellHook = "";
+          };
+
+          devShells.ci = pkgs.mkShell {
+            packages = [
+              pkgs.nodejs
+              pkgs.pnpm
+            ];
           };
         };
     };

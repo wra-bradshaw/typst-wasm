@@ -16,16 +16,16 @@ let
     inherit pname;
     version = "deps";
     src = workspaceRoot;
-    pnpm = pkgs.pnpm_10;
+    pnpm = pkgs.pnpm;
     fetcherVersion = 3;
     hash = "sha256-yJE+sLC03ri4scPQumY/Ga54deXObLvhF03W/5b74aM=";
   };
 
   pnpmNativeBuildInputs = nativeBuildInputs ++ [
     pkgs.jq
-    pkgs.nodejs_26
+    pkgs.nodejs
     pkgs.pnpmConfigHook
-    pkgs.pnpm_10
+    pkgs.pnpm
   ];
 
   prepareBuildArtifacts = ''
