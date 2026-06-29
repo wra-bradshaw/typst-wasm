@@ -163,3 +163,9 @@ impl TypstCompiler {
                 .contains_key(&id))
     }
 }
+
+impl Default for TypstCompiler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
