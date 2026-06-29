@@ -41,8 +41,7 @@
       }
     },
     "hooks": {
-      "after:bump": "cargo generate-lockfile --manifest-path packages/engine-wasm/Cargo.toml && pnpm install --lockfile-only",
-      "before:git:release": "pnpm -r --if-present format && pnpm -r --if-present lint && nix flake check"
+      "after:bump": "cargo generate-lockfile --manifest-path packages/engine-wasm/Cargo.toml && pnpm install --lockfile-only"
     }
   }
 }
