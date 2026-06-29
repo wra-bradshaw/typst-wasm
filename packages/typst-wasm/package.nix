@@ -9,7 +9,7 @@ let
   lib = pkgs.lib;
   workspaceRoot = ../..;
   pname = "typst-wasm";
-  version = "0.1.0";
+  version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
   packageDir = "packages/typst-wasm";
 
   pnpmDeps = pkgs.fetchPnpmDeps {

@@ -20,7 +20,7 @@ let
 
   commonArgs = {
     pname = "typst-wasm-wasm";
-    version = "0.1.0";
+    version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
     inherit cargoVendorDir src;
     strictDeps = true;
     doCheck = false;

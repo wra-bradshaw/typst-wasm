@@ -1,6 +1,6 @@
 [package]
 name = "typst-wasm"
-version = "0.1.0"
+version = "0.0.2-alpha"
 edition = "2024"
 
 [package.metadata.wasm-pack.profile.release]

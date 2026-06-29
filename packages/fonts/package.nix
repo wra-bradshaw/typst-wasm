@@ -1,9 +1,10 @@
 { pkgs }:
 
 let
-  version = "7.1.1";
+  version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
+  fontVersion = "7.1.1";
   fontSource = pkgs.fetchzip {
-    url = "https://download.gnu.org.ua/release/newcm/newcm-${version}.txz";
+    url = "https://download.gnu.org.ua/release/newcm/newcm-${fontVersion}.txz";
     hash = "sha256-js0AaEUe4WRPoWZloH33ahNxbl+PUcV36M3oAFN2gtQ=";
     stripRoot = true;
   };
