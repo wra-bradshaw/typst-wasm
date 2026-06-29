@@ -13,7 +13,8 @@ let
   packageDir = "packages/typst-wasm";
 
   pnpmDeps = pkgs.fetchPnpmDeps {
-    inherit pname version;
+    inherit pname;
+    version = "deps";
     src = workspaceRoot;
     pnpm = pkgs.pnpm_10;
     fetcherVersion = 3;
