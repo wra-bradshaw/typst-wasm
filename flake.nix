@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1";
+    nixpkgs-node.url = "github:NixOS/nixpkgs/346dd96ad74dc4457a9db9de4f4f57dab2e5731d";
     flake-parts.url = "github:hercules-ci/flake-parts";
     crane.url = "github:ipetkov/crane";
     fenix = {
@@ -36,8 +37,19 @@
           ...
         }:
         let
+          pkgs-node = import inputs.nixpkgs-node {
+            inherit system;
+          };
+          nodejsPinned = pkgs-node.nodejs_24 // {
+            override =
+              args:
+              pkgs-node.nodejs_24.override (builtins.removeAttrs args [
+                "nodejs-slim"
+              ]);
+          };
+
           nodeOverlay = final: prev: {
-            nodejs = prev.nodejs_24;
+            nodejs = nodejsPinned;
             pnpm = prev.pnpm_11;
           };
 

@@ -18,7 +18,7 @@ let
     src = workspaceRoot;
     pnpm = pkgs.pnpm;
     fetcherVersion = 3;
-    hash = "sha256-yJE+sLC03ri4scPQumY/Ga54deXObLvhF03W/5b74aM=";
+    hash = pkgs.lib.fakeHash;
   };
 
   pnpmNativeBuildInputs = nativeBuildInputs ++ [
