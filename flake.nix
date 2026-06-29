@@ -50,7 +50,7 @@
 
           nodeOverlay = final: prev: {
             nodejs = nodejsPinned;
-            pnpm = prev.pnpm_11;
+            pnpm = prev.pnpm_11.override { nodejs = nodejsPinned; };
           };
 
           pkgs = import inputs.nixpkgs {
