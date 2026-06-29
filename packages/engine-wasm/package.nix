@@ -56,7 +56,7 @@ let
         rustToolchain
         binaryen
         nodejs_26
-        wasm-bindgen-cli_0_2_108
+        wasm-bindgen-cli_0_2_121
       ]
       ++ (lib.optionals stdenv.isDarwin [
         apple-sdk
