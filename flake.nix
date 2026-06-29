@@ -40,17 +40,30 @@
           pkgs-node = import inputs.nixpkgs-node {
             inherit system;
           };
+
+          nodejsSlimPinned = pkgs-node.nodejs-slim_24 // {
+            override =
+              args:
+              pkgs-node.nodejs-slim_24.override (
+                removeAttrs args [
+                  "nodejs-slim"
+                ]
+              );
+          };
           nodejsPinned = pkgs-node.nodejs_24 // {
             override =
               args:
-              pkgs-node.nodejs_24.override (builtins.removeAttrs args [
-                "nodejs-slim"
-              ]);
+              pkgs-node.nodejs_24.override (
+                removeAttrs args [
+                  "nodejs-slim"
+                ]
+              );
           };
 
           nodeOverlay = final: prev: {
             nodejs = nodejsPinned;
-            pnpm = prev.pnpm_11.override { nodejs = nodejsPinned; };
+            nodejs-slim = nodejsSlimPinned;
+            pnpm = prev.pnpm_11.override { nodejs-slim = nodejsSlimPinned; };
           };
 
           pkgs = import inputs.nixpkgs {
