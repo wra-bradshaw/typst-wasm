@@ -3,6 +3,50 @@
   "private": true,
   "packageManager": "pnpm",
   "scripts": {
-    "fix": "pnpm -r --if-present fix"
+    "fix": "pnpm -r --if-present fix",
+    "release": "release-it"
+  },
+  "devDependencies": {
+    "@release-it/bumper": "^7.0.6",
+    "release-it": "^19.0.5"
+  },
+  "release-it": {
+    "git": {
+      "commitMessage": "chore: release v${version}",
+      "tagName": "v${version}",
+      "requireCleanWorkingDir": true
+    },
+    "github": {
+      "release": false
+    },
+    "npm": false,
+    "plugins": {
+      "@release-it/bumper": {
+        "in": "packages/typst-wasm/package.json",
+        "out": [
+          "packages/fonts/package.json",
+          {
+            "file": "packages/engine-wasm/package.json",
+            "path": "version"
+          },
+          {
+            "file": "packages/engine-wasm/Cargo.toml",
+            "path": "package.version"
+          },
+          {
+            "file": "packages/typst-wasm/package.json",
+            "path": [
+              "version",
+              "dependencies.@typst-wasm/engine-wasm",
+              "dependencies.@typst-wasm/fonts"
+            ]
+          }
+        ]
+      }
+    },
+    "hooks": {
+      "after:bump": "cargo generate-lockfile --manifest-path packages/engine-wasm/Cargo.toml && pnpm install --lockfile-only",
+      "before:git:release": "pnpm -r --if-present format && pnpm -r --if-present lint && nix flake check"
+    }
   }
 }
