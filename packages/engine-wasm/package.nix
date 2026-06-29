@@ -8,22 +8,57 @@
 let
   lib = pkgs.lib;
   stdenv = pkgs.stdenv;
-  src = craneLib.cleanCargoSource ./.;
+  packageVersion = (builtins.fromJSON (builtins.readFile ./package.json)).version;
+  cacheVersion = "0.0.0+nix-cache";
+  tomlFormat = pkgs.formats.toml { };
+  cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+  cargoLock = builtins.fromTOML (builtins.readFile ./Cargo.lock);
+  normalizedCargoToml = tomlFormat.generate "Cargo.toml" (
+    lib.recursiveUpdate cargoToml { package.version = cacheVersion; }
+  );
+  normalizedCargoLock = tomlFormat.generate "Cargo.lock" (
+    cargoLock
+    // {
+      package = map (
+        package:
+        if package.name == cargoToml.package.name && !(package ? source) then
+          package // { version = cacheVersion; }
+        else
+          package
+      ) cargoLock.package;
+    }
+  );
+  sourceWithoutVersionedManifests = lib.cleanSourceWith {
+    src = lib.cleanSource ./.;
+    name = "typst-wasm-engine-wasm-source";
+    filter =
+      path: type:
+      let
+        base = baseNameOf path;
+      in
+      craneLib.filterCargoSources path type && base != "Cargo.toml" && base != "Cargo.lock";
+  };
+  src = pkgs.runCommand "typst-wasm-engine-wasm-cache-src" { } ''
+    cp -R --no-preserve=mode,ownership ${sourceWithoutVersionedManifests}/. "$out"
+    cp ${normalizedCargoToml} "$out/Cargo.toml"
+    cp ${normalizedCargoLock} "$out/Cargo.lock"
+  '';
   cargoVendorDir = craneLib.vendorMultipleCargoDeps {
     inherit (craneLib.findCargoFiles src) cargoConfigs;
 
     cargoLockList = [
-      ./Cargo.lock
+      normalizedCargoLock
       "${rustSrc}/lib/rustlib/src/rust/library/Cargo.lock"
     ];
   };
 
   commonArgs = {
-    pname = "typst-wasm-wasm";
-    version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
+    pname = "typst-wasm-engine-wasm";
+    version = "cache";
     inherit cargoVendorDir src;
     strictDeps = true;
     doCheck = false;
+    cargoBuildCommand = "cargo build --profile release";
     cargoExtraArgs = "--target wasm32-unknown-unknown -Z build-std=std,panic_abort";
     CARGO_BUILD_TARGET = "wasm32-unknown-unknown";
     CARGO_TARGET_DIR = "$TMPDIR/typst-wasm-target";
@@ -64,28 +99,47 @@ let
       ]);
   };
 
+  cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+
+  wasmArtifacts = craneLib.buildPackage (
+    commonArgs
+    // {
+      inherit cargoArtifacts;
+
+      installPhaseCommand = ''
+        mkdir -p "$out/dist"
+
+        wasm-bindgen \
+          --target web \
+          --out-dir "$out/dist" \
+          "$CARGO_TARGET_DIR/$CARGO_BUILD_TARGET/release/typst_wasm.wasm"
+
+        wasm-opt -O4 "$out/dist/typst_wasm_bg.wasm" -o "$out/dist/typst_wasm_bg.wasm"
+
+        WASM_OUTPUT_DIR="$out/dist" node ${./scripts/patch-wasm-bindgen.js}
+      '';
+    }
+  );
 in
-craneLib.buildPackage (
-  commonArgs
-  // {
-    pname = "typst-wasm-engine-wasm-npm-package";
+pkgs.stdenvNoCC.mkDerivation {
+  pname = "typst-wasm-engine-wasm-npm-package";
+  version = packageVersion;
 
-    cargoBuildCommand = "cargo build --profile release";
+  dontUnpack = true;
 
-    installPhaseCommand = ''
-      mkdir -p "$out/dist"
-      cp ${./package.json} "$out/package.json"
-      cp ${./index.js} "$out/index.js"
-      cp ${./index.d.ts} "$out/index.d.ts"
+  installPhase = ''
+    runHook preInstall
 
-      wasm-bindgen \
-        --target web \
-        --out-dir "$out/dist" \
-        "$CARGO_TARGET_DIR/$CARGO_BUILD_TARGET/release/typst_wasm.wasm"
+    mkdir -p "$out"
+    cp ${./package.json} "$out/package.json"
+    cp ${./index.js} "$out/index.js"
+    cp ${./index.d.ts} "$out/index.d.ts"
+    cp -R ${wasmArtifacts}/dist "$out/dist"
 
-      wasm-opt -O4 "$out/dist/typst_wasm_bg.wasm" -o "$out/dist/typst_wasm_bg.wasm"
+    runHook postInstall
+  '';
 
-      WASM_OUTPUT_DIR="$out/dist" node ${./scripts/patch-wasm-bindgen.js}
-    '';
-  }
-)
+  passthru = {
+    inherit cargoArtifacts wasmArtifacts;
+  };
+}
