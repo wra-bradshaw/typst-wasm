@@ -96,6 +96,17 @@ describe("worker service lifecycle", () => {
     expect(workerState.terminateCount).toBe(1);
   });
 
+  it("rejects commands after dispose", async () => {
+    const workerService = await makeService();
+
+    await workerService.init("first.wasm");
+    await workerService.dispose();
+
+    expect(() => workerService.compile({ format: "svg" })).toThrow(
+      "Compiler has been disposed",
+    );
+  });
+
   it("surfaces init failures and allows a later retry", async () => {
     const workerService = await makeService();
 
