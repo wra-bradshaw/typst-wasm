@@ -19,7 +19,7 @@ let
       "typst-wasm"
     ];
     fetcherVersion = 4;
-    hash = "sha256-J2Z6cfW3In3ATja4cmhy3KMQvV+HiEoQHGxaIj5EKtQ=";
+    hash = "sha256-M6c700sSI5Q37aY6xSlNFdp541TmNSyK87zNul4LXPo";
   };
 
   pnpmNativeBuildInputs = nativeBuildInputs ++ [
