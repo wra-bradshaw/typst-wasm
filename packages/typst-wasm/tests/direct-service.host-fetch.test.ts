@@ -16,7 +16,10 @@ const wasmState = vi.hoisted(() => ({
 }));
 
 vi.mock("@typst-wasm/engine-wasm/bridge", () => ({
-  registerHostFetch: (hostId: number, hostFetch: (...args: number[]) => unknown) => {
+  registerHostFetch: (
+    hostId: number,
+    hostFetch: (...args: number[]) => unknown,
+  ) => {
     bridgeState.hostFetchers.set(hostId, hostFetch);
   },
   unregisterHostFetch: (hostId: number) => {
@@ -151,7 +154,10 @@ describe("DirectService host fetch routing", () => {
     const first = new DirectService(new FileLoaderManager([makeLoader(1)]));
     const second = new DirectService(new FileLoaderManager([makeLoader(2)]));
 
-    await Promise.all([first.init("ignored.wasm"), second.init("ignored.wasm")]);
+    await Promise.all([
+      first.init("ignored.wasm"),
+      second.init("ignored.wasm"),
+    ]);
 
     const [firstResult, secondResult] = await Promise.all([
       first.compile({
