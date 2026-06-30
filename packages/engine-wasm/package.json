@@ -17,15 +17,24 @@
       "types": "./dist/typst_wasm.d.ts",
       "default": "./dist/typst_wasm.js"
     },
+    "./bridge": {
+      "types": "./dist/bridge.d.ts",
+      "default": "./dist/bridge.js"
+    },
     "./typst_wasm.js": "./dist/typst_wasm.js",
     "./typst_wasm_bg.wasm": "./dist/typst_wasm_bg.wasm"
   },
   "scripts": {
     "build": "nix run ../..#build-artifact -- wasm",
+    "build:bridge": "tsdown",
     "fix": "cargo fmt --all && cargo clippy --fix --allow-dirty --allow-staged --target wasm32-unknown-unknown -Z build-std=std,panic_abort",
     "lint": "cargo clippy --target wasm32-unknown-unknown -Z build-std=std,panic_abort -- -D warnings",
     "format": "cargo fmt --all -- --check",
     "format:fix": "cargo fmt --all"
+  },
+  "devDependencies": {
+    "tsdown": "^0.20.3",
+    "typescript": "^5.9.3"
   },
   "files": [
     "dist"

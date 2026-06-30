@@ -19,6 +19,7 @@ pub(crate) enum FileEntry {
 
 #[wasm_bindgen]
 pub struct TypstCompiler {
+    pub(crate) host_id: u32,
     pub(crate) library: LazyHash<Library>,
     pub(crate) fonts: Vec<Font>,
     pub(crate) font_book: LazyHash<FontBook>,
@@ -29,10 +30,11 @@ pub struct TypstCompiler {
 #[wasm_bindgen]
 impl TypstCompiler {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> Self {
+    pub fn new(host_id: u32) -> Self {
         let fonts = Vec::new();
         let font_book = FontBook::from_fonts(&fonts);
         Self {
+            host_id,
             library: LazyHash::new(Library::default()),
             fonts,
             font_book: LazyHash::new(font_book),
@@ -139,7 +141,7 @@ fn file_id(path: &str) -> Result<FileId, String> {
 
 impl Default for TypstCompiler {
     fn default() -> Self {
-        Self::new()
+        Self::new(0)
     }
 }
 

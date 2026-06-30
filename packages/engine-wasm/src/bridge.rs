@@ -1,17 +1,25 @@
-#[link(wasm_import_module = "bridge")]
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen(module = "@typst-wasm/engine-wasm/bridge")]
 unsafe extern "C" {
-    fn host_fetch(path_ptr: *const u8, path_len: u32, result_len_ptr: *mut u32) -> *mut u8;
+    fn host_fetch(
+        host_id: u32,
+        path_ptr: *const u8,
+        path_len: u32,
+        result_len_ptr: *mut u32,
+    ) -> *mut u8;
 }
 
 pub struct ResourceBridge;
 
 impl ResourceBridge {
-    pub fn request_file(path: &str) -> Result<Vec<u8>, String> {
+    pub fn request_file(host_id: u32, path: &str) -> Result<Vec<u8>, String> {
         let bytes = path.as_bytes();
         let mut result_len: u32 = 0;
 
         let result_ptr = unsafe {
             host_fetch(
+                host_id,
                 bytes.as_ptr(),
                 bytes.len() as u32,
                 &mut result_len as *mut u32,

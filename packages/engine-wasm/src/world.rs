@@ -72,7 +72,7 @@ impl World for TypstCompiler {
             id.vpath().get_without_slash().to_string()
         };
 
-        match ResourceBridge::request_file(&path) {
+        match ResourceBridge::request_file(self.host_id, &path) {
             Ok(data) => {
                 let bytes = Bytes::new(data);
                 self.files

@@ -8,6 +8,7 @@
 let
   lib = pkgs.lib;
   stdenv = pkgs.stdenv;
+  workspaceRoot = ../..;
   packageVersion = (builtins.fromJSON (builtins.readFile ./package.json)).version;
   src = lib.cleanSourceWith {
     src = lib.cleanSource ./.;
@@ -80,16 +81,58 @@ let
         mkdir -p "$out/dist"
 
         wasm-bindgen \
-          --target web \
+          --target bundler \
           --out-dir "$out/dist" \
           "$CARGO_TARGET_DIR/$CARGO_BUILD_TARGET/release/typst_wasm.wasm"
 
         wasm-opt -O4 "$out/dist/typst_wasm_bg.wasm" -o "$out/dist/typst_wasm_bg.wasm"
-
-        WASM_OUTPUT_DIR="$out/dist" node ${./scripts/patch-wasm-bindgen.js}
       '';
     }
   );
+
+  bridgeDeps = pkgs.fetchPnpmDeps {
+    pname = "typst-wasm-engine-wasm-bridge";
+    version = "deps";
+    src = workspaceRoot;
+    pnpm = pkgs.pnpm;
+    pnpmWorkspaces = [
+      "@typst-wasm/engine-wasm"
+      "@typst-wasm/fonts"
+      "typst-wasm"
+      "@typst-wasm/vite-plugin-typst"
+    ];
+    fetcherVersion = 4;
+    hash = "sha256-M6c700sSI5Q37aY6xSlNFdp541TmNSyK87zNul4LXPo=";
+  };
+
+  bridgeArtifacts = pkgs.stdenvNoCC.mkDerivation {
+    pname = "typst-wasm-engine-wasm-bridge";
+    version = packageVersion;
+    src = workspaceRoot;
+    pnpmDeps = bridgeDeps;
+    nativeBuildInputs = [
+      pkgs.nodejs
+      pkgs.pnpmConfigHook
+      pkgs.pnpm
+    ];
+
+    buildPhase = ''
+      runHook preBuild
+
+      pnpm --dir packages/engine-wasm exec tsdown
+
+      runHook postBuild
+    '';
+
+    installPhase = ''
+      runHook preInstall
+
+      mkdir -p "$out"
+      cp -R packages/engine-wasm/dist "$out/dist"
+
+      runHook postInstall
+    '';
+  };
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "typst-wasm-engine-wasm-artifacts";
@@ -100,8 +143,9 @@ pkgs.stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p "$out"
-    cp -R ${wasmArtifacts}/dist "$out/dist"
+    mkdir -p "$out/dist"
+    cp -R ${wasmArtifacts}/dist/. "$out/dist"
+    cp -R ${bridgeArtifacts}/dist/. "$out/dist"
 
     runHook postInstall
   '';
