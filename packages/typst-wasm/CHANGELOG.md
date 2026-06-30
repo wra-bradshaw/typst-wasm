@@ -1,5 +1,15 @@
 # typst-wasm
 
+## 0.1.1
+
+### Patch Changes
+
+- [`edabec2`](https://github.com/wra-bradshaw/typst-wasm/commit/edabec246ac9f042a339c6e83b6b08694e52abdd) Thanks [@wra-bradshaw](https://github.com/wra-bradshaw)! - patch bump to avoid publishing over
+
+- Updated dependencies []:
+  - @typst-wasm/fonts@0.1.1
+  - @typst-wasm/engine-wasm@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes

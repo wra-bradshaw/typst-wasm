@@ -1,6 +1,6 @@
 {
   "name": "typst-wasm",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Typst WebAssembly compiler service with worker and JSPI backends",
   "type": "module",
   "main": "./dist/index.js",
