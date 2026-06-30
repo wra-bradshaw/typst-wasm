@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import {
+  CompileError,
   createTypstCompiler,
   defaultFonts,
   type PackageCache,
@@ -11,9 +12,11 @@ import {
   type WasmDiagnostic,
 } from "typst-wasm";
 import wasmUrl from "typst-wasm/wasm";
+import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
 
 export interface TypstPluginOptions {
+  moduleOrPath?: TypstCompilerOptions["moduleOrPath"];
   backend?: TypstCompilerOptions["backend"];
   packageBaseUrl?: string;
   packageCache?: PackageCache;
@@ -27,31 +30,6 @@ export interface TypstCompiledModule {
   metadata: TypstDocumentMetadata | undefined;
   diagnostics: WasmDiagnostic[];
   dependencies: TypstLoadedFile[];
-}
-
-interface ResolvedConfig {
-  root: string;
-}
-
-interface TransformResult {
-  code: string;
-  map: { mappings: "" };
-}
-
-interface PluginContext {
-  addWatchFile(id: string): void;
-  error(error: Error): never;
-}
-
-interface VitePlugin {
-  name: string;
-  enforce?: "pre" | "post";
-  configResolved(config: ResolvedConfig): void;
-  transform(
-    this: PluginContext,
-    code: string,
-    id: string,
-  ): Promise<TransformResult | undefined>;
 }
 
 const typstRequestRE = /\.typ(?:$|\?)/;
@@ -95,6 +73,17 @@ const addDefaultFonts = async (
 
 const serialize = (value: unknown): string => JSON.stringify(value);
 
+const formatCompileError = (error: CompileError): Error => {
+  const diagnostics = error.diagnostics
+    .map((diagnostic) => diagnostic.formatted || diagnostic.message)
+    .join("\n\n");
+  const message = diagnostics
+    ? `${error.message}\n\n${diagnostics}`
+    : error.message;
+
+  return new Error(message, { cause: error });
+};
+
 const buildModuleCode = (
   compiled: TypstCompiledModule,
   htmlExpression: string,
@@ -117,7 +106,7 @@ const compileTypst = async (
 ): Promise<TypstCompiledModule> => {
   const main = toTypstProjectPath(root, id);
   const compiler = await createTypstCompiler({
-    moduleOrPath: wasmUrl,
+    moduleOrPath: options.moduleOrPath ?? wasmUrl,
     backend: options.backend,
     fileLoaders: [...(options.fileLoaders ?? []), makeProjectFileLoader(root)],
     packageBaseUrl: options.packageBaseUrl,
@@ -131,7 +120,15 @@ const compileTypst = async (
     }
 
     await compiler.addSource(main, source);
-    const result = await compiler.compile({ main, format: "html" });
+    const result = await compiler
+      .compile({ main, format: "html" })
+      .catch((error) => {
+        if (error instanceof CompileError) {
+          throw formatCompileError(error);
+        }
+
+        throw error;
+      });
     if (result.format !== "html") {
       throw new Error(`Expected Typst HTML output, received ${result.format}`);
     }
@@ -143,11 +140,11 @@ const compileTypst = async (
       dependencies: result.dependencies ?? [],
     };
   } finally {
-    await compiler.dispose();
+    await compiler.dispose().catch(() => undefined);
   }
 };
 
-export const typst = (options: TypstPluginOptions = {}): VitePlugin => {
+export const typst = (options: TypstPluginOptions = {}): Plugin => {
   let config: ResolvedConfig | undefined;
 
   return {
