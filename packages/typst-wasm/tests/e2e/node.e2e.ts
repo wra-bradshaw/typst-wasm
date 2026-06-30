@@ -6,7 +6,7 @@ import { supportsJspiBackend } from "../../src/compiler-backend";
 import { runCompilerE2eScenario } from "./scenario";
 
 describe("node e2e (jspi backend)", () => {
-  it("compiles and supports iterative file operations", async () => {
+  it("covers compiler behavior across files, formats, options, and errors", async () => {
     if (!supportsJspiBackend()) {
       throw new Error(
         "Node E2E requires JSPI support (WebAssembly.Suspending and WebAssembly.promising).",
@@ -24,9 +24,15 @@ describe("node e2e (jspi backend)", () => {
       backend: "jspi",
     });
 
-    expect(result.firstOutputLength).toBeGreaterThan(0);
-    expect(result.secondOutputLength).toBeGreaterThan(0);
+    expect(result.runtime).toBe("node");
+    expect(result.svgOutputLength).toBeGreaterThan(0);
+    expect(result.pdfFormatSeen).toBe(true);
+    expect(result.pngOutputLength).toBeGreaterThan(0);
+    expect(result.htmlFeatureErrorSeen).toBe(true);
+    expect(result.bundleFeatureErrorSeen).toBe(true);
     expect(result.filesBeforeClear).toContain("main.typ");
+    expect(result.filesBeforeClear).toContain("partial.typ");
+    expect(result.filesBeforeClear).toContain("data.txt");
     expect(result.filesAfterClear).toEqual([]);
   });
 });
