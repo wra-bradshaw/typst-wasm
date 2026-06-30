@@ -17,14 +17,12 @@ impl ResourceBridge {
         let bytes = path.as_bytes();
         let mut result_len: u32 = 0;
 
-        let result_ptr = unsafe {
-            host_fetch(
-                host_id,
-                bytes.as_ptr(),
-                bytes.len() as u32,
-                &mut result_len as *mut u32,
-            )
-        };
+        let result_ptr = host_fetch(
+            host_id,
+            bytes.as_ptr(),
+            bytes.len() as u32,
+            &mut result_len as *mut u32,
+        );
 
         if result_ptr.is_null() && result_len == 0 {
             return Err(format!("Host fetch failed for path: {}", path));
