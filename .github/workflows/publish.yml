@@ -20,10 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm
 
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,8 +45,6 @@ jobs:
           version: nix develop .#ci -c pnpm version-packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-          TURBO_TEAM: ${{ vars.TURBO_TEAM }}
 
       - name: Publish packages
         if: steps.changesets.outputs.hasChangesets == 'false'

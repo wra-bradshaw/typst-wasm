@@ -74,11 +74,67 @@
             ];
             config.allowUnfree = true;
           };
+
+          buildArtifactApp = pkgs.writeShellApplication {
+            name = "typst-wasm-build-artifact";
+            runtimeInputs = [
+              pkgs.coreutils
+              pkgs.git
+              pkgs.nix
+            ];
+            text = ''
+              usage() {
+                echo "Usage: nix run .#build-artifact -- <flake-attr> [artifact-path]" >&2
+                exit 64
+              }
+
+              if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+                usage
+              fi
+
+              repo_root=$(git rev-parse --show-toplevel)
+              flake_attr=$1
+              artifact_path=''${2:-dist}
+
+              case "$artifact_path" in
+                /*)
+                  echo "artifact-path must be relative and stay inside the package directory" >&2
+                  exit 64
+                  ;;
+              esac
+
+              case "$artifact_path" in
+                .. | ../* | */.. | */../*)
+                  echo "artifact-path must stay inside the package directory" >&2
+                  exit 64
+                  ;;
+              esac
+
+              package_root=$(pwd)
+              target="$package_root/$artifact_path"
+
+              if [ -e "$target" ]; then
+                chmod -R u+w "$target"
+                rm -rf "$target"
+              fi
+
+              out_path=$(nix build "$repo_root#$flake_attr" --no-link --print-out-paths)
+
+              mkdir -p "$(dirname "$target")"
+              cp -R "$out_path/$artifact_path" "$target"
+              chmod -R u+w "$target"
+            '';
+          };
         in
         {
           _module.args.pkgs = pkgs;
 
           formatter = pkgs.nixfmt-rfc-style;
+
+          apps.build-artifact = {
+            type = "app";
+            program = "${buildArtifactApp}/bin/typst-wasm-build-artifact";
+          };
 
           devShells.default = pkgs.mkShell {
             inputsFrom = [ config.devShells.typst-wasm ];

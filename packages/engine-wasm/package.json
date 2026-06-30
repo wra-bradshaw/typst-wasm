@@ -21,7 +21,7 @@
     "./typst_wasm_bg.wasm": "./dist/typst_wasm_bg.wasm"
   },
   "scripts": {
-    "build": "out_path=$(nix build ../..#wasm --no-link --print-out-paths) && rm -rf dist && mkdir -p dist && cp -R \"$out_path/dist/.\" dist",
+    "build": "nix run ../..#build-artifact -- wasm",
     "fix": "cargo fmt --all && cargo clippy --fix --allow-dirty --allow-staged --target wasm32-unknown-unknown -Z build-std=std,panic_abort",
     "lint": "cargo clippy --target wasm32-unknown-unknown -Z build-std=std,panic_abort -- -D warnings",
     "format": "cargo fmt --all -- --check",
