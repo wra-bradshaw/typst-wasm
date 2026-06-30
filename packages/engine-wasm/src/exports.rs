@@ -4,7 +4,7 @@ use typst::introspection::MetadataElem;
 use typst::layout::PageRanges;
 use typst::model::Document;
 use typst::utils::LazyHash;
-use typst::{Library, LibraryExt};
+use typst::{Feature, Features, Library, LibraryExt};
 use typst_html::{HtmlDocument, HtmlOptions};
 use typst_layout::{Page, PagedDocument};
 use typst_render::RenderOptions;
@@ -24,7 +24,11 @@ pub(crate) enum ExportFormat {
 
 impl TypstCompiler {
     pub(crate) fn configure_library(&mut self, options: &CompileOptions) {
-        let mut builder = Library::builder();
+        let mut builder = Library::builder().with_features(
+            [Feature::Html, Feature::Bundle]
+                .into_iter()
+                .collect::<Features>(),
+        );
 
         if let Some(inputs) = options.inputs.as_ref() {
             let mut dict = Dict::new();

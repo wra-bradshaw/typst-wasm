@@ -121,25 +121,31 @@ const shouldProcessMetaContent = (attrs: Map<string, string>): boolean => {
   return property ? allowedMetaProperty.has(property) : false;
 };
 
-const splitSrcset = (
-  value: string,
-): Array<{ url: string; descriptor: string; separator: string }> => {
-  const parts = value.split(",");
-  return parts.map((part, index) => {
-    const leading = part.match(/^\s*/)?.[0] ?? "";
-    const trimmed = part.trim();
-    const [url = "", ...descriptorParts] = trimmed.split(/\s+/);
-    const descriptor = descriptorParts.length
-      ? ` ${descriptorParts.join(" ")}`
-      : "";
+interface ImageCandidate {
+  url: string;
+  descriptor: string;
+}
 
-    return {
-      url,
-      descriptor,
-      separator: index === 0 ? leading : `,${leading}`,
-    };
-  });
-};
+const imageCandidateRE =
+  /(?:^|\s|(?<=,))(?<url>[\w-]+\([^)]*\)|"[^"]*"|'[^']*'|[^,]\S*[^,])\s*(?:\s(?<descriptor>\w[^,]+))?(?:,|$)/g;
+const escapedSpaceCharactersRE = /(?: |\\t|\\n|\\f|\\r)+/g;
+
+// Kept in sync with Vite's loose srcset/image-set parser. It intentionally
+// normalizes spacing so generated modules match Vite's own HTML processing.
+const parseSrcset = (value: string): ImageCandidate[] =>
+  Array.from(
+    value
+      .trim()
+      .replace(escapedSpaceCharactersRE, " ")
+      .replace(/\r?\n/, "")
+      .replace(/,\s+/, ", ")
+      .replaceAll(/\s+/g, " ")
+      .matchAll(imageCandidateRE),
+    ({ groups }) => ({
+      url: groups?.url?.trim() ?? "",
+      descriptor: groups?.descriptor?.trim() ?? "",
+    }),
+  ).filter(({ url }) => url !== "");
 
 const cssUrlRE = /url\(\s*(?:"([^"]+)"|'([^']+)'|([^)\s]+))\s*\)/g;
 
@@ -228,24 +234,26 @@ export const transformHtmlAssets = (html: string): HtmlAssetTransformResult => {
       const range = getAttrValueRange(html, attrLoc);
       if (!range) continue;
 
-      const expressions = splitSrcset(value).map((candidate) => {
+      const expressions = parseSrcset(value).map((candidate) => {
         if (!isAssetUrl(candidate.url)) {
           return JSON.stringify(
-            `${candidate.separator}${candidate.url}${candidate.descriptor}`,
+            candidate.url +
+              (candidate.descriptor ? ` ${candidate.descriptor}` : ""),
           );
         }
 
         return [
-          JSON.stringify(candidate.separator),
           importAsset(candidate.url),
-          JSON.stringify(candidate.descriptor),
+          JSON.stringify(
+            candidate.descriptor ? ` ${candidate.descriptor}` : "",
+          ),
         ].join(" + ");
       });
 
       replacements.push({
         start: range.start,
         end: range.end,
-        expression: expressions.join(" + "),
+        expression: expressions.join(' + ", " + '),
       });
     }
 
