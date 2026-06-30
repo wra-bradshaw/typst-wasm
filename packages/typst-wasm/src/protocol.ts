@@ -1,5 +1,4 @@
 import type { WasmCompileOptions, WasmCompileOutput } from "./wasm";
-import type { WasmModuleOrPath } from "./wasm-module";
 
 const INITIAL_SAB_SIZE = 1024 * 1024;
 const MAX_SAB_SIZE = 4 * 1024 * 1024 * 1024;
@@ -92,7 +91,8 @@ export interface TypstWorkerProtocol {
   init: {
     request: {
       sharedMemoryCommunication: SharedMemoryCommunication;
-      moduleOrPath: WasmModuleOrPath;
+      wasmURL: string;
+      glueURL: string;
     };
     response: void;
   };

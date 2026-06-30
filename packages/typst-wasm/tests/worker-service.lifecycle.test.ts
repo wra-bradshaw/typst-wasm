@@ -6,7 +6,8 @@ type WorkerMessage =
       kind: "init";
       requestId: number;
       payload: {
-        moduleOrPath: string;
+        wasmURL: string;
+        glueURL: string;
       };
     }
   | {
@@ -28,10 +29,10 @@ class MockTypstWorker {
     const msg = message as WorkerMessage;
 
     if (msg.kind === "init") {
-      const payload = msg.payload as { moduleOrPath: string };
+      const payload = msg.payload as { wasmURL: string; glueURL: string };
       workerState.initMessages.push(msg);
       queueMicrotask(() => {
-        if (payload.moduleOrPath === "bad.wasm") {
+        if (payload.wasmURL === "bad.wasm") {
           this.onmessage?.({
             data: {
               requestId: msg.requestId,
@@ -78,18 +79,22 @@ describe("worker service lifecycle", () => {
   it("treats repeated init as idempotent", async () => {
     const workerService = await makeService();
 
-    await workerService.init("first.wasm");
-    await workerService.init("second.wasm");
+    await workerService.init({ wasmURL: "first.wasm", glueURL: "first.js" });
+    await workerService.init({ wasmURL: "second.wasm", glueURL: "second.js" });
 
     expect(workerState.initMessages).toHaveLength(1);
     expect(workerState.initMessages[0]?.kind).toBe("init");
+    expect(workerState.initMessages[0]?.payload).toMatchObject({
+      wasmURL: "first.wasm",
+      glueURL: "first.js",
+    });
     await workerService.dispose();
   });
 
   it("makes dispose idempotent", async () => {
     const workerService = await makeService();
 
-    await workerService.init("first.wasm");
+    await workerService.init({ wasmURL: "first.wasm", glueURL: "first.js" });
     await workerService.dispose();
     await workerService.dispose();
 
@@ -99,7 +104,7 @@ describe("worker service lifecycle", () => {
   it("rejects commands after dispose", async () => {
     const workerService = await makeService();
 
-    await workerService.init("first.wasm");
+    await workerService.init({ wasmURL: "first.wasm", glueURL: "first.js" });
     await workerService.dispose();
 
     expect(() =>
@@ -117,10 +122,12 @@ describe("worker service lifecycle", () => {
   it("surfaces init failures and allows a later retry", async () => {
     const workerService = await makeService();
 
-    await expect(workerService.init("bad.wasm")).rejects.toThrow(
-      "Worker command failed: init",
-    );
-    await expect(workerService.init("good.wasm")).resolves.toBeUndefined();
+    await expect(
+      workerService.init({ wasmURL: "bad.wasm", glueURL: "bad.js" }),
+    ).rejects.toThrow("Worker command failed: init");
+    await expect(
+      workerService.init({ wasmURL: "good.wasm", glueURL: "good.js" }),
+    ).resolves.toBeUndefined();
 
     expect(workerState.initMessages).toHaveLength(2);
     await workerService.dispose();

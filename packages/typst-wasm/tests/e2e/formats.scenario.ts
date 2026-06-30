@@ -1,11 +1,11 @@
-import { CompileError, type TypstCompiler } from "typst-wasm";
-import { assert, assertRejects, type E2eScenarioOptions } from "./harness.ts";
+import type { TypstCompiler } from "typst-wasm";
+import { assert, type E2eScenarioOptions } from "./harness.ts";
 
 export type CompileFormatResult = {
   pdfFormatSeen: boolean;
   pngOutputLength: number;
-  htmlFeatureErrorSeen: boolean;
-  bundleFeatureErrorSeen: boolean;
+  htmlOutputLength: number;
+  bundleFileCount: number;
 };
 
 const multipageSource = `#set document(
@@ -71,30 +71,22 @@ export const runCompileFormatScenario = async (
     `[${options.runtime}] expected PNG signature`,
   );
 
-  await assertRejects(
-    compiler.compile({ format: "html" }),
-    (error) =>
-      error instanceof CompileError &&
-      error.diagnostics?.some((diagnostic) =>
-        diagnostic.message.includes("html export"),
-      ) === true,
-    `[${options.runtime}] expected HTML format to reject with feature diagnostic`,
+  const htmlResult = await compiler.compile({ format: "html" });
+  assert(
+    htmlResult.format === "html" && htmlResult.output.length > 0,
+    `[${options.runtime}] expected HTML output`,
   );
 
-  await assertRejects(
-    compiler.compile({ format: "bundle" }),
-    (error) =>
-      error instanceof CompileError &&
-      error.diagnostics?.some((diagnostic) =>
-        diagnostic.message.includes("html export"),
-      ) === true,
-    `[${options.runtime}] expected bundle format to reject with feature diagnostic`,
+  const bundleResult = await compiler.compile({ format: "bundle" });
+  assert(
+    bundleResult.format === "bundle" && bundleResult.files.length > 0,
+    `[${options.runtime}] expected bundle files`,
   );
 
   return {
     pdfFormatSeen: true,
     pngOutputLength: pngBytes.length,
-    htmlFeatureErrorSeen: true,
-    bundleFeatureErrorSeen: true,
+    htmlOutputLength: htmlResult.output.length,
+    bundleFileCount: bundleResult.files.length,
   };
 };

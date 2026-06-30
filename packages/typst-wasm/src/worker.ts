@@ -8,11 +8,8 @@ import {
   type MainToWorkerMessage,
   type WorkerToMainMessage,
 } from "./messages";
-import {
-  loadWasmModule,
-  type InitOutput,
-  type TypstCompilerInstance,
-} from "./wasm";
+import { type InitOutput, type TypstCompilerInstance } from "./wasm";
+import { loadWasmModule } from "./wasm-loader";
 
 export type { MainToWorkerMessage, WorkerToMainMessage } from "./messages";
 
@@ -186,7 +183,10 @@ const handleRequest = async (
       );
       let wasmModule: Awaited<ReturnType<typeof loadWasmModule>>;
       try {
-        wasmModule = await loadWasmModule();
+        wasmModule = await loadWasmModule({
+          wasmURL: request.payload.wasmURL,
+          glueURL: request.payload.glueURL,
+        });
       } catch (cause) {
         throw new WorkerCommandError(
           request.requestId,
@@ -198,7 +198,6 @@ const handleRequest = async (
 
       try {
         registerHostFetch(WORKER_HOST_ID, hostFetch);
-        void request.payload.moduleOrPath;
         wasmExports = wasmModule;
         compiler = new wasmModule.TypstCompiler(WORKER_HOST_ID);
       } catch (cause) {

@@ -9,12 +9,8 @@ export type RuntimeName = "bun" | "node" | "deno";
 
 export type E2eScenarioOptions = {
   runtime: RuntimeName;
-  moduleOrPath:
-    | RequestInfo
-    | URL
-    | Response
-    | BufferSource
-    | WebAssembly.Module;
+  wasmURL: string | URL;
+  glueURL: string | URL;
   fontData?: Uint8Array[];
   backend?: "auto" | "worker" | "jspi";
 };
@@ -88,7 +84,8 @@ export const makeCompiler = async (
   options: E2eScenarioOptions,
 ): Promise<TypstCompiler> => {
   const compiler = await createTypstCompiler({
-    moduleOrPath: options.moduleOrPath,
+    wasmURL: options.wasmURL,
+    glueURL: options.glueURL,
     backend: options.backend,
   });
 

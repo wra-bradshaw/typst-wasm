@@ -5,7 +5,12 @@ import {
 import { CompileError } from "./errors";
 import { FetchFileLoader, FileLoaderManager } from "./file-loader";
 import { PackageFileLoader, PackageManager } from "./package-manager";
-import { toWasmCompileOptions, type WasmCompileOutput } from "./wasm";
+import {
+  toWasmCompileOptions,
+  wasmBinaryUrl,
+  wasmGlueUrl,
+  type WasmCompileOutput,
+} from "./wasm";
 import type {
   CompileOptions,
   CompileResult,
@@ -173,8 +178,11 @@ class PromiseTypstCompiler implements TypstCompiler {
   }
 }
 
+const normalizeAssetUrl = (url: string | URL | undefined, fallback: URL) =>
+  url instanceof URL ? url.href : (url ?? fallback.href);
+
 export const createTypstCompiler = async (
-  options: TypstCompilerOptions,
+  options: TypstCompilerOptions = {},
 ): Promise<TypstCompiler> => {
   const packageManager = new PackageManager({
     fetch: options.fetch,
@@ -191,13 +199,16 @@ export const createTypstCompiler = async (
     fileLoaderManager,
   });
 
-  await backend.init(options.moduleOrPath);
+  await backend.init({
+    wasmURL: normalizeAssetUrl(options.wasmURL, wasmBinaryUrl),
+    glueURL: normalizeAssetUrl(options.glueURL, wasmGlueUrl),
+  });
   return new PromiseTypstCompiler(backend, fileLoaderManager);
 };
 
 export { SharedMemoryCommunication } from "./protocol";
 export type { MainToWorkerMessage, WorkerToMainMessage } from "./messages";
-export type { WasmModuleOrPath } from "./wasm-module";
+export { wasmBinaryUrl, wasmGlueUrl };
 export type { WasmDiagnostic } from "./wasm";
 export type {
   BundleFile,

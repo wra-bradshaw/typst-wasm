@@ -1,15 +1,15 @@
 /// <reference types="bun" />
 
 import { describe, expect, test } from "bun:test";
-import { wasmBinaryUrl } from "../../src/wasm";
+import { wasmBinaryUrl, wasmGlueUrl } from "../../src/wasm";
 import { runCompilerE2eScenario } from "./scenario";
 
 describe("bun e2e (worker backend)", () => {
   test("covers compiler behavior across files, formats, options, and errors", async () => {
-    const moduleOrPath = wasmBinaryUrl.href;
     const result = await runCompilerE2eScenario({
       runtime: "bun",
-      moduleOrPath,
+      wasmURL: wasmBinaryUrl.href,
+      glueURL: wasmGlueUrl.href,
       backend: "worker",
     });
 
@@ -17,8 +17,8 @@ describe("bun e2e (worker backend)", () => {
     expect(result.svgOutputLength).toBeGreaterThan(0);
     expect(result.pdfFormatSeen).toBe(true);
     expect(result.pngOutputLength).toBeGreaterThan(0);
-    expect(result.htmlFeatureErrorSeen).toBe(true);
-    expect(result.bundleFeatureErrorSeen).toBe(true);
+    expect(result.htmlOutputLength).toBeGreaterThan(0);
+    expect(result.bundleFileCount).toBeGreaterThan(0);
     expect(result.filesBeforeClear).toContain("main.typ");
     expect(result.filesBeforeClear).toContain("partial.typ");
     expect(result.filesBeforeClear).toContain("data.txt");

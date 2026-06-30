@@ -16,7 +16,8 @@ import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
 
 export interface TypstPluginOptions {
-  moduleOrPath?: TypstCompilerOptions["moduleOrPath"];
+  wasmURL?: TypstCompilerOptions["wasmURL"];
+  glueURL?: TypstCompilerOptions["glueURL"];
   backend?: TypstCompilerOptions["backend"];
   packageBaseUrl?: string;
   packageCache?: PackageCache;
@@ -106,7 +107,8 @@ const compileTypst = async (
 ): Promise<TypstCompiledModule> => {
   const main = toTypstProjectPath(root, id);
   const compiler = await createTypstCompiler({
-    moduleOrPath: options.moduleOrPath ?? wasmUrl,
+    wasmURL: options.wasmURL ?? wasmUrl,
+    glueURL: options.glueURL,
     backend: options.backend,
     fileLoaders: [...(options.fileLoaders ?? []), makeProjectFileLoader(root)],
     packageBaseUrl: options.packageBaseUrl,

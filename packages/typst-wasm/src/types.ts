@@ -1,5 +1,4 @@
 import type { WasmDiagnostic } from "./wasm";
-import type { WasmModuleOrPath } from "./wasm-module";
 
 export type CompileFormat = "pdf" | "png" | "svg" | "html" | "bundle";
 export type TypstFileKind = "project" | "package" | "url";
@@ -46,7 +45,8 @@ export interface TypstDocumentMetadata {
 }
 
 export interface TypstCompilerOptions {
-  moduleOrPath: WasmModuleOrPath;
+  wasmURL?: string | URL;
+  glueURL?: string | URL;
   backend?: "auto" | "worker" | "jspi";
   fileLoaders?: TypstFileLoader[];
   fetch?: typeof fetch;

@@ -9,14 +9,13 @@ import {
   WorkerError,
 } from "./errors";
 import type { FileLoaderManager } from "./file-loader";
-import type { WasmModuleOrPath } from "./wasm-module";
-import {
-  loadWasmModule,
-  type InitOutput,
-  type TypstCompilerInstance,
-  type WasmCompileOptions,
-  type WasmCompileOutput,
+import type {
+  InitOutput,
+  TypstCompilerInstance,
+  WasmCompileOptions,
+  WasmCompileOutput,
 } from "./wasm";
+import { loadWasmModule, type WasmAssetUrls } from "./wasm-loader";
 import { getJspiWebAssembly } from "./webassembly-jspi";
 
 const MAX_FETCH_ATTEMPTS = 3;
@@ -59,10 +58,15 @@ export class DirectService {
 
   constructor(private readonly fileLoaderManager: FileLoaderManager) {}
 
-  async init(moduleOrPath: WasmModuleOrPath): Promise<void> {
+  async init(assets: WasmAssetUrls): Promise<void> {
     this.assertNotDisposed();
-    this.initPromise ??= this.initDirect(moduleOrPath);
-    await this.initPromise;
+    this.initPromise ??= this.initDirect(assets);
+    try {
+      await this.initPromise;
+    } catch (error) {
+      this.initPromise = null;
+      throw error;
+    }
   }
 
   async dispose(): Promise<void> {
@@ -141,12 +145,12 @@ export class DirectService {
     return this.takeExternref(wasmExports, ret[0]) as WasmCompileOutput;
   }
 
-  private async initDirect(moduleOrPath: WasmModuleOrPath): Promise<void> {
+  private async initDirect(assets: WasmAssetUrls): Promise<void> {
     if (!supportsJspiBackend()) {
       throw new WorkerError("JSPI is unavailable in this runtime");
     }
 
-    const wasmModule = await loadWasmModule();
+    const wasmModule = await loadWasmModule(assets);
     const { Suspending, promising } = getJspiWebAssembly<WasmCompileOptions>();
     if (!Suspending || !promising) {
       throw new WorkerError("JSPI is unavailable in this runtime");
@@ -154,7 +158,6 @@ export class DirectService {
     const suspending = new Suspending(this.hostFetch);
     registerHostFetch(this.hostId, suspending);
 
-    void moduleOrPath;
     const wasmExports = wasmModule;
 
     this.wasmExports = wasmExports;

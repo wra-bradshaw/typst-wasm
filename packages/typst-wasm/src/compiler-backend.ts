@@ -1,13 +1,13 @@
 import { DirectService } from "./direct-service";
 import type { FileLoaderManager } from "./file-loader";
 import { WorkerService } from "./worker-service";
-import type { WasmModuleOrPath } from "./wasm-module";
 import type { WasmCompileOptions, WasmCompileOutput } from "./wasm";
+import type { WasmAssetUrls } from "./wasm-loader";
 export { supportsJspiBackend, supportsWorkerBackend } from "./backend-support";
 import { supportsJspiBackend, supportsWorkerBackend } from "./backend-support";
 
 export type CompilerBackendService = {
-  init(moduleOrPath: WasmModuleOrPath): Promise<void>;
+  init(assets: WasmAssetUrls): Promise<void>;
   dispose(): Promise<void>;
   addFont(data: Uint8Array): Promise<void>;
   addFile(path: string, data: Uint8Array): Promise<void>;

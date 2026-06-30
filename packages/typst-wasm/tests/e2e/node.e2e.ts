@@ -1,10 +1,9 @@
 /// <reference types="node" />
 
 import { defaultFonts } from "@typst-wasm/fonts";
-import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { supportsJspiBackend } from "../../src/compiler-backend";
-import { wasmBinaryUrl } from "../../src/wasm";
+import { wasmBinaryUrl, wasmGlueUrl } from "../../src/wasm";
 import { runCompilerE2eScenario } from "./scenario";
 
 describe("node e2e (jspi backend)", () => {
@@ -15,13 +14,12 @@ describe("node e2e (jspi backend)", () => {
       );
     }
 
-    const wasmBytes = await readFile(wasmBinaryUrl);
-    const moduleOrPath = new WebAssembly.Module(wasmBytes);
     const fontData = await Promise.all(defaultFonts.map((font) => font.load()));
 
     const result = await runCompilerE2eScenario({
       runtime: "node",
-      moduleOrPath,
+      wasmURL: wasmBinaryUrl.href,
+      glueURL: wasmGlueUrl.href,
       fontData,
       backend: "jspi",
     });
@@ -30,8 +28,8 @@ describe("node e2e (jspi backend)", () => {
     expect(result.svgOutputLength).toBeGreaterThan(0);
     expect(result.pdfFormatSeen).toBe(true);
     expect(result.pngOutputLength).toBeGreaterThan(0);
-    expect(result.htmlFeatureErrorSeen).toBe(true);
-    expect(result.bundleFeatureErrorSeen).toBe(true);
+    expect(result.htmlOutputLength).toBeGreaterThan(0);
+    expect(result.bundleFileCount).toBeGreaterThan(0);
     expect(result.filesBeforeClear).toContain("main.typ");
     expect(result.filesBeforeClear).toContain("partial.typ");
     expect(result.filesBeforeClear).toContain("data.txt");

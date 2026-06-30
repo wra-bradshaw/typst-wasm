@@ -1,6 +1,5 @@
-import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, expect, test } from "vitest";
 import typst from "../src";
 import { buildFixture, getChunk } from "./helpers";
@@ -10,15 +9,20 @@ const wasmPath = path.resolve(
   dirname,
   "../../engine-wasm/dist/typst_wasm_bg.wasm",
 );
-
-const loadWasmModule = async (): Promise<WebAssembly.Module> =>
-  new WebAssembly.Module(await readFile(wasmPath));
+const gluePath = path.resolve(
+  dirname,
+  "../../engine-wasm/dist/typst_wasm_bg.js",
+);
 
 describe("vite-plugin-typst fixtures", () => {
   test("builds a typst import into a JS module", async () => {
     const build = await buildFixture(
       "basic",
-      typst({ backend: "jspi", moduleOrPath: await loadWasmModule() }),
+      typst({
+        backend: "jspi",
+        wasmURL: pathToFileURL(wasmPath),
+        glueURL: pathToFileURL(gluePath),
+      }),
     );
     try {
       const main = getChunk(build, (chunk) => chunk.isEntry);

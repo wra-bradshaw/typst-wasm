@@ -1,15 +1,15 @@
 /// <reference types="deno" />
 
-import { wasmBinaryUrl } from "../../src/wasm.ts";
+import { wasmBinaryUrl, wasmGlueUrl } from "../../src/wasm.ts";
 import { runCompilerE2eScenario } from "./scenario.ts";
 
 Deno.test(
   "deno e2e (worker backend) covers compiler behavior across files, formats, options, and errors",
   async () => {
-    const moduleOrPath = wasmBinaryUrl.href;
     const result = await runCompilerE2eScenario({
       runtime: "deno",
-      moduleOrPath,
+      wasmURL: wasmBinaryUrl.href,
+      glueURL: wasmGlueUrl.href,
       backend: "worker",
     });
 
@@ -25,11 +25,11 @@ Deno.test(
     if (!(result.pngOutputLength > 0)) {
       throw new Error("Expected PNG length to be > 0");
     }
-    if (!result.htmlFeatureErrorSeen) {
-      throw new Error("Expected HTML feature error to be seen");
+    if (!(result.htmlOutputLength > 0)) {
+      throw new Error("Expected HTML output length to be > 0");
     }
-    if (!result.bundleFeatureErrorSeen) {
-      throw new Error("Expected bundle feature error to be seen");
+    if (!(result.bundleFileCount > 0)) {
+      throw new Error("Expected bundle file count to be > 0");
     }
     if (!result.filesBeforeClear.includes("main.typ")) {
       throw new Error("Expected filesBeforeClear to include main.typ");

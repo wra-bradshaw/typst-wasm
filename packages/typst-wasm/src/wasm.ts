@@ -14,6 +14,7 @@ export interface InitOutput {
     compilerPtr: number,
     options: WasmCompileOptions,
   ) => [number, number, number];
+  __wbindgen_start(): void;
   __wbindgen_malloc(size: number, align: number): number;
   __wbindgen_externrefs: WebAssembly.Table;
   __externref_table_dealloc(idx: number): void;
@@ -38,6 +39,12 @@ export const wasmBinaryUrl = new URL(
 );
 export default wasmBinaryUrl;
 
+export const wasmGlueUrl = new URL(
+  import.meta
+    .resolve("@typst-wasm/engine-wasm/typst_wasm_bg.wasm")
+    .replace(/\.wasm$/, ".js"),
+);
+
 export const toWasmCompileOptions = (
   options: CompileOptions = {},
 ): WasmCompileOptions => ({
@@ -48,6 +55,3 @@ export const toWasmCompileOptions = (
   pdf_standards: options.pdfStandards ?? null,
   ppi: options.ppi ?? null,
 });
-
-export const loadWasmModule = (): Promise<WasmModule> =>
-  import("@typst-wasm/engine-wasm");

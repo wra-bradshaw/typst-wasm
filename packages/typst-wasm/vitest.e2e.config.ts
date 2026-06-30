@@ -6,5 +6,10 @@ export default defineConfig({
     environment: "node",
     include: ["tests/e2e/node.e2e.ts"],
     testTimeout: 60000,
+    server: {
+      deps: {
+        external: ["@typst-wasm/engine-wasm", /engine-wasm/],
+      },
+    },
   },
 });

@@ -39,7 +39,7 @@ vi.mock("@typst-wasm/engine-wasm/bridge", () => ({
   },
 }));
 
-vi.mock("../src/wasm", async () => {
+vi.mock("../src/wasm-loader", async () => {
   const bridge = await import("@typst-wasm/engine-wasm/bridge");
 
   class TypstCompiler {
@@ -110,7 +110,12 @@ vi.mock("../src/wasm", async () => {
   };
 
   return {
-    loadWasmModule: async () => wasmModule,
+    loadWasmModule: async (assets: { wasmURL: string }) => {
+      if (assets.wasmURL === "bad.wasm") {
+        throw new Error("failed to load wasm");
+      }
+      return wasmModule;
+    },
   };
 });
 
@@ -155,8 +160,8 @@ describe("DirectService host fetch routing", () => {
     const second = new DirectService(new FileLoaderManager([makeLoader(2)]));
 
     await Promise.all([
-      first.init("ignored.wasm"),
-      second.init("ignored.wasm"),
+      first.init({ wasmURL: "ignored.wasm", glueURL: "ignored.js" }),
+      second.init({ wasmURL: "ignored.wasm", glueURL: "ignored.js" }),
     ]);
 
     const [firstResult, secondResult] = await Promise.all([
@@ -186,5 +191,19 @@ describe("DirectService host fetch routing", () => {
     await second.dispose();
 
     expect(bridgeState.hostFetchers.size).toBe(0);
+  });
+
+  it("surfaces init failures and allows a later retry", async () => {
+    const { DirectService } = await import("../src/direct-service");
+    const service = new DirectService(new FileLoaderManager([makeLoader(1)]));
+
+    await expect(
+      service.init({ wasmURL: "bad.wasm", glueURL: "bad.js" }),
+    ).rejects.toThrow("failed to load wasm");
+    await expect(
+      service.init({ wasmURL: "good.wasm", glueURL: "good.js" }),
+    ).resolves.toBeUndefined();
+
+    await service.dispose();
   });
 });
