@@ -93,9 +93,7 @@ describe("HTML asset transform", () => {
     ]);
     expect(result.htmlExpression).toContain("__typst_asset_0");
     // External script should be left alone
-    expect(result.htmlExpression).toContain(
-      "https://cdn.example.com/lib.js",
-    );
+    expect(result.htmlExpression).toContain("https://cdn.example.com/lib.js");
   });
 
   it("rewrites url() references inside inline style tags", () => {
