@@ -2,8 +2,8 @@
   "name": "@typst-wasm/engine-wasm",
   "version": "0.0.2",
   "type": "module",
-  "main": "./index.js",
-  "types": "./index.d.ts",
+  "main": "./dist/typst_wasm.js",
+  "types": "./dist/typst_wasm.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wra-bradshaw/typst-wasm.git"
@@ -14,8 +14,8 @@
   "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
   "exports": {
     ".": {
-      "types": "./index.d.ts",
-      "default": "./index.js"
+      "types": "./dist/typst_wasm.d.ts",
+      "default": "./dist/typst_wasm.js"
     },
     "./typst_wasm.js": "./dist/typst_wasm.js",
     "./typst_wasm_bg.wasm": "./dist/typst_wasm_bg.wasm"
@@ -28,8 +28,6 @@
     "format:fix": "cargo fmt --all"
   },
   "files": [
-    "index.js",
-    "index.d.ts",
     "dist"
   ]
 }

@@ -8,6 +8,11 @@ type PackageFileLoader = {
   getFile(spec: string): Promise<Uint8Array>;
 };
 
+export type FetchImpl = (
+  input: Parameters<typeof fetch>[0],
+  init?: Parameters<typeof fetch>[1],
+) => ReturnType<typeof fetch>;
+
 export type FetchBridge = {
   readonly sharedMemoryCommunication: SharedMemoryCommunication;
   readonly handleFetchRequest: (path: string) => Promise<void>;
@@ -16,7 +21,7 @@ export type FetchBridge = {
 export const makeFetchBridge = (
   packageLoader: PackageFileLoader,
   isDisposed: () => boolean,
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: FetchImpl = fetch,
 ): FetchBridge => {
   const sharedMemoryCommunication = new SharedMemoryCommunication();
 
@@ -50,7 +55,7 @@ export const makeFetchBridge = (
 
 const fetchPath = async (
   path: string,
-  fetchImpl: typeof fetch,
+  fetchImpl: FetchImpl,
 ): Promise<Uint8Array> => {
   try {
     const response = await fetchImpl(path);

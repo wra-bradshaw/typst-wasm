@@ -70,6 +70,13 @@ const normalizeCompileResult = (result: WasmCompileOutput): CompileResult => {
         })),
         diagnostics,
       };
+    default:
+      throw new CompileError(
+        `Unsupported compile output format: ${result.format}`,
+        {
+          diagnostics,
+        },
+      );
   }
 };
 

@@ -32,6 +32,7 @@ pub struct CompileOptions {
 pub struct PageOutput {
     pub page: usize,
     pub output_text: Option<String>,
+    #[tsify(type = "Uint8Array | null")]
     pub output_bytes: Option<Vec<u8>>,
 }
 
@@ -39,6 +40,7 @@ pub struct PageOutput {
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct BundleFile {
     pub path: String,
+    #[tsify(type = "Uint8Array")]
     pub data: Vec<u8>,
     pub media_type: Option<String>,
 }
@@ -49,6 +51,7 @@ pub struct CompileOutput {
     pub success: bool,
     pub format: String,
     pub output_text: Option<String>,
+    #[tsify(type = "Uint8Array | null")]
     pub output_bytes: Option<Vec<u8>>,
     pub pages: Vec<PageOutput>,
     pub files: Vec<BundleFile>,

@@ -18,6 +18,10 @@ import { getJspiWebAssembly } from "./webassembly-jspi";
 const MAX_FETCH_ATTEMPTS = 3;
 const textDecoder = new TextDecoder();
 
+type WasmBindgenPointer = {
+  readonly __wbg_ptr: number;
+};
+
 const retry = async <T>(
   task: () => Promise<T>,
   maxAttempts: number,
@@ -121,7 +125,7 @@ export class DirectService {
 
     let ret: [number, number, number];
     try {
-      ret = await compile(compiler.__wbg_ptr, options);
+      ret = await compile(this.compilerPointer(compiler), options);
     } catch (cause) {
       throw new WorkerError("Direct command failed: compile", { cause });
     }
@@ -235,5 +239,9 @@ export class DirectService {
     const value = wasmExports.__wbindgen_externrefs.get(idx);
     wasmExports.__externref_table_dealloc(idx);
     return value;
+  }
+
+  private compilerPointer(compiler: TypstCompilerInstance): number {
+    return (compiler as TypstCompilerInstance & WasmBindgenPointer).__wbg_ptr;
   }
 }
