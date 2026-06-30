@@ -67,6 +67,8 @@ Use the Nix shell for reproducible artifact builds. Outside Nix, install pnpm 11
 
 ## Commands
 
+`pnpm build` uses Turbo for workspace task ordering while package artifact builds are produced by Nix-backed derivations.
+
 ```bash
 pnpm build
 pnpm test
