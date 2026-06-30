@@ -9,7 +9,7 @@ import { createTypstCompiler, defaultFonts } from "typst-wasm";
 import wasmUrl from "typst-wasm/wasm";
 
 const compiler = await createTypstCompiler({
-  moduleOrPath: wasmUrl,
+  wasmURL: wasmUrl,
   backend: "auto",
 });
 
@@ -34,7 +34,7 @@ try {
 
 Supported compile formats are `pdf`, `png`, `svg`, `html`, and `bundle`. The public API is promise-based; Effect is no longer part of the runtime or package API.
 
-Compile options include `main`, `format`, `inputs`, `features`, `pages`, `ppi`, `pdfStandards`, `pdfTags`, `creationTimestamp`, `deps`, and `timings`. Browser and server resource loading can be customized with `fetch`, `packageBaseUrl`, and `packageCache` on `createTypstCompiler`.
+Compile options include `main`, `format`, `inputs`, `pages`, `ppi`, and `pdfStandards`. Browser and server resource loading can be customized with `fetch`, `packageBaseUrl`, and `packageCache` on `createTypstCompiler`.
 
 ## Requirements
 
