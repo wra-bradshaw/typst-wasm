@@ -1,6 +1,6 @@
 {
   "name": "@typst-wasm/engine-wasm",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "main": "./dist/typst_wasm.js",
   "types": "./dist/typst_wasm.d.ts",
