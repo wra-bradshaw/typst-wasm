@@ -22,6 +22,7 @@
         ./packages/fonts/flake-module.nix
         ./packages/engine-wasm/flake-module.nix
         ./packages/typst-wasm/flake-module.nix
+        ./packages/vite-plugin-typst/flake-module.nix
       ];
 
       systems = [

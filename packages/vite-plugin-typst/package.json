@@ -1,0 +1,55 @@
+{
+  "name": "vite-plugin-typst",
+  "version": "0.0.2-alpha.7",
+  "description": "Vite plugin for importing Typst documents as compiled HTML modules",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "author": "will-lol",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wra-bradshaw/typst-wasm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wra-bradshaw/typst-wasm/issues"
+  },
+  "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
+  "scripts": {
+    "build": "nix run ../..#build-artifact -- vite-plugin-typst",
+    "fix": "pnpm run format:fix && pnpm exec eslint . --fix",
+    "lint": "pnpm exec eslint . --max-warnings=0",
+    "test": "pnpm exec vitest run",
+    "format": "pnpm exec prettier . --check",
+    "format:fix": "pnpm exec prettier . --write",
+    "knip": "pnpm exec knip"
+  },
+  "peerDependencies": {
+    "vite": "^7.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.2.0",
+    "eslint": "^10.0.0",
+    "knip": "^6.17.1",
+    "prettier": "^3.8.4",
+    "tsdown": "^0.20.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.55.0",
+    "vitest": "^4.0.16"
+  },
+  "dependencies": {
+    "parse5": "^8.0.1",
+    "typst-wasm": "workspace:*"
+  }
+}
