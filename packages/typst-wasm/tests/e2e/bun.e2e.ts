@@ -1,5 +1,7 @@
-import { wasmBinaryUrl } from "@typst-wasm/engine-wasm";
+/// <reference types="bun" />
+
 import { describe, expect, test } from "bun:test";
+import { wasmBinaryUrl } from "../../src/wasm";
 import { runCompilerE2eScenario } from "./scenario";
 
 describe("bun e2e (worker backend)", () => {

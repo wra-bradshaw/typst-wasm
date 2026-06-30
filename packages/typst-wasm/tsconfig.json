@@ -1,5 +1,9 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["src/**/*", "scripts/**/*", "tests/**/*"],
-  "exclude": ["tests/e2e/**/*"]
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src/**/*", "scripts/**/*", "tests/**/*"]
 }

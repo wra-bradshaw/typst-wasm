@@ -1,4 +1,6 @@
-import { wasmBinaryUrl } from "@typst-wasm/engine-wasm";
+/// <reference types="deno" />
+
+import { wasmBinaryUrl } from "../../src/wasm.ts";
 import { runCompilerE2eScenario } from "./scenario.ts";
 
 Deno.test(

@@ -1,8 +1,10 @@
-import { wasmBinaryUrl } from "@typst-wasm/engine-wasm";
+/// <reference types="node" />
+
 import { defaultFonts } from "@typst-wasm/fonts";
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { supportsJspiBackend } from "../../src/compiler-backend";
+import { wasmBinaryUrl } from "../../src/wasm";
 import { runCompilerE2eScenario } from "./scenario";
 
 describe("node e2e (jspi backend)", () => {

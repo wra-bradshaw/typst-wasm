@@ -13,6 +13,6 @@
       "@typst-wasm/fonts": ["../fonts"],
       "@typst-wasm/engine-wasm": ["../engine-wasm"]
     },
-    "types": ["node", "tsdown-plugin-worker/types", "vitest/globals"]
+    "types": ["tsdown-plugin-worker/types"]
   }
 }
