@@ -18,7 +18,7 @@ let
       pnpmWorkspaceName
       "typst-wasm"
     ];
-    fetcherVersion = 3;
+    fetcherVersion = 4;
     hash = "sha256-J2Z6cfW3In3ATja4cmhy3KMQvV+HiEoQHGxaIj5EKtQ=";
   };
 
