@@ -28,8 +28,6 @@ const extractErrorMessage = (error: unknown): string => {
 
 const normalizeCompileResult = (result: WasmCompileOutput): CompileResult => {
   const diagnostics = result.diagnostics;
-  const deps = result.deps ?? undefined;
-  const timings = result.timings;
 
   switch (result.format) {
     case "pdf":
@@ -37,8 +35,6 @@ const normalizeCompileResult = (result: WasmCompileOutput): CompileResult => {
         format: "pdf",
         output: result.output_bytes ?? new Uint8Array(),
         diagnostics,
-        deps,
-        timings,
       };
     case "png":
       return {
@@ -48,8 +44,6 @@ const normalizeCompileResult = (result: WasmCompileOutput): CompileResult => {
           output: page.output_bytes ?? new Uint8Array(),
         })),
         diagnostics,
-        deps,
-        timings,
       };
     case "svg":
       return {
@@ -59,16 +53,12 @@ const normalizeCompileResult = (result: WasmCompileOutput): CompileResult => {
           output: page.output_text ?? "",
         })),
         diagnostics,
-        deps,
-        timings,
       };
     case "html":
       return {
         format: "html",
         output: result.output_text ?? "",
         diagnostics,
-        deps,
-        timings,
       };
     case "bundle":
       return {
@@ -79,8 +69,6 @@ const normalizeCompileResult = (result: WasmCompileOutput): CompileResult => {
           mediaType: file.media_type ?? undefined,
         })),
         diagnostics,
-        deps,
-        timings,
       };
   }
 };
@@ -173,7 +161,6 @@ export type {
   CompileFormat,
   CompileOptions,
   CompileResult,
-  DependencyInfo,
   PageOutput,
   PackageCache,
   TypstCompiler,

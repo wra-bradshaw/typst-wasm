@@ -9,15 +9,20 @@ use typst::{Library, LibraryExt};
 use wasm_bindgen::prelude::*;
 
 use crate::exports::ExportFormat;
-use crate::types::{CompileOptions, CompileOutput};
+use crate::types::{CompileFormat, CompileOptions, CompileOutput};
+
+#[derive(Clone)]
+pub(crate) enum FileEntry {
+    Source(Source),
+    Bytes(Bytes),
+}
 
 #[wasm_bindgen]
 pub struct TypstCompiler {
     pub(crate) library: LazyHash<Library>,
     pub(crate) fonts: Vec<Font>,
     pub(crate) font_book: LazyHash<FontBook>,
-    pub(crate) sources: RwLock<HashMap<FileId, Source>>,
-    pub(crate) files: RwLock<HashMap<FileId, Bytes>>,
+    pub(crate) files: RwLock<HashMap<FileId, FileEntry>>,
     pub(crate) main_id: Option<FileId>,
 }
 
@@ -31,7 +36,6 @@ impl TypstCompiler {
             library: LazyHash::new(Library::default()),
             fonts,
             font_book: LazyHash::new(font_book),
-            sources: RwLock::new(HashMap::new()),
             files: RwLock::new(HashMap::new()),
             main_id: None,
         }
@@ -54,26 +58,18 @@ impl TypstCompiler {
         let source = Source::new(id, text.to_string());
         self.files
             .write()
-            .map_err(|_| "Failed to acquire write lock on files".to_string())?
-            .remove(&id);
-        self.sources
-            .write()
-            .map_err(|_| "Failed to acquire write lock on sources".to_string())?
-            .insert(id, source);
+            .map_err(lock_write_files)?
+            .insert(id, FileEntry::Source(source));
         Ok(())
     }
 
     pub fn add_file(&mut self, path: &str, data: &[u8]) -> Result<(), String> {
         let id = file_id(path)?;
         let bytes = Bytes::new(data.to_vec());
-        self.sources
-            .write()
-            .map_err(|_| "Failed to acquire write lock on sources".to_string())?
-            .remove(&id);
         self.files
             .write()
-            .map_err(|_| "Failed to acquire write lock on files".to_string())?
-            .insert(id, bytes);
+            .map_err(lock_write_files)?
+            .insert(id, FileEntry::Bytes(bytes));
         Ok(())
     }
 
@@ -94,73 +90,45 @@ impl TypstCompiler {
 
         self.configure_library(&options);
 
-        match options.format.as_deref().unwrap_or("pdf") {
-            "pdf" => self.compile_paged(options, ExportFormat::Pdf),
-            "png" => self.compile_paged(options, ExportFormat::Png),
-            "svg" => self.compile_paged(options, ExportFormat::Svg),
-            "html" => self.compile_html(),
-            "bundle" => self.compile_bundle(),
-            other => Err(format!("Unsupported compile format: {}", other)),
+        match options.format {
+            CompileFormat::Pdf => self.compile_paged(options, ExportFormat::Pdf),
+            CompileFormat::Png => self.compile_paged(options, ExportFormat::Png),
+            CompileFormat::Svg => self.compile_paged(options, ExportFormat::Svg),
+            CompileFormat::Html => self.compile_html(),
+            CompileFormat::Bundle => self.compile_bundle(),
         }
     }
 
     pub fn remove_file(&mut self, path: &str) -> Result<(), String> {
         let id = file_id(path)?;
-        self.sources
-            .write()
-            .map_err(|_| "Failed to acquire write lock on sources".to_string())?
-            .remove(&id);
-        self.files
-            .write()
-            .map_err(|_| "Failed to acquire write lock on files".to_string())?
-            .remove(&id);
+        self.files.write().map_err(lock_write_files)?.remove(&id);
         Ok(())
     }
 
     pub fn clear_files(&mut self) -> Result<(), String> {
-        self.sources
-            .write()
-            .map_err(|_| "Failed to acquire write lock on sources".to_string())?
-            .clear();
-        self.files
-            .write()
-            .map_err(|_| "Failed to acquire write lock on files".to_string())?
-            .clear();
+        self.files.write().map_err(lock_write_files)?.clear();
         Ok(())
     }
 
     pub fn list_files(&self) -> Result<Vec<String>, String> {
-        let sources = self
-            .sources
-            .read()
-            .map_err(|_| "Failed to acquire read lock on sources".to_string())?;
-        let files = self
+        let mut paths: Vec<String> = self
             .files
             .read()
-            .map_err(|_| "Failed to acquire read lock on files".to_string())?;
-
-        let mut paths: Vec<String> = sources
+            .map_err(lock_read_files)?
             .keys()
-            .chain(files.keys())
             .map(|id| id.vpath().get_without_slash().to_string())
             .collect();
         paths.sort();
-        paths.dedup();
         Ok(paths)
     }
 
     pub fn has_file(&self, path: &str) -> Result<bool, String> {
         let id = file_id(path)?;
         Ok(self
-            .sources
+            .files
             .read()
-            .map_err(|_| "Failed to acquire read lock on sources".to_string())?
-            .contains_key(&id)
-            || self
-                .files
-                .read()
-                .map_err(|_| "Failed to acquire read lock on files".to_string())?
-                .contains_key(&id))
+            .map_err(lock_read_files)?
+            .contains_key(&id))
     }
 }
 
@@ -173,4 +141,12 @@ impl Default for TypstCompiler {
     fn default() -> Self {
         Self::new()
     }
+}
+
+pub(crate) fn lock_read_files<T>(_: T) -> String {
+    "Failed to acquire read lock on files".to_string()
+}
+
+pub(crate) fn lock_write_files<T>(_: T) -> String {
+    "Failed to acquire write lock on files".to_string()
 }

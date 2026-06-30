@@ -59,18 +59,7 @@ impl TypstCompiler {
         let diagnostics = format_diagnostics(self, &result);
 
         match result.output {
-            Ok(document) => Ok(CompileOutput {
-                success: true,
-                format: "html".to_string(),
-                output_text: Some(html(&document)?),
-                output_bytes: None,
-                pages: Vec::new(),
-                files: Vec::new(),
-                diagnostics,
-                internal_error: None,
-                deps: None,
-                timings: None,
-            }),
+            Ok(document) => Ok(CompileOutput::html(html(&document)?, diagnostics)),
             Err(_) => Ok(CompileOutput::failed("html", diagnostics)),
         }
     }
@@ -80,22 +69,14 @@ impl TypstCompiler {
         let diagnostics = format_diagnostics(self, &result);
 
         match result.output {
-            Ok(document) => Ok(CompileOutput {
-                success: true,
-                format: "bundle".to_string(),
-                output_text: None,
-                output_bytes: None,
-                pages: Vec::new(),
-                files: vec![BundleFile {
+            Ok(document) => Ok(CompileOutput::bundle(
+                vec![BundleFile {
                     path: "index.html".to_string(),
                     data: html(&document)?.into_bytes(),
                     media_type: Some("text/html; charset=utf-8".to_string()),
                 }],
                 diagnostics,
-                internal_error: None,
-                deps: None,
-                timings: None,
-            }),
+            )),
             Err(_) => Ok(CompileOutput::failed("bundle", diagnostics)),
         }
     }
@@ -113,18 +94,7 @@ impl TypstCompiler {
         };
         let bytes = typst_pdf::pdf(document, &pdf_options).map_err(format_export_errors)?;
 
-        Ok(CompileOutput {
-            success: true,
-            format: "pdf".to_string(),
-            output_text: None,
-            output_bytes: Some(bytes),
-            pages: Vec::new(),
-            files: Vec::new(),
-            diagnostics,
-            internal_error: None,
-            deps: None,
-            timings: None,
-        })
+        Ok(CompileOutput::pdf(bytes, diagnostics))
     }
 
     fn export_png(
@@ -152,18 +122,7 @@ impl TypstCompiler {
             })
             .collect::<Result<Vec<_>, String>>()?;
 
-        Ok(CompileOutput {
-            success: true,
-            format: "png".to_string(),
-            output_text: None,
-            output_bytes: None,
-            pages,
-            files: Vec::new(),
-            diagnostics,
-            internal_error: None,
-            deps: None,
-            timings: None,
-        })
+        Ok(CompileOutput::pages("png", pages, diagnostics))
     }
 
     fn export_svg(
@@ -182,18 +141,7 @@ impl TypstCompiler {
             })
             .collect();
 
-        Ok(CompileOutput {
-            success: true,
-            format: "svg".to_string(),
-            output_text: None,
-            output_bytes: None,
-            pages,
-            files: Vec::new(),
-            diagnostics,
-            internal_error: None,
-            deps: None,
-            timings: None,
-        })
+        Ok(CompileOutput::pages("svg", pages, diagnostics))
     }
 }
 
@@ -282,4 +230,47 @@ fn selected_pages<'a>(document: &'a PagedDocument, pages: Option<&str>) -> Vec<(
             include.then_some((page_number, page))
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{parse_page_ranges, parse_pdf_standards};
+
+    #[test]
+    fn parses_page_ranges() {
+        let ranges = parse_page_ranges(Some("1, 3-4, 6-")).expect("ranges");
+
+        assert!(ranges.includes_page_index(0));
+        assert!(!ranges.includes_page_index(1));
+        assert!(ranges.includes_page_index(2));
+        assert!(ranges.includes_page_index(3));
+        assert!(!ranges.includes_page_index(4));
+        assert!(ranges.includes_page_index(5));
+        assert!(ranges.includes_page_index(100));
+    }
+
+    #[test]
+    fn ignores_empty_page_range_parts() {
+        let ranges = parse_page_ranges(Some(" , 2, ")).expect("ranges");
+
+        assert!(!ranges.includes_page_index(0));
+        assert!(ranges.includes_page_index(1));
+    }
+
+    #[test]
+    fn parses_supported_pdf_standards() {
+        let standards = vec!["1.7".to_string(), "A-2B".to_string()];
+
+        assert!(parse_pdf_standards(Some(&standards)).is_ok());
+    }
+
+    #[test]
+    fn rejects_unsupported_pdf_standards() {
+        let standards = vec!["x-1".to_string()];
+
+        assert_eq!(
+            parse_pdf_standards(Some(&standards)).unwrap_err(),
+            "Unsupported PDF standard: x-1",
+        );
+    }
 }

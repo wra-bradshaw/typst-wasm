@@ -1,21 +1,12 @@
 export type CompileFormat = "pdf" | "png" | "svg" | "html" | "bundle";
 
 export interface CompileOptions {
-  format?: CompileFormat;
+  format: CompileFormat;
   main?: string;
-  root?: string;
   inputs?: Record<string, string>;
-  features?: string[];
-  creation_timestamp?: number | null;
-  jobs?: number;
-  diagnostic_format?: string;
   pages?: string;
   pdf_standards?: string[];
-  pdf_tags?: boolean;
   ppi?: number;
-  deps?: boolean;
-  deps_format?: string;
-  timings?: boolean;
 }
 
 export interface WasmDiagnostic {
@@ -52,8 +43,6 @@ export interface CompileOutput {
   files: BundleFile[];
   diagnostics: WasmDiagnostic[];
   internal_error: string | null;
-  deps?: { files: string[] } | null;
-  timings?: string | null;
 }
 
 export interface InitOutput {

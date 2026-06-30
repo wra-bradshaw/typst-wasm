@@ -8,7 +8,7 @@ use typst::{Library, World};
 use wasm_bindgen::prelude::JsValue;
 
 use crate::bridge::ResourceBridge;
-use crate::compiler::TypstCompiler;
+use crate::compiler::{FileEntry, TypstCompiler, lock_read_files, lock_write_files};
 
 impl World for TypstCompiler {
     fn library(&self) -> &LazyHash<Library> {
@@ -25,40 +25,39 @@ impl World for TypstCompiler {
     }
 
     fn source(&self, id: FileId) -> FileResult<Source> {
-        if let Some(source) = self
-            .sources
+        let entry = self
+            .files
             .read()
-            .map_err(|_| {
-                FileError::Other(Some(eco_format!("Failed to acquire read lock on sources")))
-            })?
+            .map_err(|err| FileError::Other(Some(eco_format!("{}", lock_read_files(err)))))?
             .get(&id)
-        {
-            return Ok(source.clone());
+            .cloned();
+
+        let Some(entry) = entry else {
+            let bytes = self.file(id)?;
+            let text = std::str::from_utf8(&bytes).map_err(|_| FileError::InvalidUtf8)?;
+            return Ok(Source::new(id, text.to_string()));
+        };
+
+        match entry {
+            FileEntry::Source(source) => Ok(source),
+            FileEntry::Bytes(bytes) => {
+                let text = std::str::from_utf8(&bytes).map_err(|_| FileError::InvalidUtf8)?;
+                Ok(Source::new(id, text.to_string()))
+            }
         }
-
-        let bytes = self.file(id)?;
-        let text = std::str::from_utf8(&bytes).map_err(|_| FileError::InvalidUtf8)?;
-        let source = Source::new(id, text.to_string());
-
-        self.sources
-            .write()
-            .map_err(|_| {
-                FileError::Other(Some(eco_format!("Failed to acquire write lock on sources")))
-            })?
-            .insert(id, source.clone());
-        Ok(source)
     }
 
     fn file(&self, id: FileId) -> FileResult<Bytes> {
-        if let Some(bytes) = self
+        if let Some(entry) = self
             .files
             .read()
-            .map_err(|_| {
-                FileError::Other(Some(eco_format!("Failed to acquire read lock on files")))
-            })?
+            .map_err(|err| FileError::Other(Some(eco_format!("{}", lock_read_files(err)))))?
             .get(&id)
         {
-            return Ok(bytes.clone());
+            return match entry {
+                FileEntry::Source(source) => Ok(Bytes::new(source.text().as_bytes().to_vec())),
+                FileEntry::Bytes(bytes) => Ok(bytes.clone()),
+            };
         }
 
         let path = if let VirtualRoot::Package(package) = id.root() {
@@ -78,10 +77,10 @@ impl World for TypstCompiler {
                 let bytes = Bytes::new(data);
                 self.files
                     .write()
-                    .map_err(|_| {
-                        FileError::Other(Some(eco_format!("Failed to acquire write lock on files")))
+                    .map_err(|err| {
+                        FileError::Other(Some(eco_format!("{}", lock_write_files(err))))
                     })?
-                    .insert(id, bytes.clone());
+                    .insert(id, FileEntry::Bytes(bytes.clone()));
                 Ok(bytes)
             }
             Err(e) => Err(FileError::Other(Some(eco_format!("{}", e)))),

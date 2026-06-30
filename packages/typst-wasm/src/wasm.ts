@@ -21,10 +21,7 @@ export type {
   WasmModule,
 };
 
-export type WasmCompileOptions = EngineCompileOptions & {
-  main?: string;
-  root?: string;
-};
+export type WasmCompileOptions = EngineCompileOptions;
 
 export type WasmCompileOutput = EngineCompileOutput;
 
@@ -36,19 +33,10 @@ export const toWasmCompileOptions = (
 ): WasmCompileOptions => ({
   format: options.format ?? "pdf",
   main: options.main,
-  root: options.root,
   inputs: options.inputs,
-  features: options.features,
-  creation_timestamp: options.creationTimestamp,
-  jobs: options.jobs,
-  diagnostic_format: options.diagnosticFormat,
   pages: options.pages,
   pdf_standards: options.pdfStandards,
-  pdf_tags: options.pdfTags,
   ppi: options.ppi,
-  deps: options.deps,
-  deps_format: options.depsFormat,
-  timings: options.timings,
 });
 
 export const loadWasmModule = (): Promise<WasmModule> => loadEngineWasmModule();
