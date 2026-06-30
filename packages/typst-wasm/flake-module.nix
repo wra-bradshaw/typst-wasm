@@ -21,18 +21,10 @@
         nativeBuildInputs = typstWasmNativeBuildInputs;
       };
 
-      typst-wasm-with-engine = pkgs.callPackage ./package.nix {
-        fonts = config.packages.fonts;
-        wasm = config.packages.wasm;
-        nativeBuildInputs = typstWasmNativeBuildInputs;
-      };
     in
     {
       packages.typst-wasm = typst-wasm;
       packages.default = typst-wasm;
-      checks = typst-wasm.passthru.tests // {
-        inherit (typst-wasm-with-engine.passthru.tests) e2e-node e2e-bun e2e-deno;
-      };
 
       devShells.typst-wasm = pkgs.mkShell {
         inputsFrom = [

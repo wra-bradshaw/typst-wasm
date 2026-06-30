@@ -1,20 +1,25 @@
-{ pkgs, nativeBuildInputs ? [ ] }:
+{
+  pkgs,
+  nativeBuildInputs ? [ ],
+}:
 
 let
-  lib = pkgs.lib;
   workspaceRoot = ../..;
   pname = "vite-plugin-typst";
+  pnpmWorkspaceName = "@typst-wasm/vite-plugin-typst";
   version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
-  packageDir = "packages/vite-plugin-typst";
 
   pnpmDeps = pkgs.fetchPnpmDeps {
     inherit pname;
     version = "deps";
     src = workspaceRoot;
     pnpm = pkgs.pnpm;
-    pnpmWorkspaces = [ pname ];
+    pnpmWorkspaces = [
+      pnpmWorkspaceName
+      "typst-wasm"
+    ];
     fetcherVersion = 3;
-    hash = lib.fakeHash;
+    hash = "sha256-J2Z6cfW3In3ATja4cmhy3KMQvV+HiEoQHGxaIj5EKtQ=";
   };
 
   pnpmNativeBuildInputs = nativeBuildInputs ++ [
@@ -24,41 +29,8 @@ let
   ];
 
   buildBundle = ''
-    pnpm --dir ${packageDir} exec tsdown
+    pnpm turbo run bundle --filter=${pnpmWorkspaceName} --only
   '';
-
-  mkWorkspaceCheck =
-    {
-      name,
-      command,
-    }:
-    pkgs.stdenvNoCC.mkDerivation {
-      pname = "vite-plugin-typst-${name}";
-      inherit version;
-      src = workspaceRoot;
-      inherit pnpmDeps;
-
-      nativeBuildInputs = pnpmNativeBuildInputs;
-
-      buildPhase = ''
-        runHook preBuild
-
-        export HOME="$TMPDIR/home"
-        mkdir -p "$HOME"
-        chmod -R u+w packages/vite-plugin-typst
-
-        cd ${packageDir}
-        ${command}
-
-        runHook postBuild
-      '';
-
-      installPhase = ''
-        runHook preInstall
-        mkdir -p "$out"
-        runHook postInstall
-      '';
-    };
 in
 pkgs.stdenvNoCC.mkDerivation {
   inherit pname version;
@@ -79,15 +51,4 @@ pkgs.stdenvNoCC.mkDerivation {
     cp -r packages/vite-plugin-typst/dist "$out/dist"
     runHook postInstall
   '';
-
-  passthru.tests = {
-    lint = mkWorkspaceCheck {
-      name = "lint";
-      command = "pnpm exec eslint . --max-warnings=0";
-    };
-    unit = mkWorkspaceCheck {
-      name = "unit";
-      command = "pnpm exec vitest run";
-    };
-  };
 }

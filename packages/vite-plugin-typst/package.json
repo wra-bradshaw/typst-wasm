@@ -1,5 +1,5 @@
 {
-  "name": "vite-plugin-typst",
+  "name": "@typst-wasm/vite-plugin-typst",
   "version": "0.0.2-alpha.7",
   "description": "Vite plugin for importing Typst documents as compiled HTML modules",
   "type": "module",
@@ -26,10 +26,11 @@
   },
   "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
   "scripts": {
+    "bundle": "tsdown",
     "build": "nix run ../..#build-artifact -- vite-plugin-typst",
     "fix": "pnpm run format:fix && pnpm exec eslint . --fix",
     "lint": "pnpm exec eslint . --max-warnings=0",
-    "test": "pnpm exec vitest run",
+    "test": "node --experimental-wasm-jspi ./node_modules/vitest/vitest.mjs run",
     "format": "pnpm exec prettier . --check",
     "format:fix": "pnpm exec prettier . --write",
     "knip": "pnpm exec knip"
@@ -46,6 +47,7 @@
     "tsdown": "^0.20.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.55.0",
+    "vite": "^7.0.0",
     "vitest": "^4.0.16"
   },
   "dependencies": {
