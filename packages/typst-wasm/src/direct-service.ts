@@ -1,3 +1,7 @@
+import {
+  registerHostFetch,
+  unregisterHostFetch,
+} from "@typst-wasm/engine-wasm/bridge";
 import { supportsJspiBackend } from "./backend-support";
 import {
   CompilerDisposedError,
@@ -17,6 +21,7 @@ import { getJspiWebAssembly } from "./webassembly-jspi";
 
 const MAX_FETCH_ATTEMPTS = 3;
 const textDecoder = new TextDecoder();
+let nextHostId = 1;
 
 type WasmBindgenPointer = {
   readonly __wbg_ptr: number;
@@ -44,6 +49,7 @@ export class DirectService {
   private initPromise: Promise<void> | null = null;
   private compiler: TypstCompilerInstance | null = null;
   private wasmExports: InitOutput | null = null;
+  private readonly hostId = nextHostId++;
   private compileAsync:
     | ((
         compilerPtr: number,
@@ -67,6 +73,7 @@ export class DirectService {
     this.compiler = null;
     this.wasmExports = null;
     this.compileAsync = null;
+    unregisterHostFetch(this.hostId);
   }
 
   async addFont(data: Uint8Array): Promise<void> {
@@ -145,19 +152,14 @@ export class DirectService {
       throw new WorkerError("JSPI is unavailable in this runtime");
     }
     const suspending = new Suspending(this.hostFetch);
+    registerHostFetch(this.hostId, suspending);
 
-    const wasmExports = await wasmModule.default({
-      module_or_path: moduleOrPath,
-      imports: {
-        bridge: {
-          host_fetch: suspending,
-        },
-      },
-    });
+    void moduleOrPath;
+    const wasmExports = wasmModule;
 
     this.wasmExports = wasmExports;
     this.compileAsync = promising(wasmExports.typstcompiler_compile);
-    this.compiler = new wasmModule.TypstCompiler();
+    this.compiler = new wasmModule.TypstCompiler(this.hostId);
   }
 
   private readonly hostFetch = async (

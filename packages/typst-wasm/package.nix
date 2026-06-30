@@ -1,5 +1,6 @@
 {
   pkgs,
+  engineWasm,
   fonts,
   nativeBuildInputs ? [ ],
 }:
@@ -16,10 +17,13 @@ let
     src = workspaceRoot;
     pnpm = pkgs.pnpm;
     pnpmWorkspaces = [
+      "@typst-wasm/engine-wasm"
+      "@typst-wasm/fonts"
       pname
+      "@typst-wasm/vite-plugin-typst"
     ];
-    fetcherVersion = 3;
-    hash = "sha256-J2Z6cfW3In3ATja4cmhy3KMQvV+HiEoQHGxaIj5EKtQ=";
+    fetcherVersion = 4;
+    hash = "sha256-M6c700sSI5Q37aY6xSlNFdp541TmNSyK87zNul4LXPo=";
   };
 
   pnpmNativeBuildInputs = nativeBuildInputs ++ [
@@ -31,6 +35,11 @@ let
   prepareFontArtifacts = ''
     mkdir -p packages/fonts/dist
     cp -R ${fonts}/dist/files packages/fonts/dist/files
+  '';
+
+  prepareEngineArtifacts = ''
+    mkdir -p packages/engine-wasm/dist
+    cp -R ${engineWasm}/dist/. packages/engine-wasm/dist
   '';
 
   buildBundle = ''
@@ -48,6 +57,7 @@ pkgs.stdenvNoCC.mkDerivation {
     runHook preBuild
 
     ${prepareFontArtifacts}
+    ${prepareEngineArtifacts}
 
     ${buildBundle}
 

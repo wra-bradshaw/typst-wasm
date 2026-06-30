@@ -1,23 +1,31 @@
-import type initWasmModule from "@typst-wasm/engine-wasm";
 import type {
   BundleFile as WasmBundleFile,
   CompileOptions as EngineCompileOptions,
   CompileOutput as EngineCompileOutput,
-  InitOutput,
   PageOutput as WasmPageOutput,
   TypstCompiler,
   WasmDiagnostic,
 } from "@typst-wasm/engine-wasm";
 import type { CompileOptions, TypstDocumentMetadata } from "./types";
 
-export interface WasmModule {
-  default: typeof initWasmModule;
+export interface InitOutput {
+  memory: WebAssembly.Memory;
+  typstcompiler_compile: (
+    compilerPtr: number,
+    options: WasmCompileOptions,
+  ) => [number, number, number];
+  __wbindgen_malloc(size: number, align: number): number;
+  __wbindgen_externrefs: WebAssembly.Table;
+  __externref_table_dealloc(idx: number): void;
+}
+
+export interface WasmModule extends InitOutput {
   TypstCompiler: typeof TypstCompiler;
 }
 
 export type TypstCompilerInstance = InstanceType<WasmModule["TypstCompiler"]>;
 
-export type { InitOutput, WasmBundleFile, WasmDiagnostic, WasmPageOutput };
+export type { WasmBundleFile, WasmDiagnostic, WasmPageOutput };
 
 export type WasmCompileOptions = EngineCompileOptions;
 

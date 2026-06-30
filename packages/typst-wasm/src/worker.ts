@@ -1,3 +1,4 @@
+import { registerHostFetch } from "@typst-wasm/engine-wasm/bridge";
 import {
   SharedMemoryCommunication,
   SharedMemoryCommunicationStatus,
@@ -59,6 +60,7 @@ let wasmExports: InitOutput | null = null;
 
 const MAX_FETCH_ATTEMPTS = 3;
 const textDecoder = new TextDecoder();
+const WORKER_HOST_ID = 1;
 
 const writeResultLength = (resultLenPtr: number, len: number): void => {
   if (!wasmExports) {
@@ -195,15 +197,10 @@ const handleRequest = async (
       }
 
       try {
-        wasmExports = await wasmModule.default({
-          module_or_path: request.payload.moduleOrPath,
-          imports: {
-            bridge: {
-              host_fetch: hostFetch,
-            },
-          },
-        });
-        compiler = new wasmModule.TypstCompiler();
+        registerHostFetch(WORKER_HOST_ID, hostFetch);
+        void request.payload.moduleOrPath;
+        wasmExports = wasmModule;
+        compiler = new wasmModule.TypstCompiler(WORKER_HOST_ID);
       } catch (cause) {
         throw new WorkerCommandError(
           request.requestId,
