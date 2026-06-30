@@ -23,6 +23,13 @@ describe("toWasmCompileOptions", () => {
   });
 
   it("defaults to pdf", () => {
-    expect(toWasmCompileOptions()).toEqual({ format: "pdf" });
+    expect(toWasmCompileOptions()).toEqual({
+      format: "pdf",
+      main: null,
+      inputs: null,
+      pages: null,
+      pdf_standards: null,
+      ppi: null,
+    });
   });
 });

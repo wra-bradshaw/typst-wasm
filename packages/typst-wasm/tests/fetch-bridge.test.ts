@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { makeFetchBridge } from "../src/fetch-bridge";
+import { makeFetchBridge, type FetchImpl } from "../src/fetch-bridge";
 import { SharedMemoryCommunicationStatus } from "../src/protocol";
 
 describe("fetch bridge", () => {
@@ -52,7 +52,7 @@ describe("fetch bridge", () => {
   });
 
   it("uses the provided fetch implementation for non-package paths", async () => {
-    const fetchImpl: typeof fetch = vi.fn(
+    const fetchImpl: FetchImpl = vi.fn(
       async () => new Response(new Uint8Array([4, 5])),
     );
     const bridge = makeFetchBridge(

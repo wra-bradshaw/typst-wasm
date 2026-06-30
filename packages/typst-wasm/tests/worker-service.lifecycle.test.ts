@@ -102,9 +102,16 @@ describe("worker service lifecycle", () => {
     await workerService.init("first.wasm");
     await workerService.dispose();
 
-    expect(() => workerService.compile({ format: "svg" })).toThrow(
-      "Compiler has been disposed",
-    );
+    expect(() =>
+      workerService.compile({
+        format: "svg",
+        main: null,
+        inputs: null,
+        pages: null,
+        pdf_standards: null,
+        ppi: null,
+      }),
+    ).toThrow("Compiler has been disposed");
   });
 
   it("surfaces init failures and allows a later retry", async () => {
