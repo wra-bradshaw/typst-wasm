@@ -1,17 +1,8 @@
-import { FetchError } from "./errors";
+import type { FileLoaderManager } from "./file-loader";
 import {
   SharedMemoryCommunication,
   SharedMemoryCommunicationStatus,
 } from "./protocol";
-
-type PackageFileLoader = {
-  getFile(spec: string): Promise<Uint8Array>;
-};
-
-export type FetchImpl = (
-  input: Parameters<typeof fetch>[0],
-  init?: Parameters<typeof fetch>[1],
-) => ReturnType<typeof fetch>;
 
 export type FetchBridge = {
   readonly sharedMemoryCommunication: SharedMemoryCommunication;
@@ -19,9 +10,8 @@ export type FetchBridge = {
 };
 
 export const makeFetchBridge = (
-  packageLoader: PackageFileLoader,
+  fileLoaderManager: FileLoaderManager,
   isDisposed: () => boolean,
-  fetchImpl: FetchImpl = fetch,
 ): FetchBridge => {
   const sharedMemoryCommunication = new SharedMemoryCommunication();
 
@@ -29,9 +19,7 @@ export const makeFetchBridge = (
     if (isDisposed()) return;
 
     try {
-      const bytes = path.startsWith("@")
-        ? await packageLoader.getFile(path)
-        : await fetchPath(path, fetchImpl);
+      const bytes = await fileLoaderManager.load(path);
       if (isDisposed()) return;
 
       sharedMemoryCommunication.setBuffer(bytes);
@@ -51,17 +39,4 @@ export const makeFetchBridge = (
     sharedMemoryCommunication,
     handleFetchRequest,
   };
-};
-
-const fetchPath = async (
-  path: string,
-  fetchImpl: FetchImpl,
-): Promise<Uint8Array> => {
-  try {
-    const response = await fetchImpl(path);
-    if (!response.ok) throw new Error(`Status ${response.status}`);
-    return new Uint8Array(await response.arrayBuffer());
-  } catch (cause) {
-    throw new FetchError(path, cause);
-  }
 };

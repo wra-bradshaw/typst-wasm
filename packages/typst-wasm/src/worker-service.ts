@@ -1,5 +1,5 @@
 import type { TypstWorkerProtocol } from "./protocol";
-import type { PackageManager } from "./package-manager";
+import type { FileLoaderManager } from "./file-loader";
 import TypstWorker from "./worker.ts?worker";
 import { makeRpcClient, type RpcClient } from "./rpc";
 import { isRpcResponseMessage, type WorkerToMainMessage } from "./messages";
@@ -16,13 +16,9 @@ export class WorkerService {
   private readonly rpcClient: RpcClient<TypstWorkerProtocol>;
   private readonly transport: WorkerTransport;
 
-  constructor(packageManager: PackageManager, fetchImpl: typeof fetch = fetch) {
+  constructor(fileLoaderManager: FileLoaderManager) {
     this.worker = new TypstWorker() as Worker;
-    const fetchBridge = makeFetchBridge(
-      packageManager,
-      () => this.disposed,
-      fetchImpl,
-    );
+    const fetchBridge = makeFetchBridge(fileLoaderManager, () => this.disposed);
 
     this.rpcClient = makeRpcClient<TypstWorkerProtocol>((msg) => {
       this.transport.post(msg);

@@ -5,7 +5,12 @@ import {
   PackageParseError,
 } from "./errors";
 import { makeDefaultPackageCache } from "./cache-abstraction";
-import type { PackageCache } from "./types";
+import type {
+  PackageCache,
+  TypstFileLoad,
+  TypstFileLoader,
+  TypstFileRequest,
+} from "./types";
 
 interface PackageSpec {
   readonly namespace: string;
@@ -133,5 +138,18 @@ export class PackageManager {
     } catch (cause) {
       throw new PackageFetchError(url, cause);
     }
+  }
+}
+
+export class PackageFileLoader implements TypstFileLoader {
+  constructor(private readonly packageManager: PackageManager) {}
+
+  async load(request: TypstFileRequest): Promise<TypstFileLoad | null> {
+    if (request.kind !== "package") return null;
+
+    return {
+      data: await this.packageManager.getFile(request.path),
+      resolvedPath: request.path,
+    };
   }
 }

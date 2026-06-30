@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PackageManager } from "../src/package-manager";
+import { FileLoaderManager } from "../src/file-loader";
 
 type WorkerMessage =
   | {
@@ -66,7 +66,7 @@ vi.mock("../src/worker.ts?worker", () => ({
 
 const makeService = async () => {
   const { WorkerService } = await import("../src/worker-service");
-  return new WorkerService(new PackageManager());
+  return new WorkerService(new FileLoaderManager([]));
 };
 
 describe("worker service lifecycle", () => {

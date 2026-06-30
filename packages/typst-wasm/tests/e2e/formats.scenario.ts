@@ -8,7 +8,14 @@ export type CompileFormatResult = {
   bundleFeatureErrorSeen: boolean;
 };
 
-const multipageSource = `#set page(width: auto, height: auto, margin: 10pt)
+const multipageSource = `#set document(
+  title: [Compiler Metadata],
+  description: [Metadata should not be HTML-specific.],
+  author: ("Ada", "Grace"),
+  keywords: ("typst", "wasm"),
+)
+#set page(width: auto, height: auto, margin: 10pt)
+#metadata(("answer": 42)) <doc-meta>
 = Page One
 #pagebreak()
 = Page Two`;
@@ -27,6 +34,22 @@ export const runCompileFormatScenario = async (
   assert(
     pdfResult.format === "pdf",
     `[${options.runtime}] expected PDF result format`,
+  );
+  assert(
+    pdfResult.metadata?.title === "Compiler Metadata" &&
+      pdfResult.metadata.description ===
+        "Metadata should not be HTML-specific." &&
+      pdfResult.metadata.author.join(",") === "Ada,Grace" &&
+      pdfResult.metadata.keywords.join(",") === "typst,wasm" &&
+      pdfResult.metadata.custom.some(
+        (entry) =>
+          entry.label === "doc-meta" &&
+          typeof entry.value === "object" &&
+          entry.value !== null &&
+          "answer" in entry.value &&
+          entry.value.answer === 42,
+      ),
+    `[${options.runtime}] expected document metadata on PDF result`,
   );
 
   const pngResult = await compiler.compile({

@@ -3,11 +3,14 @@ import {
   type CompilerBackendService,
 } from "./compiler-backend";
 import { CompileError } from "./errors";
-import { PackageManager } from "./package-manager";
+import { FetchFileLoader, FileLoaderManager } from "./file-loader";
+import { PackageFileLoader, PackageManager } from "./package-manager";
 import { toWasmCompileOptions, type WasmCompileOutput } from "./wasm";
 import type {
   CompileOptions,
   CompileResult,
+  TypstDocumentMetadata,
+  TypstLoadedFile,
   TypstCompiler,
   TypstCompilerOptions,
 } from "./types";
@@ -26,49 +29,74 @@ const extractErrorMessage = (error: unknown): string => {
   }
 };
 
-const normalizeCompileResult = (result: WasmCompileOutput): CompileResult => {
+const normalizeMetadata = (
+  metadata: WasmCompileOutput["metadata"],
+): TypstDocumentMetadata | undefined => {
+  if (!metadata) return undefined;
+
+  return {
+    title: metadata.title ?? undefined,
+    description: metadata.description ?? undefined,
+    author: metadata.author,
+    keywords: metadata.keywords,
+    custom: metadata.custom.map((entry) => ({
+      label: entry.label ?? undefined,
+      value: entry.value,
+    })),
+  };
+};
+
+const normalizeCompileResult = (
+  result: WasmCompileOutput,
+  dependencies: TypstLoadedFile[],
+): CompileResult => {
   const diagnostics = result.diagnostics;
+  const base = {
+    diagnostics,
+    dependencies,
+    metadata: normalizeMetadata(result.metadata),
+  };
 
   switch (result.format) {
     case "pdf":
       return {
+        ...base,
         format: "pdf",
         output: result.output_bytes ?? new Uint8Array(),
-        diagnostics,
       };
     case "png":
       return {
+        ...base,
         format: "png",
         pages: result.pages.map((page) => ({
           page: page.page,
           output: page.output_bytes ?? new Uint8Array(),
         })),
-        diagnostics,
       };
     case "svg":
       return {
+        ...base,
         format: "svg",
         pages: result.pages.map((page) => ({
           page: page.page,
           output: page.output_text ?? "",
         })),
-        diagnostics,
       };
     case "html":
       return {
+        ...base,
         format: "html",
         output: result.output_text ?? "",
-        diagnostics,
       };
     case "bundle":
       return {
+        ...base,
         format: "bundle",
         files: result.files.map((file) => ({
           path: file.path,
           data: file.data,
           mediaType: file.media_type ?? undefined,
         })),
-        diagnostics,
       };
     default:
       throw new CompileError(
@@ -81,7 +109,10 @@ const normalizeCompileResult = (result: WasmCompileOutput): CompileResult => {
 };
 
 class PromiseTypstCompiler implements TypstCompiler {
-  constructor(private readonly backend: CompilerBackendService) {}
+  constructor(
+    private readonly backend: CompilerBackendService,
+    private readonly fileLoaderManager: FileLoaderManager,
+  ) {}
 
   addFont(data: Uint8Array): Promise<void> {
     return this.backend.addFont(data);
@@ -121,6 +152,7 @@ class PromiseTypstCompiler implements TypstCompiler {
     }
 
     let rawResult: WasmCompileOutput;
+    this.fileLoaderManager.resetTrace();
     try {
       rawResult = await this.backend.compile(toWasmCompileOptions(options));
     } catch (cause) {
@@ -133,7 +165,7 @@ class PromiseTypstCompiler implements TypstCompiler {
       });
     }
 
-    return normalizeCompileResult(rawResult);
+    return normalizeCompileResult(rawResult, this.fileLoaderManager.getTrace());
   }
 
   dispose(): Promise<void> {
@@ -150,13 +182,17 @@ export const createTypstCompiler = async (
     cache: options.packageCache,
     memoryPackageCacheCapacity: options.memoryPackageCacheCapacity,
   });
+  const fileLoaderManager = new FileLoaderManager([
+    ...(options.fileLoaders ?? []),
+    new PackageFileLoader(packageManager),
+    new FetchFileLoader(options.fetch),
+  ]);
   const backend = createCompilerBackend(options.backend ?? "auto", {
-    packageManager,
-    fetch: options.fetch,
+    fileLoaderManager,
   });
 
   await backend.init(options.moduleOrPath);
-  return new PromiseTypstCompiler(backend);
+  return new PromiseTypstCompiler(backend, fileLoaderManager);
 };
 
 export { SharedMemoryCommunication } from "./protocol";
@@ -168,14 +204,29 @@ export type {
   CompileFormat,
   CompileOptions,
   CompileResult,
+  CompileResultBase,
   PageOutput,
   PackageCache,
   TypstCompiler,
   TypstCompilerOptions,
+  TypstCustomMetadata,
+  TypstDocumentMetadata,
+  TypstFileKind,
+  TypstFileLoad,
+  TypstFileLoader,
+  TypstFileLoaderResult,
+  TypstFileRequest,
+  TypstLoadedFile,
 } from "./types";
 export * from "@typst-wasm/fonts";
 export * from "./errors";
 export { PackageManager } from "./package-manager";
+export {
+  classifyTypstFilePath,
+  FetchFileLoader,
+  FileLoaderManager,
+} from "./file-loader";
+export { PackageFileLoader } from "./package-manager";
 export {
   makeBrowserCacheStorage,
   makeDefaultPackageCache,

@@ -7,4 +7,7 @@ mod world;
 
 pub use compiler::TypstCompiler;
 pub use diagnostics::{WasmDiagnostic, format_diagnostics};
-pub use types::{BundleFile, CompileFormat, CompileOptions, CompileOutput, PageOutput};
+pub use types::{
+    BundleFile, CompileFormat, CompileOptions, CompileOutput, CustomMetadata, DocumentMetadata,
+    PageOutput,
+};

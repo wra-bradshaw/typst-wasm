@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use tsify::Tsify;
 
 use crate::diagnostics::WasmDiagnostic;
@@ -45,6 +46,24 @@ pub struct BundleFile {
     pub media_type: Option<String>,
 }
 
+#[derive(Tsify, Serialize, Deserialize, Clone)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct CustomMetadata {
+    pub label: Option<String>,
+    #[tsify(type = "unknown")]
+    pub value: Value,
+}
+
+#[derive(Tsify, Serialize, Deserialize, Clone)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct DocumentMetadata {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub author: Vec<String>,
+    pub keywords: Vec<String>,
+    pub custom: Vec<CustomMetadata>,
+}
+
 #[derive(Tsify, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct CompileOutput {
@@ -56,6 +75,7 @@ pub struct CompileOutput {
     pub pages: Vec<PageOutput>,
     pub files: Vec<BundleFile>,
     pub diagnostics: Vec<WasmDiagnostic>,
+    pub metadata: Option<DocumentMetadata>,
     pub internal_error: Option<String>,
 }
 
@@ -69,11 +89,16 @@ impl CompileOutput {
             pages: Vec::new(),
             files: Vec::new(),
             diagnostics,
+            metadata: None,
             internal_error: None,
         }
     }
 
-    pub(crate) fn pdf(bytes: Vec<u8>, diagnostics: Vec<WasmDiagnostic>) -> Self {
+    pub(crate) fn pdf(
+        bytes: Vec<u8>,
+        diagnostics: Vec<WasmDiagnostic>,
+        metadata: DocumentMetadata,
+    ) -> Self {
         Self {
             success: true,
             format: "pdf".to_string(),
@@ -82,6 +107,7 @@ impl CompileOutput {
             pages: Vec::new(),
             files: Vec::new(),
             diagnostics,
+            metadata: Some(metadata),
             internal_error: None,
         }
     }
@@ -90,6 +116,7 @@ impl CompileOutput {
         format: &str,
         pages: Vec<PageOutput>,
         diagnostics: Vec<WasmDiagnostic>,
+        metadata: DocumentMetadata,
     ) -> Self {
         Self {
             success: true,
@@ -99,11 +126,16 @@ impl CompileOutput {
             pages,
             files: Vec::new(),
             diagnostics,
+            metadata: Some(metadata),
             internal_error: None,
         }
     }
 
-    pub(crate) fn html(output: String, diagnostics: Vec<WasmDiagnostic>) -> Self {
+    pub(crate) fn html(
+        output: String,
+        diagnostics: Vec<WasmDiagnostic>,
+        metadata: DocumentMetadata,
+    ) -> Self {
         Self {
             success: true,
             format: "html".to_string(),
@@ -112,11 +144,16 @@ impl CompileOutput {
             pages: Vec::new(),
             files: Vec::new(),
             diagnostics,
+            metadata: Some(metadata),
             internal_error: None,
         }
     }
 
-    pub(crate) fn bundle(files: Vec<BundleFile>, diagnostics: Vec<WasmDiagnostic>) -> Self {
+    pub(crate) fn bundle(
+        files: Vec<BundleFile>,
+        diagnostics: Vec<WasmDiagnostic>,
+        metadata: DocumentMetadata,
+    ) -> Self {
         Self {
             success: true,
             format: "bundle".to_string(),
@@ -125,6 +162,7 @@ impl CompileOutput {
             pages: Vec::new(),
             files,
             diagnostics,
+            metadata: Some(metadata),
             internal_error: None,
         }
     }

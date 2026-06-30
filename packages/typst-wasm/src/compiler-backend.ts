@@ -1,5 +1,5 @@
 import { DirectService } from "./direct-service";
-import type { PackageManager } from "./package-manager";
+import type { FileLoaderManager } from "./file-loader";
 import { WorkerService } from "./worker-service";
 import type { WasmModuleOrPath } from "./wasm-module";
 import type { WasmCompileOptions, WasmCompileOutput } from "./wasm";
@@ -21,8 +21,7 @@ export type CompilerBackendService = {
 };
 
 export interface BackendFactoryOptions {
-  packageManager: PackageManager;
-  fetch?: typeof fetch;
+  fileLoaderManager: FileLoaderManager;
 }
 
 export const selectAutomaticBackendKind = (): "worker" | "jspi" | "none" => {
@@ -39,9 +38,9 @@ export const createCompilerBackend = (
 
   switch (selected) {
     case "worker":
-      return new WorkerService(options.packageManager, options.fetch);
+      return new WorkerService(options.fileLoaderManager);
     case "jspi":
-      return new DirectService(options.packageManager, options.fetch);
+      return new DirectService(options.fileLoaderManager);
     case "none":
       throw new Error(
         "No compatible typst-wasm backend available. Requires Worker+SharedArrayBuffer+Atomics.wait or JSPI.",

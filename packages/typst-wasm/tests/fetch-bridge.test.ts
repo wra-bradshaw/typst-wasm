@@ -1,11 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
-import { makeFetchBridge, type FetchImpl } from "../src/fetch-bridge";
+import {
+  FetchFileLoader,
+  FileLoaderManager,
+  type FetchImpl,
+} from "../src/file-loader";
+import { makeFetchBridge } from "../src/fetch-bridge";
 import { SharedMemoryCommunicationStatus } from "../src/protocol";
 
 describe("fetch bridge", () => {
   it("writes package bytes into shared memory on success", async () => {
     const bridge = makeFetchBridge(
-      { getFile: async () => new Uint8Array([1, 2, 3]) },
+      new FileLoaderManager([{ load: async () => new Uint8Array([1, 2, 3]) }]),
       () => false,
     );
 
@@ -21,11 +26,13 @@ describe("fetch bridge", () => {
 
   it("sets error status on loader failure", async () => {
     const bridge = makeFetchBridge(
-      {
-        getFile: async () => {
-          throw new Error("not found");
+      new FileLoaderManager([
+        {
+          load: async () => {
+            throw new Error("not found");
+          },
         },
-      },
+      ]),
       () => false,
     );
 
@@ -39,7 +46,7 @@ describe("fetch bridge", () => {
   it("does not publish results after disposal", async () => {
     let disposed = false;
     const bridge = makeFetchBridge(
-      { getFile: async () => new Uint8Array([9, 9, 9]) },
+      new FileLoaderManager([{ load: async () => new Uint8Array([9, 9, 9]) }]),
       () => disposed,
     );
 
@@ -56,9 +63,8 @@ describe("fetch bridge", () => {
       async () => new Response(new Uint8Array([4, 5])),
     );
     const bridge = makeFetchBridge(
-      { getFile: async () => new Uint8Array() },
+      new FileLoaderManager([new FetchFileLoader(fetchImpl)]),
       () => false,
-      fetchImpl,
     );
 
     await bridge.handleFetchRequest("/image.png");

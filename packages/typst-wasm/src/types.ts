@@ -2,10 +2,53 @@ import type { WasmDiagnostic } from "./wasm";
 import type { WasmModuleOrPath } from "./wasm-module";
 
 export type CompileFormat = "pdf" | "png" | "svg" | "html" | "bundle";
+export type TypstFileKind = "project" | "package" | "url";
+
+export interface TypstFileRequest {
+  path: string;
+  kind: TypstFileKind;
+}
+
+export interface TypstFileLoad {
+  data: Uint8Array;
+  resolvedPath?: string;
+  mediaType?: string;
+}
+
+export type TypstFileLoaderResult =
+  | TypstFileLoad
+  | Uint8Array
+  | null
+  | undefined;
+
+export interface TypstFileLoader {
+  load(request: TypstFileRequest): Promise<TypstFileLoaderResult>;
+}
+
+export interface TypstLoadedFile {
+  path: string;
+  kind: TypstFileKind;
+  resolvedPath?: string;
+  mediaType?: string;
+}
+
+export interface TypstCustomMetadata {
+  label?: string;
+  value: unknown;
+}
+
+export interface TypstDocumentMetadata {
+  title?: string;
+  description?: string;
+  author: string[];
+  keywords: string[];
+  custom: TypstCustomMetadata[];
+}
 
 export interface TypstCompilerOptions {
   moduleOrPath: WasmModuleOrPath;
   backend?: "auto" | "worker" | "jspi";
+  fileLoaders?: TypstFileLoader[];
   fetch?: typeof fetch;
   packageBaseUrl?: string;
   packageCache?: PackageCache;
@@ -32,32 +75,33 @@ export interface BundleFile {
   mediaType?: string;
 }
 
+export interface CompileResultBase {
+  diagnostics: WasmDiagnostic[];
+  metadata?: TypstDocumentMetadata;
+  dependencies?: TypstLoadedFile[];
+}
+
 export type CompileResult =
-  | {
+  | (CompileResultBase & {
       format: "pdf";
       output: Uint8Array;
-      diagnostics: WasmDiagnostic[];
-    }
-  | {
+    })
+  | (CompileResultBase & {
       format: "png";
       pages: PageOutput<Uint8Array>[];
-      diagnostics: WasmDiagnostic[];
-    }
-  | {
+    })
+  | (CompileResultBase & {
       format: "svg";
       pages: PageOutput<string>[];
-      diagnostics: WasmDiagnostic[];
-    }
-  | {
+    })
+  | (CompileResultBase & {
       format: "html";
       output: string;
-      diagnostics: WasmDiagnostic[];
-    }
-  | {
+    })
+  | (CompileResultBase & {
       format: "bundle";
       files: BundleFile[];
-      diagnostics: WasmDiagnostic[];
-    };
+    });
 
 export interface PackageCache {
   get(key: string): Promise<Uint8Array | null>;

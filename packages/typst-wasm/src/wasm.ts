@@ -8,7 +8,7 @@ import type {
   TypstCompiler,
   WasmDiagnostic,
 } from "@typst-wasm/engine-wasm";
-import type { CompileOptions } from "./types";
+import type { CompileOptions, TypstDocumentMetadata } from "./types";
 
 export interface WasmModule {
   default: typeof initWasmModule;
@@ -21,7 +21,9 @@ export type { InitOutput, WasmBundleFile, WasmDiagnostic, WasmPageOutput };
 
 export type WasmCompileOptions = EngineCompileOptions;
 
-export type WasmCompileOutput = EngineCompileOutput;
+export type WasmCompileOutput = EngineCompileOutput & {
+  metadata?: TypstDocumentMetadata | null;
+};
 
 export const wasmBinaryUrl = new URL(
   import.meta.resolve("@typst-wasm/engine-wasm/typst_wasm_bg.wasm"),

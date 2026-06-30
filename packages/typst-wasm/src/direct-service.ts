@@ -4,7 +4,7 @@ import {
   CompilerNotInitializedError,
   WorkerError,
 } from "./errors";
-import type { PackageManager } from "./package-manager";
+import type { FileLoaderManager } from "./file-loader";
 import type { WasmModuleOrPath } from "./wasm-module";
 import {
   loadWasmModule,
@@ -51,10 +51,7 @@ export class DirectService {
       ) => Promise<[number, number, number]>)
     | null = null;
 
-  constructor(
-    private readonly packageManager: PackageManager,
-    private readonly fetchImpl: typeof fetch = fetch,
-  ) {}
+  constructor(private readonly fileLoaderManager: FileLoaderManager) {}
 
   async init(moduleOrPath: WasmModuleOrPath): Promise<void> {
     this.assertNotDisposed();
@@ -179,7 +176,7 @@ export class DirectService {
 
     try {
       const bytes = await retry(
-        () => this.fetchBytes(path),
+        () => this.fileLoaderManager.load(path),
         MAX_FETCH_ATTEMPTS,
       );
       const resultPtr = wasmExports.__wbindgen_malloc(bytes.length, 1);
@@ -197,21 +194,6 @@ export class DirectService {
       return 0;
     }
   };
-
-  private async fetchBytes(path: string): Promise<Uint8Array> {
-    if (path.startsWith("@")) {
-      return this.packageManager.getFile(path);
-    }
-
-    const response = await this.fetchImpl(path);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch "${path}" with status ${response.status}`,
-      );
-    }
-
-    return new Uint8Array(await response.arrayBuffer());
-  }
 
   private withCompiler<T>(
     run: (compiler: TypstCompilerInstance) => T,

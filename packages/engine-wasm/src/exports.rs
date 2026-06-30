@@ -1,6 +1,8 @@
 use typst::diag::{SourceDiagnostic, Warned};
-use typst::foundations::{Dict, Str, Value};
+use typst::foundations::{Dict, Output, Repr, Str, Value};
+use typst::introspection::MetadataElem;
 use typst::layout::PageRanges;
+use typst::model::Document;
 use typst::utils::LazyHash;
 use typst::{Library, LibraryExt};
 use typst_html::{HtmlDocument, HtmlOptions};
@@ -10,7 +12,9 @@ use typst_svg::SvgOptions;
 
 use crate::compiler::TypstCompiler;
 use crate::diagnostics::{WasmDiagnostic, format_diagnostics};
-use crate::types::{BundleFile, CompileOptions, CompileOutput, PageOutput};
+use crate::types::{
+    BundleFile, CompileOptions, CompileOutput, CustomMetadata, DocumentMetadata, PageOutput,
+};
 
 pub(crate) enum ExportFormat {
     Pdf,
@@ -59,7 +63,11 @@ impl TypstCompiler {
         let diagnostics = format_diagnostics(self, &result);
 
         match result.output {
-            Ok(document) => Ok(CompileOutput::html(html(&document)?, diagnostics)),
+            Ok(document) => Ok(CompileOutput::html(
+                html(&document)?,
+                diagnostics,
+                document_metadata(&document),
+            )),
             Err(_) => Ok(CompileOutput::failed("html", diagnostics)),
         }
     }
@@ -76,6 +84,7 @@ impl TypstCompiler {
                     media_type: Some("text/html; charset=utf-8".to_string()),
                 }],
                 diagnostics,
+                document_metadata(&document),
             )),
             Err(_) => Ok(CompileOutput::failed("bundle", diagnostics)),
         }
@@ -94,7 +103,11 @@ impl TypstCompiler {
         };
         let bytes = typst_pdf::pdf(document, &pdf_options).map_err(format_export_errors)?;
 
-        Ok(CompileOutput::pdf(bytes, diagnostics))
+        Ok(CompileOutput::pdf(
+            bytes,
+            diagnostics,
+            document_metadata(document),
+        ))
     }
 
     fn export_png(
@@ -122,7 +135,12 @@ impl TypstCompiler {
             })
             .collect::<Result<Vec<_>, String>>()?;
 
-        Ok(CompileOutput::pages("png", pages, diagnostics))
+        Ok(CompileOutput::pages(
+            "png",
+            pages,
+            diagnostics,
+            document_metadata(document),
+        ))
     }
 
     fn export_svg(
@@ -141,7 +159,12 @@ impl TypstCompiler {
             })
             .collect();
 
-        Ok(CompileOutput::pages("svg", pages, diagnostics))
+        Ok(CompileOutput::pages(
+            "svg",
+            pages,
+            diagnostics,
+            document_metadata(document),
+        ))
     }
 }
 
@@ -152,6 +175,37 @@ impl ExportFormat {
             Self::Png => "png",
             Self::Svg => "svg",
         }
+    }
+}
+
+fn document_metadata<T>(document: &T) -> DocumentMetadata
+where
+    T: Document + Output,
+{
+    let info = document.info();
+    let custom = document
+        .introspector()
+        .query_labelled()
+        .into_iter()
+        .filter(|content| content.is::<MetadataElem>())
+        .filter_map(|content| {
+            let value = content.field_by_name("value").ok()?;
+            let value = serde_json::to_value(&value)
+                .unwrap_or_else(|_| serde_json::Value::String(value.repr().to_string()));
+
+            Some(CustomMetadata {
+                label: content.label().map(|label| label.resolve().to_string()),
+                value,
+            })
+        })
+        .collect();
+
+    DocumentMetadata {
+        title: info.title.as_ref().map(ToString::to_string),
+        description: info.description.as_ref().map(ToString::to_string),
+        author: info.author.iter().map(ToString::to_string).collect(),
+        keywords: info.keywords.iter().map(ToString::to_string).collect(),
+        custom,
     }
 }
 
