@@ -9,6 +9,12 @@ import type { WasmCompileOptions, WasmCompileOutput } from "./wasm";
 import type { WasmAssetUrls } from "./wasm-loader";
 import { CompilerDisposedError } from "./errors";
 
+export type TypstWorkerFactory = () => Worker;
+
+export interface WorkerServiceInternals {
+  createWorker?: TypstWorkerFactory;
+}
+
 export class WorkerService {
   private disposed = false;
   private initPromise: Promise<void> | null = null;
@@ -16,8 +22,13 @@ export class WorkerService {
   private readonly rpcClient: RpcClient<TypstWorkerProtocol>;
   private readonly transport: WorkerTransport;
 
-  constructor(fileLoaderManager: FileLoaderManager) {
-    this.worker = new TypstWorker() as Worker;
+  constructor(
+    fileLoaderManager: FileLoaderManager,
+    internals: WorkerServiceInternals = {},
+  ) {
+    this.worker = internals.createWorker
+      ? internals.createWorker()
+      : (new TypstWorker() as Worker);
     const fetchBridge = makeFetchBridge(fileLoaderManager, () => this.disposed);
 
     this.rpcClient = makeRpcClient<TypstWorkerProtocol>((msg) => {

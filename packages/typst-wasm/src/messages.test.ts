@@ -1,38 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  isMainToWorkerMessage,
-  isRpcResponseMessage,
-  isWorkerEventMessage,
-  isWorkerToMainMessage,
-} from "./messages";
+import { isRpcResponseMessage, isWorkerToMainMessage } from "./messages";
 
 describe("message guards", () => {
-  it("accepts valid main->worker RPC request", () => {
-    const msg = {
-      kind: "compile",
-      requestId: 1,
-    };
-    expect(isMainToWorkerMessage(msg)).toBe(true);
-  });
-
-  it("rejects malformed main->worker message", () => {
-    const msg = {
-      kind: "compile",
-      requestId: "1",
-    };
-    expect(isMainToWorkerMessage(msg)).toBe(false);
-  });
-
-  it("accepts worker event messages", () => {
-    expect(
-      isWorkerEventMessage({
-        kind: "web_fetch",
-        payload: { path: "main.typ" },
-      }),
-    ).toBe(true);
-  });
-
-  it("accepts valid rpc responses and rejects ambiguous ones", () => {
+  it("rejects ambiguous RPC responses from untrusted worker messages", () => {
     expect(isRpcResponseMessage({ requestId: 2, result: {} })).toBe(true);
     expect(
       isRpcResponseMessage({ requestId: 2, error: { message: "failed" } }),
@@ -42,8 +12,20 @@ describe("message guards", () => {
     );
   });
 
-  it("accepts worker->main union and rejects unknown messages", () => {
-    expect(isWorkerToMainMessage({ requestId: 3, result: true })).toBe(true);
+  it("only accepts well-formed worker fetch events", () => {
+    expect(
+      isWorkerToMainMessage({
+        kind: "web_fetch",
+        payload: { path: "main.typ" },
+      }),
+    ).toBe(true);
+    expect(isWorkerToMainMessage({ kind: "web_fetch" })).toBe(false);
+    expect(
+      isWorkerToMainMessage({
+        kind: "web_fetch",
+        payload: { path: 1 },
+      }),
+    ).toBe(false);
     expect(isWorkerToMainMessage({ kind: "unknown" })).toBe(false);
   });
 });

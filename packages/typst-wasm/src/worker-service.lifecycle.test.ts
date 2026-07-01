@@ -1,73 +1,20 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { FileLoaderManager } from "./file-loader";
+import {
+  makeFakeWorkerFactory,
+  type FakeWorkerState,
+} from "../tests/unit/fakes";
 
-type WorkerMessage =
-  | {
-      kind: "init";
-      requestId: number;
-      payload: {
-        wasmURL: string;
-        glueURL: string;
-      };
-    }
-  | {
-      kind: Exclude<string, "init">;
-      requestId: number;
-      payload?: unknown;
-    };
-
-const workerState = {
-  initMessages: [] as WorkerMessage[],
+const workerState: FakeWorkerState = {
+  initMessages: [],
   terminateCount: 0,
 };
 
-class MockTypstWorker {
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  onerror: ((event: ErrorEvent) => void) | null = null;
-
-  postMessage(message: unknown) {
-    const msg = message as WorkerMessage;
-
-    if (msg.kind === "init") {
-      const payload = msg.payload as { wasmURL: string; glueURL: string };
-      workerState.initMessages.push(msg);
-      queueMicrotask(() => {
-        if (payload.wasmURL === "bad.wasm") {
-          this.onmessage?.({
-            data: {
-              requestId: msg.requestId,
-              error: { message: "init failed" },
-            },
-          } as MessageEvent);
-          return;
-        }
-
-        this.onmessage?.({
-          data: { requestId: msg.requestId, result: undefined },
-        } as MessageEvent);
-      });
-      return;
-    }
-
-    queueMicrotask(() => {
-      this.onmessage?.({
-        data: { requestId: msg.requestId, result: undefined },
-      } as MessageEvent);
-    });
-  }
-
-  terminate() {
-    workerState.terminateCount += 1;
-  }
-}
-
-vi.mock("./worker.ts?worker", () => ({
-  default: MockTypstWorker,
-}));
-
 const makeService = async () => {
   const { WorkerService } = await import("./worker-service");
-  return new WorkerService(new FileLoaderManager([]));
+  return new WorkerService(new FileLoaderManager([]), {
+    createWorker: makeFakeWorkerFactory(workerState),
+  });
 };
 
 describe("worker service lifecycle", () => {

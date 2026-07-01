@@ -1,6 +1,6 @@
 import {
-  registerHostFetch,
-  unregisterHostFetch,
+  registerHostFetch as defaultRegisterHostFetch,
+  unregisterHostFetch as defaultUnregisterHostFetch,
 } from "@typst-wasm/engine-wasm/bridge";
 import { supportsJspiBackend } from "./backend-support";
 import {
@@ -15,7 +15,10 @@ import type {
   WasmCompileOptions,
   WasmCompileOutput,
 } from "./wasm";
-import { loadWasmModule, type WasmAssetUrls } from "./wasm-loader";
+import {
+  loadWasmModule as defaultLoadWasmModule,
+  type WasmAssetUrls,
+} from "./wasm-loader";
 import { getJspiWebAssembly } from "./webassembly-jspi";
 
 const MAX_FETCH_ATTEMPTS = 3;
@@ -25,6 +28,12 @@ let nextHostId = 1;
 type WasmBindgenPointer = {
   readonly __wbg_ptr: number;
 };
+
+export interface DirectServiceInternals {
+  loadWasmModule?: typeof defaultLoadWasmModule;
+  registerHostFetch?: typeof defaultRegisterHostFetch;
+  unregisterHostFetch?: typeof defaultUnregisterHostFetch;
+}
 
 const retry = async <T>(
   task: () => Promise<T>,
@@ -56,7 +65,10 @@ export class DirectService {
       ) => Promise<[number, number, number]>)
     | null = null;
 
-  constructor(private readonly fileLoaderManager: FileLoaderManager) {}
+  constructor(
+    private readonly fileLoaderManager: FileLoaderManager,
+    private readonly internals: DirectServiceInternals = {},
+  ) {}
 
   async init(assets: WasmAssetUrls): Promise<void> {
     this.assertNotDisposed();
@@ -77,7 +89,9 @@ export class DirectService {
     this.compiler = null;
     this.wasmExports = null;
     this.compileAsync = null;
-    unregisterHostFetch(this.hostId);
+    const unregister =
+      this.internals.unregisterHostFetch ?? defaultUnregisterHostFetch;
+    unregister(this.hostId);
   }
 
   async addFont(data: Uint8Array): Promise<void> {
@@ -150,13 +164,18 @@ export class DirectService {
       throw new WorkerError("JSPI is unavailable in this runtime");
     }
 
+    const loadWasmModule =
+      this.internals.loadWasmModule ?? defaultLoadWasmModule;
+    const register =
+      this.internals.registerHostFetch ?? defaultRegisterHostFetch;
+
     const wasmModule = await loadWasmModule(assets);
     const { Suspending, promising } = getJspiWebAssembly<WasmCompileOptions>();
     if (!Suspending || !promising) {
       throw new WorkerError("JSPI is unavailable in this runtime");
     }
     const suspending = new Suspending(this.hostFetch);
-    registerHostFetch(this.hostId, suspending);
+    register(this.hostId, suspending);
 
     const wasmExports = wasmModule;
 
