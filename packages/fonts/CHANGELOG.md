@@ -1,5 +1,13 @@
 # @typst-wasm/fonts
 
+## 0.3.0
+
+### Minor Changes
+
+- [`3b0d5c7`](https://github.com/wra-bradshaw/typst-wasm/commit/3b0d5c77b0e2c767f602672735d06de0b7eaaf5a) Thanks [@wra-bradshaw](https://github.com/wra-bradshaw)! - wasm optimisations and improved testing
+
+- [`7cc01af`](https://github.com/wra-bradshaw/typst-wasm/commit/7cc01af53793636f654e1ead8d933321656c3882) Thanks [@wra-bradshaw](https://github.com/wra-bradshaw)! - fix tests and make vite-plugin-typst reuse its compiler
+
 ## 0.2.0
 
 ### Minor Changes
