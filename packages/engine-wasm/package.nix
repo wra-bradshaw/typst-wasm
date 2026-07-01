@@ -85,7 +85,14 @@ let
           --out-dir "$out/dist" \
           "$CARGO_TARGET_DIR/$CARGO_BUILD_TARGET/release/typst_wasm.wasm"
 
-        wasm-opt -O4 "$out/dist/typst_wasm_bg.wasm" -o "$out/dist/typst_wasm_bg.wasm"
+        wasm-opt \
+          -Oz \
+          --enable-threads \
+          --enable-bulk-memory \
+          --enable-mutable-globals \
+          --enable-nontrapping-float-to-int \
+          "$out/dist/typst_wasm_bg.wasm" \
+          -o "$out/dist/typst_wasm_bg.wasm"
       '';
     }
   );

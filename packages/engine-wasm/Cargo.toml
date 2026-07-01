@@ -4,7 +4,20 @@ version = "0.0.0"
 edition = "2024"
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = ["-O4"]
+wasm-opt = [
+  "-Oz",
+  "--enable-threads",
+  "--enable-bulk-memory",
+  "--enable-mutable-globals",
+  "--enable-nontrapping-float-to-int",
+]
+
+[profile.release]
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]
