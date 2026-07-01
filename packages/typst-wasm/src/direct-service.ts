@@ -59,10 +59,7 @@ export class DirectService {
   private wasmExports: InitOutput | null = null;
   private readonly hostId = nextHostId++;
   private compileAsync:
-    | ((
-        compilerPtr: number,
-        options: WasmCompileOptions,
-      ) => Promise<[number, number, number]>)
+    | ((options: WasmCompileOptions) => Promise<WasmCompileOutput>)
     | null = null;
 
   constructor(
@@ -145,18 +142,11 @@ export class DirectService {
       throw new CompilerNotInitializedError("Compiler not initialized");
     }
 
-    let ret: [number, number, number];
     try {
-      ret = await compile(this.compilerPointer(compiler), options);
+      return await compile(options);
     } catch (cause) {
       throw new WorkerError("Direct command failed: compile", { cause });
     }
-
-    if (ret[2]) {
-      throw this.takeExternref(wasmExports, ret[1]);
-    }
-
-    return this.takeExternref(wasmExports, ret[0]) as WasmCompileOutput;
   }
 
   private async initDirect(assets: WasmAssetUrls): Promise<void> {
@@ -170,17 +160,20 @@ export class DirectService {
       this.internals.registerHostFetch ?? defaultRegisterHostFetch;
 
     const wasmModule = await loadWasmModule(assets);
-    const { Suspending, promising } = getJspiWebAssembly<WasmCompileOptions>();
-    if (!Suspending || !promising) {
+    const { Suspending } = getJspiWebAssembly<WasmCompileOptions>();
+    if (!Suspending) {
       throw new WorkerError("JSPI is unavailable in this runtime");
     }
-    const suspending = new Suspending(this.hostFetch);
-    register(this.hostId, suspending);
+    register(this.hostId, this.hostFetch);
 
     const wasmExports = wasmModule;
 
     this.wasmExports = wasmExports;
-    this.compileAsync = promising(wasmExports.typstcompiler_compile);
+    this.compileAsync = async (options: WasmCompileOptions) =>
+      this.withCompiler((compiler) => {
+        this.assertCompilerPointer(compiler);
+        return compiler.compile(options) as WasmCompileOutput;
+      }, "compile");
     this.compiler = new wasmModule.TypstCompiler(this.hostId);
   }
 
@@ -241,13 +234,11 @@ export class DirectService {
     }
   }
 
-  private takeExternref(wasmExports: InitOutput, idx: number): unknown {
-    const value = wasmExports.__wbindgen_externrefs.get(idx);
-    wasmExports.__externref_table_dealloc(idx);
-    return value;
-  }
-
-  private compilerPointer(compiler: TypstCompilerInstance): number {
-    return (compiler as TypstCompilerInstance & WasmBindgenPointer).__wbg_ptr;
+  private assertCompilerPointer(compiler: TypstCompilerInstance): void {
+    const ptr = (compiler as TypstCompilerInstance & WasmBindgenPointer)
+      .__wbg_ptr;
+    if (!ptr) {
+      throw new Error("Compiler pointer is zero");
+    }
   }
 }
