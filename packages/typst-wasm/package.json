@@ -37,7 +37,7 @@
     "build": "nix run ../..#build-artifact -- typst-wasm",
     "fix": "pnpm run format:fix && pnpm exec eslint . --fix",
     "lint": "pnpm exec eslint . --max-warnings=0",
-    "test": "pnpm run test:unit",
+    "test": "pnpm run test:unit && pnpm run test:integration",
     "test:unit": "pnpm exec vitest run",
     "test:integration": "pnpm run test:integration:node && pnpm run test:integration:bun && pnpm run test:integration:deno",
     "test:integration:node": "node --experimental-wasm-stack-switching ./node_modules/vitest/vitest.mjs run -c vitest.integration.config.ts --pool vmThreads",
