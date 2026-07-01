@@ -1,6 +1,6 @@
 {
   "name": "@typst-wasm/vite-plugin-typst",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Vite plugin for importing Typst documents as compiled HTML modules",
   "type": "module",
   "main": "./dist/index.mjs",
