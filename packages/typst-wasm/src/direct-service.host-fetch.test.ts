@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FileLoaderManager } from "../src/file-loader";
-import type { TypstFileLoader } from "../src/types";
+import { FileLoaderManager } from "./file-loader";
+import type { TypstFileLoader } from "./types";
 
 const textEncoder = new TextEncoder();
 
@@ -39,7 +39,7 @@ vi.mock("@typst-wasm/engine-wasm/bridge", () => ({
   },
 }));
 
-vi.mock("../src/wasm-loader", async () => {
+vi.mock("./wasm-loader", async () => {
   const bridge = await import("@typst-wasm/engine-wasm/bridge");
 
   class TypstCompiler {
@@ -155,7 +155,7 @@ describe("DirectService host fetch routing", () => {
   });
 
   it("keeps concurrent JSPI compiler instances on separate host fetchers", async () => {
-    const { DirectService } = await import("../src/direct-service");
+    const { DirectService } = await import("./direct-service");
     const first = new DirectService(new FileLoaderManager([makeLoader(1)]));
     const second = new DirectService(new FileLoaderManager([makeLoader(2)]));
 
@@ -194,7 +194,7 @@ describe("DirectService host fetch routing", () => {
   });
 
   it("surfaces init failures and allows a later retry", async () => {
-    const { DirectService } = await import("../src/direct-service");
+    const { DirectService } = await import("./direct-service");
     const service = new DirectService(new FileLoaderManager([makeLoader(1)]));
 
     await expect(

@@ -3,9 +3,9 @@ import {
   FetchFileLoader,
   FileLoaderManager,
   type FetchImpl,
-} from "../src/file-loader";
-import { makeFetchBridge } from "../src/fetch-bridge";
-import { SharedMemoryCommunicationStatus } from "../src/protocol";
+} from "./file-loader";
+import { makeFetchBridge } from "./fetch-bridge";
+import { SharedMemoryCommunicationStatus } from "./protocol";
 
 describe("fetch bridge", () => {
   it("writes package bytes into shared memory on success", async () => {

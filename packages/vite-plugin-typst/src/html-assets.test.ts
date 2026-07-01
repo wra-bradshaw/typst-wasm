@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { transformHtmlAssets } from "../src/html-assets";
+import { transformHtmlAssets } from "./html-assets";
 
 describe("HTML asset transform", () => {
   it("rewrites src, poster, and srcset values to Vite url imports", () => {

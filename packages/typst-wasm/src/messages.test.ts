@@ -4,7 +4,7 @@ import {
   isRpcResponseMessage,
   isWorkerEventMessage,
   isWorkerToMainMessage,
-} from "../src/messages";
+} from "./messages";
 
 describe("message guards", () => {
   it("accepts valid main->worker RPC request", () => {

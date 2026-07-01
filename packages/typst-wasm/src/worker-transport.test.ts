@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { makeWorkerTransport } from "../src/worker-transport";
+import { makeWorkerTransport } from "./worker-transport";
 
 class FakeWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;

@@ -3,9 +3,9 @@ import {
   classifyTypstFilePath,
   FetchFileLoader,
   FileLoaderManager,
-} from "../src/file-loader";
-import { PackageFileLoader, PackageManager } from "../src/package-manager";
-import type { TypstFileLoader } from "../src/types";
+} from "./file-loader";
+import { PackageFileLoader, PackageManager } from "./package-manager";
+import type { TypstFileLoader } from "./types";
 
 describe("file loader manager", () => {
   it("classifies Typst paths", () => {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { FileLoaderManager } from "../src/file-loader";
+import { FileLoaderManager } from "./file-loader";
 
 type WorkerMessage =
   | {
@@ -61,12 +61,12 @@ class MockTypstWorker {
   }
 }
 
-vi.mock("../src/worker.ts?worker", () => ({
+vi.mock("./worker.ts?worker", () => ({
   default: MockTypstWorker,
 }));
 
 const makeService = async () => {
-  const { WorkerService } = await import("../src/worker-service");
+  const { WorkerService } = await import("./worker-service");
   return new WorkerService(new FileLoaderManager([]));
 };
 
