@@ -2,11 +2,14 @@ export type HostFetch = (
   pathPtr: number,
   pathLen: number,
   resultLenPtr: number,
-) => number;
+) => number | Promise<number>;
 
 const hostFetchers = new Map<number, HostFetch>();
 
-export const registerHostFetch = (hostId: number, hostFetch: HostFetch): void => {
+export const registerHostFetch = (
+  hostId: number,
+  hostFetch: HostFetch,
+): void => {
   hostFetchers.set(hostId, hostFetch);
 };
 
@@ -19,7 +22,7 @@ export const host_fetch = (
   pathPtr: number,
   pathLen: number,
   resultLenPtr: number,
-): number => {
+): number | Promise<number> => {
   const hostFetch = hostFetchers.get(hostId);
   if (!hostFetch) {
     throw new Error(`No host_fetch registered for host id ${hostId}`);
