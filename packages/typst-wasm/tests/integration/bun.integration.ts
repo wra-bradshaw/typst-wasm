@@ -2,11 +2,11 @@
 
 import { describe, expect, test } from "bun:test";
 import { wasmBinaryUrl, wasmGlueUrl } from "../../src/wasm";
-import { runCompilerE2eScenario } from "./scenario";
+import { runCompilerIntegrationScenario } from "./scenario";
 
-describe("bun e2e (worker backend)", () => {
+describe("bun integration (worker backend)", () => {
   test("covers compiler behavior across files, formats, options, and errors", async () => {
-    const result = await runCompilerE2eScenario({
+    const result = await runCompilerIntegrationScenario({
       runtime: "bun",
       wasmURL: wasmBinaryUrl.href,
       glueURL: wasmGlueUrl.href,

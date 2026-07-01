@@ -63,7 +63,7 @@ nix develop .#ci -c pnpm install --frozen-lockfile
 
 ### Option 3: Manual JS/runtime setup
 
-Use the Nix shell for reproducible artifact builds. Outside Nix, install pnpm 11 plus Bun and Deno for runtime e2e checks.
+Use the Nix shell for reproducible artifact builds. Outside Nix, install pnpm 11 plus Bun and Deno for runtime integration checks.
 
 ## Commands
 
@@ -72,7 +72,7 @@ Use the Nix shell for reproducible artifact builds. Outside Nix, install pnpm 11
 ```bash
 pnpm build
 pnpm test
-pnpm e2e
+pnpm test:integration
 nix develop .#ci -c pnpm build
 ```
 

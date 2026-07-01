@@ -7,7 +7,7 @@ import {
 
 export type RuntimeName = "bun" | "node" | "deno";
 
-export type E2eScenarioOptions = {
+export type IntegrationScenarioOptions = {
   runtime: RuntimeName;
   wasmURL: string | URL;
   glueURL: string | URL;
@@ -81,7 +81,7 @@ const addDefaultFonts = async (
 };
 
 export const makeCompiler = async (
-  options: E2eScenarioOptions,
+  options: IntegrationScenarioOptions,
 ): Promise<TypstCompiler> => {
   const compiler = await createTypstCompiler({
     wasmURL: options.wasmURL,

@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["tests/e2e/node.e2e.ts"],
+    include: ["tests/integration/node.integration.ts"],
     testTimeout: 60000,
     server: {
       deps: {

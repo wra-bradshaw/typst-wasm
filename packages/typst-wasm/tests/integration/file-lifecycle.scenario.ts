@@ -4,7 +4,7 @@ import {
   assertIncludes,
   assertSvgPage,
   textBytes,
-  type E2eScenarioOptions,
+  type IntegrationScenarioOptions,
 } from "./harness.ts";
 
 export type FileLifecycleResult = {
@@ -16,17 +16,17 @@ export type FileLifecycleResult = {
 const fileMainSource = `#set page(width: auto, height: auto, margin: 10pt)
 #import "partial.typ": message
 #let data = read("data.txt")
-= Runtime E2E
+= Runtime Integration
 #message
 #data`;
 
 const fileEditedSource = `#set page(width: auto, height: auto, margin: 10pt)
-= Runtime E2E Updated
+= Runtime Integration Updated
 The compiler still works after remove_file().`;
 
 export const runFileLifecycleScenario = async (
   compiler: TypstCompiler,
-  options: E2eScenarioOptions,
+  options: IntegrationScenarioOptions,
 ): Promise<FileLifecycleResult> => {
   await compiler.clearFiles();
   await compiler.addSource("main.typ", fileMainSource);

@@ -1,7 +1,7 @@
 import {
   assertRejects,
   makeCompiler,
-  type E2eScenarioOptions,
+  type IntegrationScenarioOptions,
 } from "./harness.ts";
 import {
   runFileLifecycleScenario,
@@ -13,16 +13,16 @@ import {
 } from "./formats.scenario.ts";
 import { runOptionsAndErrorsScenario } from "./errors.scenario.ts";
 
-type E2eScenarioResult = {
-  runtime: E2eScenarioOptions["runtime"];
+type IntegrationScenarioResult = {
+  runtime: IntegrationScenarioOptions["runtime"];
 } & FileLifecycleResult &
   CompileFormatResult;
 
-export const runCompilerE2eScenario = async (
-  options: E2eScenarioOptions,
-): Promise<E2eScenarioResult> => {
+export const runCompilerIntegrationScenario = async (
+  options: IntegrationScenarioOptions,
+): Promise<IntegrationScenarioResult> => {
   const compiler = await makeCompiler(options);
-  let result: E2eScenarioResult;
+  let result: IntegrationScenarioResult;
 
   try {
     const fileLifecycle = await runFileLifecycleScenario(compiler, options);

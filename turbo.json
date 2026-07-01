@@ -46,7 +46,7 @@
     "format": {
       "dependsOn": []
     },
-    "e2e": {
+    "test:integration": {
       "dependsOn": ["^build", "build"]
     }
   }

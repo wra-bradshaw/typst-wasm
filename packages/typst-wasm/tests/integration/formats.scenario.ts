@@ -1,5 +1,5 @@
 import type { TypstCompiler } from "typst-wasm";
-import { assert, type E2eScenarioOptions } from "./harness.ts";
+import { assert, type IntegrationScenarioOptions } from "./harness.ts";
 
 export type CompileFormatResult = {
   pdfFormatSeen: boolean;
@@ -22,7 +22,7 @@ const multipageSource = `#set document(
 
 export const runCompileFormatScenario = async (
   compiler: TypstCompiler,
-  options: E2eScenarioOptions,
+  options: IntegrationScenarioOptions,
 ): Promise<CompileFormatResult> => {
   await compiler.clearFiles();
   await compiler.addSource("main.typ", multipageSource);

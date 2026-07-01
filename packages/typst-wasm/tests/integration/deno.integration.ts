@@ -1,12 +1,12 @@
 /// <reference types="deno" />
 
 import { wasmBinaryUrl, wasmGlueUrl } from "../../src/wasm.ts";
-import { runCompilerE2eScenario } from "./scenario.ts";
+import { runCompilerIntegrationScenario } from "./scenario.ts";
 
 Deno.test(
-  "deno e2e (worker backend) covers compiler behavior across files, formats, options, and errors",
+  "deno integration (worker backend) covers compiler behavior across files, formats, options, and errors",
   async () => {
-    const result = await runCompilerE2eScenario({
+    const result = await runCompilerIntegrationScenario({
       runtime: "deno",
       wasmURL: wasmBinaryUrl.href,
       glueURL: wasmGlueUrl.href,

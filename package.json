@@ -4,8 +4,9 @@
   "packageManager": "pnpm@11.5.2",
   "scripts": {
     "build": "turbo run build",
-    "test": "turbo run test",
-    "e2e": "turbo run e2e",
+    "test": "pnpm -r --if-present test",
+    "test:unit": "pnpm -r --if-present test:unit",
+    "test:integration": "pnpm -r --if-present test:integration",
     "fix": "pnpm -r --if-present fix",
     "format": "turbo run format",
     "changeset": "changeset",
