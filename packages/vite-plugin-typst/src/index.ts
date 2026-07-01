@@ -5,6 +5,7 @@ import {
   createTypstCompiler,
   defaultFonts,
   type PackageCache,
+  type TypstCompiler,
   type TypstCompilerOptions,
   type TypstDocumentMetadata,
   type TypstFileLoader,
@@ -100,60 +101,117 @@ export default document;
 `;
 
 const compileTypst = async (
+  compiler: TypstCompiler,
   source: string,
   id: string,
   root: string,
-  options: TypstPluginOptions,
 ): Promise<TypstCompiledModule> => {
   const main = toTypstProjectPath(root, id);
-  const compiler = await createTypstCompiler({
-    wasmURL: options.wasmURL ?? wasmUrl,
-    glueURL: options.glueURL,
-    backend: options.backend,
-    fileLoaders: [...(options.fileLoaders ?? []), makeProjectFileLoader(root)],
-    packageBaseUrl: options.packageBaseUrl,
-    packageCache: options.packageCache,
-    memoryPackageCacheCapacity: options.memoryPackageCacheCapacity,
-  });
 
-  try {
-    if (options.includeDefaultFonts !== false) {
-      await addDefaultFonts(compiler);
-    }
+  await compiler.addSource(main, source);
+  const result = await compiler
+    .compile({ main, format: "html" })
+    .catch((error) => {
+      if (error instanceof CompileError) {
+        throw formatCompileError(error);
+      }
 
-    await compiler.addSource(main, source);
-    const result = await compiler
-      .compile({ main, format: "html" })
-      .catch((error) => {
-        if (error instanceof CompileError) {
-          throw formatCompileError(error);
-        }
-
-        throw error;
-      });
-    if (result.format !== "html") {
-      throw new Error(`Expected Typst HTML output, received ${result.format}`);
-    }
-
-    return {
-      html: result.output,
-      metadata: result.metadata,
-      diagnostics: result.diagnostics,
-      dependencies: result.dependencies ?? [],
-    };
-  } finally {
-    await compiler.dispose().catch(() => undefined);
+      throw error;
+    });
+  if (result.format !== "html") {
+    throw new Error(`Expected Typst HTML output, received ${result.format}`);
   }
+
+  return {
+    html: result.output,
+    metadata: result.metadata,
+    diagnostics: result.diagnostics,
+    dependencies: result.dependencies ?? [],
+  };
 };
 
 export const typst = (options: TypstPluginOptions = {}): Plugin => {
   let config: ResolvedConfig | undefined;
+  let compilerPromise: Promise<TypstCompiler> | undefined;
+  let transformQueue: Promise<void> = Promise.resolve();
+  const watchedProjectFiles = new Set<string>();
+
+  const disposeCompiler = async (): Promise<void> => {
+    const compiler = await compilerPromise?.catch(() => undefined);
+    compilerPromise = undefined;
+    await compiler?.dispose().catch(() => undefined);
+  };
+
+  const getCompiler = (): Promise<TypstCompiler> => {
+    if (!config) {
+      throw new Error("vite-plugin-typst used before config resolution");
+    }
+
+    compilerPromise ??= (async () => {
+      const compiler = await createTypstCompiler({
+        wasmURL: options.wasmURL ?? wasmUrl,
+        glueURL: options.glueURL,
+        backend: options.backend,
+        fileLoaders: [
+          ...(options.fileLoaders ?? []),
+          makeProjectFileLoader(config.root),
+        ],
+        packageBaseUrl: options.packageBaseUrl,
+        packageCache: options.packageCache,
+        memoryPackageCacheCapacity: options.memoryPackageCacheCapacity,
+      });
+
+      if (options.includeDefaultFonts !== false) {
+        await addDefaultFonts(compiler);
+      }
+
+      return compiler;
+    })().catch((error) => {
+      compilerPromise = undefined;
+      throw error;
+    });
+
+    return compilerPromise;
+  };
+
+  const runWithCompiler = async <T>(
+    task: (compiler: TypstCompiler) => Promise<T>,
+  ) => {
+    const run = transformQueue.then(async () => task(await getCompiler()));
+    transformQueue = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  };
+
+  const invalidateProjectFile = async (id: string): Promise<void> => {
+    if (!config || !compilerPromise || !isInsideRoot(config.root, id)) return;
+    const projectPath = toTypstProjectPath(config.root, id);
+    await runWithCompiler((compiler) => compiler.removeFile(projectPath));
+  };
 
   return {
     name: "vite-plugin-typst",
 
     configResolved(resolvedConfig) {
       config = resolvedConfig;
+    },
+
+    configureServer(server) {
+      server.watcher.on("change", (id) => {
+        void invalidateProjectFile(id);
+      });
+      server.watcher.on("unlink", (id) => {
+        void invalidateProjectFile(id);
+      });
+      server.httpServer?.once("close", () => {
+        void disposeCompiler();
+      });
+    },
+
+    async watchChange(id) {
+      await invalidateProjectFile(id);
     },
 
     async transform(code, id) {
@@ -164,11 +222,17 @@ export const typst = (options: TypstPluginOptions = {}): Plugin => {
         );
       }
 
-      const compiled = await compileTypst(code, id, config.root, options);
+      const root = config.root;
+      const compiled = await runWithCompiler((compiler) =>
+        compileTypst(compiler, code, id, root),
+      );
       for (const dependency of compiled.dependencies) {
         if (dependency.kind === "project" && dependency.resolvedPath) {
-          this.addWatchFile(dependency.resolvedPath);
+          watchedProjectFiles.add(dependency.resolvedPath);
         }
+      }
+      for (const file of watchedProjectFiles) {
+        this.addWatchFile(file);
       }
 
       const { imports, htmlExpression } = transformHtmlAssets(compiled.html);
@@ -176,6 +240,10 @@ export const typst = (options: TypstPluginOptions = {}): Plugin => {
         code: buildModuleCode(compiled, htmlExpression, imports),
         map: { mappings: "" },
       };
+    },
+
+    async closeBundle() {
+      await disposeCompiler();
     },
   };
 };
