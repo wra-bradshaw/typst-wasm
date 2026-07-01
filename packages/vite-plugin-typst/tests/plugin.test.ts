@@ -1,7 +1,6 @@
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, expect, test } from "vitest";
-import { supportsJspiBackend } from "typst-wasm";
 import typst from "../src";
 import { buildFixture, getChunk } from "./helpers";
 
@@ -16,9 +15,7 @@ const gluePath = path.resolve(
 );
 
 describe("vite-plugin-typst fixtures", () => {
-  const runIfJspi = supportsJspiBackend() ? test : test.skip;
-
-  runIfJspi("builds a typst import into a JS module", async () => {
+  test("builds a typst import into a JS module", async () => {
     const build = await buildFixture(
       "basic",
       typst({
