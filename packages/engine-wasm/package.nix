@@ -97,26 +97,13 @@ let
     }
   );
 
-  bridgeDeps = pkgs.fetchPnpmDeps {
-    pname = "typst-wasm-engine-wasm-bridge";
-    version = "deps";
-    src = workspaceRoot;
-    pnpm = pkgs.pnpm;
-    pnpmWorkspaces = [
-      "@typst-wasm/engine-wasm"
-      "@typst-wasm/fonts"
-      "typst-wasm"
-      "@typst-wasm/vite-plugin-typst"
-    ];
-    fetcherVersion = 4;
-    hash = "sha256-M6c700sSI5Q37aY6xSlNFdp541TmNSyK87zNul4LXPo=";
-  };
+  pnpmDeps = import ../../nix/pnpm-deps.nix { inherit pkgs workspaceRoot; };
 
   bridgeArtifacts = pkgs.stdenvNoCC.mkDerivation {
     pname = "typst-wasm-engine-wasm-bridge";
     version = packageVersion;
     src = workspaceRoot;
-    pnpmDeps = bridgeDeps;
+    inherit pnpmDeps;
     nativeBuildInputs = [
       pkgs.nodejs
       pkgs.pnpmConfigHook

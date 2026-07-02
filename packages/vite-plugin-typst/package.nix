@@ -8,19 +8,7 @@ let
   pname = "vite-plugin-typst";
   pnpmWorkspaceName = "@typst-wasm/vite-plugin-typst";
   version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
-
-  pnpmDeps = pkgs.fetchPnpmDeps {
-    inherit pname;
-    version = "deps";
-    src = workspaceRoot;
-    pnpm = pkgs.pnpm;
-    pnpmWorkspaces = [
-      pnpmWorkspaceName
-      "typst-wasm"
-    ];
-    fetcherVersion = 4;
-    hash = "sha256-M6c700sSI5Q37aY6xSlNFdp541TmNSyK87zNul4LXPo";
-  };
+  pnpmDeps = import ../../nix/pnpm-deps.nix { inherit pkgs workspaceRoot; };
 
   pnpmNativeBuildInputs = nativeBuildInputs ++ [
     pkgs.nodejs

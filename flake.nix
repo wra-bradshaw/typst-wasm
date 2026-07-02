@@ -81,7 +81,6 @@
             runtimeInputs = [
               pkgs.coreutils
               pkgs.git
-              pkgs.nix
             ];
             text = ''
               usage() {
