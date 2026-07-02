@@ -3,6 +3,7 @@ import {
   SharedMemoryCommunication,
   SharedMemoryCommunicationStatus,
 } from "./protocol";
+import type { WorkerPort } from "./port";
 import {
   isMainToWorkerMessage,
   type MainToWorkerMessage,
@@ -56,6 +57,7 @@ const toWorkerCommandError = (
       );
 
 export const installTypstWorkerRuntime = (
+  port: WorkerPort,
   loadWorkerWasmModule: (assets: WasmAssetUrls) => Promise<WasmModule>,
 ): void => {
   let compiler: TypstCompilerInstance | null = null;
@@ -112,7 +114,7 @@ export const installTypstWorkerRuntime = (
       sharedMemoryCommunication.setStatus(
         SharedMemoryCommunicationStatus.Pending,
       );
-      self.postMessage({
+      port.postMessage({
         kind: "web_fetch",
         payload: { path },
       } satisfies WorkerToMainMessage);
@@ -285,8 +287,7 @@ export const installTypstWorkerRuntime = (
     }
   };
 
-  self.onmessage = (event: MessageEvent) => {
-    const data = event.data;
+  port.onMessage((data) => {
     if (!isMainToWorkerMessage(data)) {
       return;
     }
@@ -302,7 +303,7 @@ export const installTypstWorkerRuntime = (
         );
       })
       .then((result) => {
-        self.postMessage(result);
+        port.postMessage(result);
       });
-  };
+  });
 };

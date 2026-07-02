@@ -5,6 +5,7 @@ import {
   isRpcResponseMessage,
   type WorkerToMainMessage,
 } from "../worker/messages";
+import type { WorkerHost } from "../worker/host";
 import type { TypstWorkerProtocol } from "../worker/protocol";
 import { makeRpcClient, type RpcClient } from "../worker/rpc";
 import { makeWorkerTransport, type WorkerTransport } from "../worker/transport";
@@ -14,7 +15,7 @@ import type {
   WasmCompileOutput,
 } from "../wasm/index";
 
-export type TypstWorkerFactory = () => Worker;
+export type TypstWorkerFactory = () => WorkerHost;
 
 export interface WorkerServiceInternals {
   createWorker?: TypstWorkerFactory;
@@ -23,7 +24,7 @@ export interface WorkerServiceInternals {
 export class WorkerService {
   private disposed = false;
   private initPromise: Promise<void> | null = null;
-  private readonly worker: Worker;
+  private readonly worker: WorkerHost;
   private readonly rpcClient: RpcClient<TypstWorkerProtocol>;
   private readonly transport: WorkerTransport;
 
@@ -81,7 +82,7 @@ export class WorkerService {
       new CompilerDisposedError("Compiler has been disposed"),
     );
     this.transport.close();
-    this.worker.terminate();
+    void this.worker.terminate();
   }
 
   addFont(data: Uint8Array): Promise<void> {

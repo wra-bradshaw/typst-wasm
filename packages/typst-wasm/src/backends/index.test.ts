@@ -1,155 +1,51 @@
-import { describe, expect, it } from "vitest";
-import { selectAutomaticBackendKind } from "./index";
+import { describe, expect, it, vi } from "vitest";
+import {
+  selectAutomaticBackendKind,
+  type TypstRuntime,
+  type BackendSelection,
+} from "./index";
+
+vi.mock("@typst-wasm/engine-wasm/bridge", () => ({
+  registerHostFetch: () => undefined,
+  unregisterHostFetch: () => undefined,
+}));
+
+const makeRuntime = (worker: boolean, jspi: boolean): TypstRuntime => ({
+  createWorker: () => {
+    throw new Error("not used");
+  },
+  loadWasmModule: () => {
+    throw new Error("not used");
+  },
+  resolveAssets: () => ({}),
+  supportsWorkerBackend: () => worker,
+  supportsJspiBackend: () => jspi,
+});
 
 describe("compiler backend selection", () => {
-  it("auto-selects worker when both worker and jspi capabilities are present", () => {
-    const originalWorker = globalThis.Worker;
-    const originalSAB = globalThis.SharedArrayBuffer;
-    const originalAtomics = globalThis.Atomics;
-    const originalWebAssembly = globalThis.WebAssembly;
+  it.each([
+    { worker: true, jspi: true, selected: "worker" },
+    { worker: true, jspi: false, selected: "worker" },
+    { worker: false, jspi: true, selected: "jspi" },
+    { worker: false, jspi: false, selected: "none" },
+  ] satisfies Array<{
+    worker: boolean;
+    jspi: boolean;
+    selected: BackendSelection;
+  }>)(
+    "selects $selected when runtime reports worker=$worker and jspi=$jspi",
+    ({ worker, jspi, selected }) => {
+      expect(selectAutomaticBackendKind(makeRuntime(worker, jspi))).toBe(
+        selected,
+      );
+    },
+  );
 
-    class FakeWorker {}
+  it("lets the same primitive environment produce different runtime decisions", () => {
+    const nodeLikeRuntime = makeRuntime(true, false);
+    const browserLikeRuntime = makeRuntime(false, true);
 
-    Object.defineProperty(globalThis, "Worker", {
-      configurable: true,
-      value: FakeWorker,
-    });
-    Object.defineProperty(globalThis, "SharedArrayBuffer", {
-      configurable: true,
-      value: class {},
-    });
-    Object.defineProperty(globalThis, "Atomics", {
-      configurable: true,
-      value: {
-        wait: () => "ok",
-      },
-    });
-    Object.defineProperty(globalThis, "WebAssembly", {
-      configurable: true,
-      value: {
-        ...originalWebAssembly,
-        Suspending: function Suspending() {},
-        promising: () => undefined,
-      },
-    });
-
-    try {
-      expect(selectAutomaticBackendKind()).toBe("worker");
-    } finally {
-      Object.defineProperty(globalThis, "Worker", {
-        configurable: true,
-        value: originalWorker,
-      });
-      Object.defineProperty(globalThis, "SharedArrayBuffer", {
-        configurable: true,
-        value: originalSAB,
-      });
-      Object.defineProperty(globalThis, "Atomics", {
-        configurable: true,
-        value: originalAtomics,
-      });
-      Object.defineProperty(globalThis, "WebAssembly", {
-        configurable: true,
-        value: originalWebAssembly,
-      });
-    }
-  });
-
-  it("auto-selects jspi when worker support is unavailable", () => {
-    const originalWorker = globalThis.Worker;
-    const originalSAB = globalThis.SharedArrayBuffer;
-    const originalAtomics = globalThis.Atomics;
-    const originalWebAssembly = globalThis.WebAssembly;
-
-    Object.defineProperty(globalThis, "Worker", {
-      configurable: true,
-      value: undefined,
-    });
-    Object.defineProperty(globalThis, "SharedArrayBuffer", {
-      configurable: true,
-      value: undefined,
-    });
-    Object.defineProperty(globalThis, "Atomics", {
-      configurable: true,
-      value: undefined,
-    });
-    Object.defineProperty(globalThis, "WebAssembly", {
-      configurable: true,
-      value: {
-        ...originalWebAssembly,
-        Suspending: function Suspending() {},
-        promising: () => undefined,
-      },
-    });
-
-    try {
-      expect(selectAutomaticBackendKind()).toBe("jspi");
-    } finally {
-      Object.defineProperty(globalThis, "Worker", {
-        configurable: true,
-        value: originalWorker,
-      });
-      Object.defineProperty(globalThis, "SharedArrayBuffer", {
-        configurable: true,
-        value: originalSAB,
-      });
-      Object.defineProperty(globalThis, "Atomics", {
-        configurable: true,
-        value: originalAtomics,
-      });
-      Object.defineProperty(globalThis, "WebAssembly", {
-        configurable: true,
-        value: originalWebAssembly,
-      });
-    }
-  });
-
-  it("auto-selects none when neither worker nor jspi is available", () => {
-    const originalWorker = globalThis.Worker;
-    const originalSAB = globalThis.SharedArrayBuffer;
-    const originalAtomics = globalThis.Atomics;
-    const originalWebAssembly = globalThis.WebAssembly;
-
-    Object.defineProperty(globalThis, "Worker", {
-      configurable: true,
-      value: undefined,
-    });
-    Object.defineProperty(globalThis, "SharedArrayBuffer", {
-      configurable: true,
-      value: undefined,
-    });
-    Object.defineProperty(globalThis, "Atomics", {
-      configurable: true,
-      value: undefined,
-    });
-    Object.defineProperty(globalThis, "WebAssembly", {
-      configurable: true,
-      value: {
-        ...originalWebAssembly,
-        Suspending: undefined,
-        promising: undefined,
-      },
-    });
-
-    try {
-      expect(selectAutomaticBackendKind()).toBe("none");
-    } finally {
-      Object.defineProperty(globalThis, "Worker", {
-        configurable: true,
-        value: originalWorker,
-      });
-      Object.defineProperty(globalThis, "SharedArrayBuffer", {
-        configurable: true,
-        value: originalSAB,
-      });
-      Object.defineProperty(globalThis, "Atomics", {
-        configurable: true,
-        value: originalAtomics,
-      });
-      Object.defineProperty(globalThis, "WebAssembly", {
-        configurable: true,
-        value: originalWebAssembly,
-      });
-    }
+    expect(selectAutomaticBackendKind(nodeLikeRuntime)).toBe("worker");
+    expect(selectAutomaticBackendKind(browserLikeRuntime)).toBe("jspi");
   });
 });

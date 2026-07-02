@@ -104,4 +104,22 @@ describe("runtime boundary", () => {
     expect(reachable).not.toContain("runtime/node-loader.ts");
     expect(reachable).not.toContain("wasm.ts");
   });
+
+  it("keeps runtime-bound backend capability wrappers at the public entries", async () => {
+    const nodeEntry = await readFile(join(srcRoot, "index.ts"), "utf8");
+    const browserEntry = await readFile(
+      join(srcRoot, "index.browser.ts"),
+      "utf8",
+    );
+    const browserRuntime = await readFile(
+      join(srcRoot, "runtime/browser.ts"),
+      "utf8",
+    );
+
+    expect(nodeEntry).toContain("nodeRuntime.supportsWorkerBackend()");
+    expect(nodeEntry).toContain("nodeRuntime.supportsJspiBackend()");
+    expect(browserEntry).toContain("browserRuntime.supportsWorkerBackend()");
+    expect(browserEntry).toContain("browserRuntime.supportsJspiBackend()");
+    expect(browserRuntime).toContain('typeof Worker !== "undefined"');
+  });
 });

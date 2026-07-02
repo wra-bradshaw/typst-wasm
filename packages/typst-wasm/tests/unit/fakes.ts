@@ -1,5 +1,6 @@
 import type { DirectServiceInternals } from "../../src/backends/direct";
 import type { TypstWorkerFactory } from "../../src/backends/worker";
+import type { WorkerHost } from "../../src/worker/host";
 import type { WasmCompileOutput, WasmModule } from "../../src/wasm/index";
 
 type WorkerMessage =
@@ -25,9 +26,15 @@ export interface FakeWorkerState {
 export const makeFakeWorkerFactory = (
   state: FakeWorkerState,
 ): TypstWorkerFactory => {
-  class FakeWorker {
-    onmessage: ((event: MessageEvent) => void) | null = null;
-    onerror: ((event: ErrorEvent) => void) | null = null;
+  class FakeWorker implements WorkerHost {
+    private onMessage: ((data: unknown) => void) | null = null;
+
+    listen(
+      onMessage: (data: unknown) => void,
+      _onError: (cause: unknown) => void,
+    ) {
+      this.onMessage = onMessage;
+    }
 
     postMessage(message: unknown) {
       const msg = message as WorkerMessage;
@@ -37,26 +44,20 @@ export const makeFakeWorkerFactory = (
         state.initMessages.push(msg);
         queueMicrotask(() => {
           if (payload.wasmURL === "bad.wasm") {
-            this.onmessage?.({
-              data: {
-                requestId: msg.requestId,
-                error: { message: "init failed" },
-              },
-            } as MessageEvent);
+            this.onMessage?.({
+              requestId: msg.requestId,
+              error: { message: "init failed" },
+            });
             return;
           }
 
-          this.onmessage?.({
-            data: { requestId: msg.requestId, result: undefined },
-          } as MessageEvent);
+          this.onMessage?.({ requestId: msg.requestId, result: undefined });
         });
         return;
       }
 
       queueMicrotask(() => {
-        this.onmessage?.({
-          data: { requestId: msg.requestId, result: undefined },
-        } as MessageEvent);
+        this.onMessage?.({ requestId: msg.requestId, result: undefined });
       });
     }
 
@@ -65,7 +66,7 @@ export const makeFakeWorkerFactory = (
     }
   }
 
-  return () => new FakeWorker() as unknown as Worker;
+  return () => new FakeWorker();
 };
 
 const textEncoder = new TextEncoder();

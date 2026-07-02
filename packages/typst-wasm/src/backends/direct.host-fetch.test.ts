@@ -1,10 +1,15 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FileLoaderManager } from "../files/loaders";
 import type { TypstFileLoader } from "../compiler/types";
 import {
   installJspiWebAssemblyMock,
   makeFakeDirectServiceHost,
 } from "../../tests/unit/fakes";
+
+vi.mock("@typst-wasm/engine-wasm/bridge", () => ({
+  registerHostFetch: () => undefined,
+  unregisterHostFetch: () => undefined,
+}));
 
 const makeLoader = (value: number): TypstFileLoader => ({
   load: async (request) =>

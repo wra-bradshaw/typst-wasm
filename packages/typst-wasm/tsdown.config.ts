@@ -8,36 +8,19 @@ const external = [
   "@typst-wasm/engine-wasm/typst_wasm_bg.wasm",
   "@typst-wasm/engine-wasm/typst_wasm_bg.wasm?init",
   "node:fs/promises",
+  "node:worker_threads",
 ];
 
-export default defineConfig({
-  entry: {
-    index: "./src/index.ts",
-    "index.browser": "./src/index.browser.ts",
-    files: "./src/files.ts",
-    wasm: "./src/wasm.ts",
-  },
-  platform: "neutral",
+const common = {
+  platform: "neutral" as const,
   external,
-  plugins: [
-    workerPlugins({
-      format: "es",
-      rolldownOptions: {
-        external,
-      },
-    }),
-  ],
-  format: ["esm"],
-  clean: true,
+  format: ["esm" as const],
   dts: true,
   sourcemap: true,
   loader: {
-    ".otf": "asset",
+    ".otf": "asset" as const,
   },
   inputOptions: {
-    experimental: {
-      resolveNewUrlToAsset: true,
-    },
     resolve: {
       mainFields: ["module", "main"],
     },
@@ -45,4 +28,32 @@ export default defineConfig({
   outputOptions: {
     assetFileNames: "fonts/[name][extname]",
   },
-});
+};
+
+export default defineConfig([
+  {
+    ...common,
+    entry: {
+      index: "./src/index.ts",
+      "index.browser": "./src/index.browser.ts",
+      files: "./src/files.ts",
+      wasm: "./src/wasm.ts",
+    },
+    plugins: [
+      workerPlugins({
+        format: "es",
+        rolldownOptions: {
+          external,
+        },
+      }),
+    ],
+    clean: true,
+  },
+  {
+    ...common,
+    entry: {
+      "worker/node": "./src/worker/node.ts",
+    },
+    clean: false,
+  },
+]);

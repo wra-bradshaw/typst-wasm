@@ -34,15 +34,28 @@ export interface BackendOptions {
   fileLoaderManager: FileLoaderManager;
 }
 
-export interface TypstRuntime {
-  createWorker(): Worker;
-  loadWasmModule(assets: WasmAssetUrls): Promise<WasmModule>;
-  resolveAssets(options: TypstCompilerOptions): WasmAssetUrls;
+interface RuntimeWorkerHost {
+  listen(
+    onMessage: (data: unknown) => void,
+    onError: (cause: unknown) => void,
+  ): void;
+  postMessage(data: unknown): void;
+  terminate(): void | Promise<unknown>;
 }
 
-export const selectAutomaticBackendKind = (): BackendSelection => {
-  if (supportsWorkerBackend()) return "worker";
-  if (supportsJspiBackend()) return "jspi";
+export interface TypstRuntime {
+  createWorker(): RuntimeWorkerHost;
+  loadWasmModule(assets: WasmAssetUrls): Promise<WasmModule>;
+  resolveAssets(options: TypstCompilerOptions): WasmAssetUrls;
+  supportsWorkerBackend(): boolean;
+  supportsJspiBackend(): boolean;
+}
+
+export const selectAutomaticBackendKind = (
+  runtime: TypstRuntime,
+): BackendSelection => {
+  if (runtime.supportsWorkerBackend()) return "worker";
+  if (runtime.supportsJspiBackend()) return "jspi";
   return "none";
 };
 
@@ -51,7 +64,8 @@ export const createRuntimeBackend = (
   options: BackendOptions,
   runtime: TypstRuntime,
 ): BackendService => {
-  const selected = backend === "auto" ? selectAutomaticBackendKind() : backend;
+  const selected =
+    backend === "auto" ? selectAutomaticBackendKind(runtime) : backend;
 
   switch (selected) {
     case "worker":

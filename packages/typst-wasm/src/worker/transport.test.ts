@@ -1,17 +1,28 @@
 import { describe, expect, it } from "vitest";
+import type { WorkerHost } from "./host";
 import { makeWorkerTransport } from "./transport";
 
-class FakeWorker {
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  onerror: ((event: ErrorEvent) => void) | null = null;
+class FakeWorker implements WorkerHost {
+  onMessage: ((data: unknown) => void) | null = null;
+  onError: ((cause: unknown) => void) | null = null;
   messages: unknown[] = [];
+
+  listen(
+    onMessage: (data: unknown) => void,
+    onError: (cause: unknown) => void,
+  ) {
+    this.onMessage = onMessage;
+    this.onError = onError;
+  }
 
   postMessage(message: unknown) {
     this.messages.push(message);
   }
 
+  terminate() {}
+
   emit(data: unknown) {
-    this.onmessage?.({ data } as MessageEvent);
+    this.onMessage?.(data);
   }
 }
 
@@ -46,7 +57,7 @@ describe("worker transport", () => {
     ]);
   });
 
-  it("clears worker handlers on close", () => {
+  it("leaves listener cleanup to worker termination", () => {
     const worker = new FakeWorker();
     const transport = makeWorkerTransport(
       worker,
@@ -56,7 +67,7 @@ describe("worker transport", () => {
 
     transport.close();
 
-    expect(worker.onmessage).toBeNull();
-    expect(worker.onerror).toBeNull();
+    expect(worker.onMessage).not.toBeNull();
+    expect(worker.onError).not.toBeNull();
   });
 });

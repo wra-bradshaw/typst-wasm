@@ -1,7 +1,6 @@
 import { getJspiWebAssembly } from "../wasm/index";
 
 export const supportsWorkerBackend = (): boolean =>
-  typeof Worker !== "undefined" &&
   typeof SharedArrayBuffer !== "undefined" &&
   typeof Atomics !== "undefined" &&
   typeof Atomics.wait === "function";
