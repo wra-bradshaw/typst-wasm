@@ -23,6 +23,8 @@
         ./packages/engine-wasm/flake-module.nix
         ./packages/typst-wasm/flake-module.nix
         ./packages/vite-plugin-typst/flake-module.nix
+        ./packages/example-typst-playground/flake-module.nix
+        ./packages/example-typst-blog/flake-module.nix
       ];
 
       systems = [

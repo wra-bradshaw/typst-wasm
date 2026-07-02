@@ -7,6 +7,8 @@ result-*
 # outputs
 out
 dist
+.output
+.vercel
 .release/
 *.tgz
 target

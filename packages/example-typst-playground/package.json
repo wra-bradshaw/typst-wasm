@@ -1,0 +1,30 @@
+{
+  "name": "@typst-wasm/example-typst-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bundle": "vite build",
+    "build": "nix run ../..#build-artifact -- example-typst-playground",
+    "dev": "node --experimental-wasm-jspi ./node_modules/vite/bin/vite.js dev",
+    "preview": "node --experimental-wasm-jspi ./node_modules/vite/bin/vite.js preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "4.3.1",
+    "@tanstack/react-router": "^1.170.16",
+    "@tanstack/react-start": "^1.168.26",
+    "@vitejs/plugin-react": "^6.0.3",
+    "nitro": "3.0.260610-beta",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tailwindcss": "4.3.1",
+    "typst-wasm": "workspace:*",
+    "vite": "^8.0.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.20",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}
