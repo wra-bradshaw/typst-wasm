@@ -29,7 +29,6 @@
   },
   "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
   "scripts": {
-    "bundle": "tsdown",
     "build": "nix run ../..#build-artifact -- vite-plugin-typst",
     "fix": "pnpm run format:fix && pnpm exec eslint . --fix",
     "lint": "pnpm exec eslint . --max-warnings=0",

@@ -21,21 +21,7 @@
         "scripts/**",
         "src/**"
       ],
-      "outputs": ["dist/**"]
-    },
-    "bundle": {
-      "dependsOn": [],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".cargo/**",
-        "Cargo.toml",
-        "Cargo.lock",
-        "package.nix",
-        "flake-module.nix",
-        "scripts/**",
-        "src/**"
-      ],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", ".output/**"]
     },
     "lint": {
       "dependsOn": []

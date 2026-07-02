@@ -1,10 +1,10 @@
 {
   "name": "@typst-wasm/example-typst-playground",
   "private": true,
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "bundle": "vite build",
-    "build": "nix run ../..#build-artifact -- example-typst-playground",
+    "build": "nix run ../..#build-artifact -- example-typst-playground .output",
     "dev": "node --experimental-wasm-jspi ./node_modules/vite/bin/vite.js dev",
     "preview": "node --experimental-wasm-jspi ./node_modules/vite/bin/vite.js preview",
     "typecheck": "tsc --noEmit"

@@ -2,8 +2,8 @@
   "name": "@typst-wasm/example-typst-blog",
   "private": true,
   "type": "module",
+  "version": "0.0.0",
   "scripts": {
-    "bundle": "vite build",
     "build": "nix run ../..#build-artifact -- example-typst-blog",
     "dev": "node --experimental-wasm-jspi ./node_modules/vite/bin/vite.js dev",
     "preview": "node --experimental-wasm-jspi ./node_modules/vite/bin/vite.js preview",

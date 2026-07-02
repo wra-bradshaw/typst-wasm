@@ -6,7 +6,7 @@
 let
   workspaceRoot = ../..;
   pname = "vite-plugin-typst";
-  pnpmWorkspaceName = "@typst-wasm/vite-plugin-typst";
+  packageDir = "packages/vite-plugin-typst";
   version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
   pnpmDeps = import ../../nix/pnpm-deps.nix { inherit pkgs workspaceRoot; };
 
@@ -17,7 +17,7 @@ let
   ];
 
   buildBundle = ''
-    pnpm turbo run bundle --filter=${pnpmWorkspaceName} --only
+    pnpm --dir ${packageDir} exec tsdown
   '';
 in
 pkgs.stdenvNoCC.mkDerivation {

@@ -11,6 +11,7 @@ let
   version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
   packageDir = "packages/typst-wasm";
   pnpmDeps = import ../../nix/pnpm-deps.nix { inherit pkgs workspaceRoot; };
+  prepareWorkspaceArtifacts = import ../../nix/workspace-artifacts.nix { lib = pkgs.lib; };
 
   pnpmNativeBuildInputs = nativeBuildInputs ++ [
     pkgs.nodejs
@@ -18,15 +19,17 @@ let
     pkgs.pnpm
   ];
 
-  prepareFontArtifacts = ''
-    mkdir -p packages/fonts/dist
-    cp -R ${fonts}/dist/files packages/fonts/dist/files
-  '';
-
-  prepareEngineArtifacts = ''
-    mkdir -p packages/engine-wasm/dist
-    cp -R ${engineWasm}/dist/. packages/engine-wasm/dist
-  '';
+  prepareBuildArtifacts = prepareWorkspaceArtifacts [
+    {
+      packageDir = "packages/fonts";
+      outputPath = "dist/files";
+      derivation = fonts;
+    }
+    {
+      packageDir = "packages/engine-wasm";
+      derivation = engineWasm;
+    }
+  ];
 
   buildBundle = ''
     pnpm --dir ${packageDir} exec tsdown
@@ -42,8 +45,7 @@ pkgs.stdenvNoCC.mkDerivation {
   buildPhase = ''
     runHook preBuild
 
-    ${prepareFontArtifacts}
-    ${prepareEngineArtifacts}
+    ${prepareBuildArtifacts}
 
     ${buildBundle}
 
