@@ -1,4 +1,7 @@
-import type { PackageCache } from "./types";
+export interface PackageCache {
+  get(key: string): Promise<Uint8Array | null>;
+  set(key: string, value: Uint8Array): Promise<void>;
+}
 
 export const makeBrowserCacheStorage = (): PackageCache => {
   let cachePromise: Promise<Cache | null> | null = null;

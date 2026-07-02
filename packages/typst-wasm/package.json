@@ -9,11 +9,15 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "browser": {
+        "types": "./dist/index.browser.d.ts",
+        "default": "./dist/index.browser.js"
+      },
       "default": "./dist/index.js"
     },
-    "./fonts": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+    "./files": {
+      "types": "./dist/files.d.ts",
+      "default": "./dist/files.js"
     },
     "./wasm": {
       "types": "./dist/wasm.d.ts",

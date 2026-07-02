@@ -1,4 +1,4 @@
-import type { FileLoaderManager } from "./file-loader";
+import type { FileLoaderManager } from "../files/loaders";
 import {
   SharedMemoryCommunication,
   SharedMemoryCommunicationStatus,

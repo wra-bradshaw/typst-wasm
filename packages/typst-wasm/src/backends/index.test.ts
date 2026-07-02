@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { selectAutomaticBackendKind } from "./compiler-backend";
+import { selectAutomaticBackendKind } from "./index";
 
 describe("compiler backend selection", () => {
   it("auto-selects worker when both worker and jspi capabilities are present", () => {

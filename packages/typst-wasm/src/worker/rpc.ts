@@ -1,4 +1,4 @@
-import { WorkerError } from "./errors";
+import { WorkerError } from "../errors";
 import { isRpcResponseMessage } from "./messages";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

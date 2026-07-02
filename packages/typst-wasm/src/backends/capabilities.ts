@@ -1,4 +1,4 @@
-import { getJspiWebAssembly } from "./webassembly-jspi";
+import { getJspiWebAssembly } from "../wasm/index";
 
 export const supportsWorkerBackend = (): boolean =>
   typeof Worker !== "undefined" &&

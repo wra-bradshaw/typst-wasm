@@ -1,6 +1,6 @@
-import type { DirectServiceInternals } from "../../src/direct-service";
-import type { TypstWorkerFactory } from "../../src/worker-service";
-import type { WasmModule, WasmCompileOutput } from "../../src/wasm";
+import type { DirectServiceInternals } from "../../src/backends/direct";
+import type { TypstWorkerFactory } from "../../src/backends/worker";
+import type { WasmCompileOutput, WasmModule } from "../../src/wasm/index";
 
 type WorkerMessage =
   | {

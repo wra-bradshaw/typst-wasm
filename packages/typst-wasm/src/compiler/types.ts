@@ -1,4 +1,5 @@
-import type { WasmDiagnostic } from "./wasm";
+import type { PackageCache } from "../files";
+import type { WasmDiagnostic } from "../wasm/index";
 
 export type CompileFormat = "pdf" | "png" | "svg" | "html" | "bundle";
 export type TypstFileKind = "project" | "package" | "url";
@@ -102,11 +103,6 @@ export type CompileResult =
       format: "bundle";
       files: BundleFile[];
     });
-
-export interface PackageCache {
-  get(key: string): Promise<Uint8Array | null>;
-  set(key: string, value: Uint8Array): Promise<void>;
-}
 
 export interface TypstCompiler {
   addFont(data: Uint8Array): Promise<void>;

@@ -3,14 +3,13 @@ import {
   FileNotFoundError,
   PackageFetchError,
   PackageParseError,
-} from "./errors";
-import { makeDefaultPackageCache } from "./cache-abstraction";
+} from "../errors";
+import { makeDefaultPackageCache, type PackageCache } from "./cache";
 import type {
-  PackageCache,
   TypstFileLoad,
   TypstFileLoader,
   TypstFileRequest,
-} from "./types";
+} from "../compiler/types";
 
 interface PackageSpec {
   readonly namespace: string;

@@ -1,14 +1,13 @@
 import { createTypstCompilerWithRuntime } from "./compiler/index";
 import type { TypstCompiler, TypstCompilerOptions } from "./compiler/types";
-import { nodeRuntime, wasmBinaryUrl, wasmGlueUrl } from "./runtime/node";
+import { browserRuntime } from "./runtime/browser";
 
 export const createTypstCompiler = (
   options: TypstCompilerOptions = {},
 ): Promise<TypstCompiler> =>
-  createTypstCompilerWithRuntime(options, nodeRuntime);
+  createTypstCompilerWithRuntime(options, browserRuntime);
 
 export * from "./public-api";
-export { wasmBinaryUrl, wasmGlueUrl };
 export {
   supportsWorkerBackend,
   supportsJspiBackend,

@@ -39,7 +39,6 @@ export default tseslint.config(
       eqeqeq: ["error", "always", { null: "ignore" }],
       "no-console": "warn",
       "no-debugger": "error",
-      "no-duplicate-imports": "error",
       "no-var": "error",
       "prefer-const": "error",
       "object-shorthand": "error",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toWasmCompileOptions } from "./wasm";
+import { toWasmCompileOptions } from "./index";
 
 describe("toWasmCompileOptions", () => {
   it("maps public options to the narrow engine request", () => {

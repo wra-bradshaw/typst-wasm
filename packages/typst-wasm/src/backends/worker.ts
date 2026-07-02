@@ -1,13 +1,18 @@
-import type { TypstWorkerProtocol } from "./protocol";
-import type { FileLoaderManager } from "./file-loader";
-import TypstWorker from "./worker.ts?worker";
-import { makeRpcClient, type RpcClient } from "./rpc";
-import { isRpcResponseMessage, type WorkerToMainMessage } from "./messages";
-import { makeFetchBridge } from "./fetch-bridge";
-import { makeWorkerTransport, type WorkerTransport } from "./worker-transport";
-import type { WasmCompileOptions, WasmCompileOutput } from "./wasm";
-import type { WasmAssetUrls } from "./wasm-loader";
-import { CompilerDisposedError } from "./errors";
+import type { FileLoaderManager } from "../files/loaders";
+import { CompilerDisposedError } from "../errors";
+import { makeFetchBridge } from "../worker/fetch-bridge";
+import {
+  isRpcResponseMessage,
+  type WorkerToMainMessage,
+} from "../worker/messages";
+import type { TypstWorkerProtocol } from "../worker/protocol";
+import { makeRpcClient, type RpcClient } from "../worker/rpc";
+import { makeWorkerTransport, type WorkerTransport } from "../worker/transport";
+import type {
+  WasmAssetUrls,
+  WasmCompileOptions,
+  WasmCompileOutput,
+} from "../wasm/index";
 
 export type TypstWorkerFactory = () => Worker;
 
@@ -26,9 +31,11 @@ export class WorkerService {
     fileLoaderManager: FileLoaderManager,
     internals: WorkerServiceInternals = {},
   ) {
-    this.worker = internals.createWorker
-      ? internals.createWorker()
-      : (new TypstWorker() as Worker);
+    if (!internals.createWorker) {
+      throw new Error("WorkerService requires a worker factory");
+    }
+
+    this.worker = internals.createWorker();
     const fetchBridge = makeFetchBridge(fileLoaderManager, () => this.disposed);
 
     this.rpcClient = makeRpcClient<TypstWorkerProtocol>((msg) => {

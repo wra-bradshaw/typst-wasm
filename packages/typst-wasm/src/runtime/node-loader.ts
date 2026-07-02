@@ -1,10 +1,7 @@
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
 import type { TypstCompiler } from "@typst-wasm/engine-wasm";
-import type { InitOutput, WasmModule } from "./wasm";
-
-export type WasmAssetUrls = {
-  wasmURL: string;
-  glueURL: string;
-};
+import type { InitOutput, WasmAssetUrls, WasmModule } from "../wasm/index";
 
 type WasmGlueModule = {
   TypstCompiler: typeof TypstCompiler;
@@ -26,20 +23,6 @@ const parseAbsoluteUrl = (source: string): URL | null => {
 };
 
 const readFileUrl = async (url: URL): Promise<Uint8Array> => {
-  const maybeDeno = globalThis as typeof globalThis & {
-    Deno?: { readFile(path: URL): Promise<Uint8Array> };
-  };
-  if (maybeDeno.Deno?.readFile) {
-    return maybeDeno.Deno.readFile(url);
-  }
-
-  const maybeBun = globalThis as typeof globalThis & {
-    Bun?: { file(path: URL): { arrayBuffer(): Promise<ArrayBuffer> } };
-  };
-  if (maybeBun.Bun?.file) {
-    return new Uint8Array(await maybeBun.Bun.file(url).arrayBuffer());
-  }
-
   const { readFile } = await import("node:fs/promises");
   return readFile(url);
 };
@@ -61,10 +44,27 @@ const loadWasmBytes = async (wasmURL: string): Promise<ArrayBuffer> => {
   return fetchBytes(parsed ?? wasmURL);
 };
 
+const require = createRequire(import.meta.url);
+
+export const wasmBinaryUrl = pathToFileURL(
+  require.resolve("@typst-wasm/engine-wasm/typst_wasm_bg.wasm"),
+);
+export default wasmBinaryUrl;
+
+export const wasmGlueUrl = pathToFileURL(
+  require.resolve("@typst-wasm/engine-wasm/typst_wasm_bg.js"),
+);
+
 export const loadWasmModule = async (
   assets: WasmAssetUrls,
 ): Promise<WasmModule> => {
-  const glue = (await import(assets.glueURL)) as WasmGlueModule;
+  if (!assets.wasmURL || !assets.glueURL) {
+    throw new Error("WASM URL loader requires both wasmURL and glueURL");
+  }
+
+  const glue = (await import(
+    /* @vite-ignore */ assets.glueURL
+  )) as WasmGlueModule;
   const instance = (
     await WebAssembly.instantiate(await loadWasmBytes(assets.wasmURL), {
       "./typst_wasm_bg.js": glue,

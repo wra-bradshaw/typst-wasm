@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { FileLoaderManager } from "./file-loader";
+import { FileLoaderManager } from "../files/loaders";
 import {
   makeFakeWorkerFactory,
   type FakeWorkerState,
-} from "../tests/unit/fakes";
+} from "../../tests/unit/fakes";
 
 const workerState: FakeWorkerState = {
   initMessages: [],
@@ -11,7 +11,7 @@ const workerState: FakeWorkerState = {
 };
 
 const makeService = async () => {
-  const { WorkerService } = await import("./worker-service");
+  const { WorkerService } = await import("./worker");
   return new WorkerService(new FileLoaderManager([]), {
     createWorker: makeFakeWorkerFactory(workerState),
   });

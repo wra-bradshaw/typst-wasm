@@ -3,7 +3,7 @@ import {
   FetchFileLoader,
   FileLoaderManager,
   type FetchImpl,
-} from "./file-loader";
+} from "../files/loaders";
 import { makeFetchBridge } from "./fetch-bridge";
 import { SharedMemoryCommunicationStatus } from "./protocol";
 

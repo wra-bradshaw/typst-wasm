@@ -1,4 +1,4 @@
-import type { WasmDiagnostic } from "./wasm";
+import type { WasmDiagnostic } from "./wasm/index";
 
 export class TypstError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {

@@ -2,24 +2,22 @@ import {
   registerHostFetch as defaultRegisterHostFetch,
   unregisterHostFetch as defaultUnregisterHostFetch,
 } from "@typst-wasm/engine-wasm/bridge";
-import { supportsJspiBackend } from "./backend-support";
+import { supportsJspiBackend } from "./capabilities";
 import {
   CompilerDisposedError,
   CompilerNotInitializedError,
   WorkerError,
-} from "./errors";
-import type { FileLoaderManager } from "./file-loader";
+} from "../errors";
+import type { FileLoaderManager } from "../files/loaders";
 import type {
   InitOutput,
   TypstCompilerInstance,
+  WasmAssetUrls,
   WasmCompileOptions,
   WasmCompileOutput,
-} from "./wasm";
-import {
-  loadWasmModule as defaultLoadWasmModule,
-  type WasmAssetUrls,
-} from "./wasm-loader";
-import { getJspiWebAssembly } from "./webassembly-jspi";
+  WasmModule,
+} from "../wasm/index";
+import { getJspiWebAssembly } from "../wasm/index";
 
 const MAX_FETCH_ATTEMPTS = 3;
 const textDecoder = new TextDecoder();
@@ -30,7 +28,7 @@ type WasmBindgenPointer = {
 };
 
 export interface DirectServiceInternals {
-  loadWasmModule?: typeof defaultLoadWasmModule;
+  loadWasmModule?: (assets: WasmAssetUrls) => Promise<WasmModule>;
   registerHostFetch?: typeof defaultRegisterHostFetch;
   unregisterHostFetch?: typeof defaultUnregisterHostFetch;
 }
@@ -154,8 +152,10 @@ export class DirectService {
       throw new WorkerError("JSPI is unavailable in this runtime");
     }
 
-    const loadWasmModule =
-      this.internals.loadWasmModule ?? defaultLoadWasmModule;
+    const loadWasmModule = this.internals.loadWasmModule;
+    if (!loadWasmModule) {
+      throw new WorkerError("DirectService requires a WASM loader");
+    }
     const register =
       this.internals.registerHostFetch ?? defaultRegisterHostFetch;
 

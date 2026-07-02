@@ -1,4 +1,4 @@
-import { FetchError, FileNotFoundError } from "./errors";
+import { FetchError, FileNotFoundError } from "../errors";
 import type {
   TypstFileKind,
   TypstFileLoad,
@@ -6,7 +6,7 @@ import type {
   TypstFileLoaderResult,
   TypstFileRequest,
   TypstLoadedFile,
-} from "./types";
+} from "../compiler/types";
 
 export type FetchImpl = (
   input: Parameters<typeof fetch>[0],

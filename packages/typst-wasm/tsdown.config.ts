@@ -1,15 +1,29 @@
 import { defineConfig } from "tsdown";
 import workerPlugins from "tsdown-plugin-worker";
 
+const external = [
+  "@typst-wasm/engine-wasm",
+  "@typst-wasm/engine-wasm/bridge",
+  "@typst-wasm/engine-wasm/typst_wasm_bg.js",
+  "@typst-wasm/engine-wasm/typst_wasm_bg.wasm",
+  "@typst-wasm/engine-wasm/typst_wasm_bg.wasm?init",
+  "node:fs/promises",
+];
+
 export default defineConfig({
-  entry: ["./src/index.ts", "./src/wasm.ts"],
+  entry: {
+    index: "./src/index.ts",
+    "index.browser": "./src/index.browser.ts",
+    files: "./src/files.ts",
+    wasm: "./src/wasm.ts",
+  },
   platform: "neutral",
-  external: ["@typst-wasm/engine-wasm"],
+  external,
   plugins: [
     workerPlugins({
       format: "es",
       rolldownOptions: {
-        external: ["@typst-wasm/engine-wasm"],
+        external,
       },
     }),
   ],

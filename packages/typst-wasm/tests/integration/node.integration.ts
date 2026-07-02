@@ -2,7 +2,7 @@
 
 import { defaultFonts } from "@typst-wasm/fonts";
 import { describe, expect, it } from "vitest";
-import { supportsJspiBackend } from "../../src/compiler-backend";
+import { supportsJspiBackend } from "../../src";
 import { wasmBinaryUrl, wasmGlueUrl } from "../../src/wasm";
 import { runCompilerIntegrationScenario } from "./scenario";
 

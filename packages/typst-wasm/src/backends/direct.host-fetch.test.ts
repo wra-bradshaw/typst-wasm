@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { FileLoaderManager } from "./file-loader";
-import type { TypstFileLoader } from "./types";
+import { FileLoaderManager } from "../files/loaders";
+import type { TypstFileLoader } from "../compiler/types";
 import {
   installJspiWebAssemblyMock,
   makeFakeDirectServiceHost,
-} from "../tests/unit/fakes";
+} from "../../tests/unit/fakes";
 
 const makeLoader = (value: number): TypstFileLoader => ({
   load: async (request) =>
@@ -26,7 +26,7 @@ describe("DirectService host fetch routing", () => {
   });
 
   it("surfaces init failures and allows a later retry", async () => {
-    const { DirectService } = await import("./direct-service");
+    const { DirectService } = await import("./direct");
     const service = new DirectService(
       new FileLoaderManager([makeLoader(1)]),
       host.internals,
