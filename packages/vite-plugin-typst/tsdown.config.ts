@@ -8,4 +8,8 @@ export default defineConfig({
   clean: true,
   dts: true,
   sourcemap: true,
+  copy: [{ from: "src/client.d.ts", to: "dist" }],
+  banner: {
+    dts: '/// <reference path="./client.d.ts" />\n',
+  },
 });
