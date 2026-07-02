@@ -22,6 +22,7 @@
       "default": "./dist/bridge.js"
     },
     "./typst_wasm.js": "./dist/typst_wasm.js",
+    "./typst_wasm_bg.js": "./dist/typst_wasm_bg.js",
     "./typst_wasm_bg.wasm": "./dist/typst_wasm_bg.wasm"
   },
   "scripts": {
