@@ -1,14 +1,18 @@
 /// <reference types="deno" />
 
-import { wasmBinaryUrl } from "../../src/wasm.ts";
 import { runCompilerIntegrationScenario } from "./scenario.ts";
+
+const wasmPath = new URL(
+  "../../../engine-wasm/dist/typst_wasm_bg.wasm",
+  import.meta.url,
+);
 
 Deno.test(
   "deno integration (worker backend) covers compiler behavior across files, formats, options, and errors",
   async () => {
     const result = await runCompilerIntegrationScenario({
       runtime: "deno",
-      loadWasmBytes: () => Deno.readFile(wasmBinaryUrl),
+      loadWasmBytes: () => Deno.readFile(wasmPath),
       backend: "worker",
     });
 

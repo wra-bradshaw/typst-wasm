@@ -1,12 +1,13 @@
 # typst-wasm
 
 `typst-wasm` is the primary npm package. The WASM engine and bundled default fonts are published as scoped runtime dependencies for users who want to import those assets directly.
+When loading the engine asset with a bundler import, add `@typst-wasm/engine-wasm` to the consuming app so package managers can resolve the direct asset import.
 
 ## Usage
 
 ```ts
 import { createTypstCompiler, loadDefaultFonts } from "typst-wasm";
-import wasmUrl from "typst-wasm/wasm";
+import wasmUrl from "@typst-wasm/engine-wasm/typst_wasm_bg.wasm?url";
 
 const compiler = await createTypstCompiler({
   loadWasmBytes: async () => {

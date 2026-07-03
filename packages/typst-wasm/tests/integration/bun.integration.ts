@@ -1,14 +1,18 @@
 /// <reference types="bun" />
 
 import { describe, expect, test } from "bun:test";
-import { wasmBinaryUrl } from "../../src/wasm";
 import { runCompilerIntegrationScenario } from "./scenario";
+
+const wasmPath = new URL(
+  "../../../engine-wasm/dist/typst_wasm_bg.wasm",
+  import.meta.url,
+);
 
 describe("bun integration (worker backend)", () => {
   test("covers compiler behavior across files, formats, options, and errors", async () => {
     const result = await runCompilerIntegrationScenario({
       runtime: "bun",
-      loadWasmBytes: () => Bun.file(wasmBinaryUrl).arrayBuffer(),
+      loadWasmBytes: () => Bun.file(wasmPath).arrayBuffer(),
       backend: "worker",
     });
 

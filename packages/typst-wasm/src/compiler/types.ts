@@ -47,7 +47,7 @@ export interface TypstDocumentMetadata {
 }
 
 export interface TypstCompilerOptions {
-  loadWasmBytes?: WasmBytesLoader;
+  loadWasmBytes: WasmBytesLoader;
   backend?: "auto" | "worker" | "jspi";
   fileLoaders?: TypstFileLoader[];
   fetch?: typeof fetch;

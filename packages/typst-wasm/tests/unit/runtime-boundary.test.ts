@@ -74,7 +74,6 @@ describe("runtime boundary", () => {
           "index.browser.ts",
           "worker/node.ts",
           "worker/browser.ts",
-          "wasm.ts",
         ].includes(rel)
       );
     });
@@ -94,15 +93,13 @@ describe("runtime boundary", () => {
     expect(violations).toEqual([]);
   });
 
-  it("keeps the browser entry away from node runtime and host-only wasm helpers", async () => {
+  it("keeps the browser entry away from node runtime helpers", async () => {
     const graph = await collectGraph(join(srcRoot, "index.browser.ts"));
     const reachable = [...graph].map((file) =>
       relative(srcRoot, file).replaceAll("\\", "/"),
     );
 
     expect(reachable).not.toContain("runtime/node.ts");
-    expect(reachable).not.toContain("runtime/node-loader.ts");
-    expect(reachable).not.toContain("wasm.ts");
   });
 
   it("keeps runtime-bound backend capability wrappers at the public entries", async () => {

@@ -5,7 +5,6 @@ const external = [
   "@typst-wasm/engine-wasm",
   "@typst-wasm/engine-wasm/bridge",
   "@typst-wasm/engine-wasm/typst_wasm_bg.js",
-  "@typst-wasm/engine-wasm/typst_wasm_bg.wasm",
   "node:fs/promises",
   "node:worker_threads",
 ];
@@ -37,7 +36,6 @@ export default defineConfig([
       "index.browser": "./src/index.browser.ts",
       "index.workerd": "./src/index.workerd.ts",
       files: "./src/files.ts",
-      wasm: "./src/wasm.ts",
     },
     plugins: [
       workerPlugins({

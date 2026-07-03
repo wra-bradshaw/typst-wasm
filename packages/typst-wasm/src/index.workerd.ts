@@ -6,7 +6,7 @@ import { workerdRuntime } from "./runtime/workerd";
 type BackendSelection = "worker" | "jspi" | "none";
 
 export const createTypstCompiler = (
-  options: TypstCompilerOptions = {},
+  options: TypstCompilerOptions,
 ): Promise<TypstCompiler> =>
   createTypstCompilerWithRuntime(options, workerdRuntime);
 

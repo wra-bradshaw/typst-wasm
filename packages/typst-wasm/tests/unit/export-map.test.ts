@@ -20,14 +20,10 @@ const readFontsPackageJson = async (): Promise<PackageJson> =>
   ) as PackageJson;
 
 describe("package exports", () => {
-  it("keeps the public surface to the main API, file helpers, and wasm details", async () => {
+  it("keeps the public surface to the main API and file helpers", async () => {
     const packageJson = await readPackageJson();
 
-    expect(Object.keys(packageJson.exports).sort()).toEqual([
-      ".",
-      "./files",
-      "./wasm",
-    ]);
+    expect(Object.keys(packageJson.exports).sort()).toEqual([".", "./files"]);
   });
 
   it("routes bundlers and workerd runtimes before the default Node entry", async () => {
@@ -52,10 +48,6 @@ describe("package exports", () => {
     expect(
       Object.keys(packageJson.exports["."] as Record<string, unknown>),
     ).toEqual(["types", "browser", "workerd", "worker", "default"]);
-    expect(packageJson.exports["./wasm"]).toEqual({
-      types: "./dist/wasm.d.ts",
-      default: "./dist/wasm.js",
-    });
     expect(packageJson.exports["./files"]).toEqual({
       types: "./dist/files.d.ts",
       default: "./dist/files.js",

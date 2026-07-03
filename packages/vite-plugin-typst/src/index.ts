@@ -13,12 +13,11 @@ import {
   type TypstLoadedFile,
   type WasmDiagnostic,
 } from "typst-wasm";
-import wasmUrl from "typst-wasm/wasm";
 import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
 
 export interface TypstPluginOptions {
-  loadWasmBytes?: TypstCompilerOptions["loadWasmBytes"];
+  loadWasmBytes: TypstCompilerOptions["loadWasmBytes"];
   backend?: TypstCompilerOptions["backend"];
   packageBaseUrl?: string;
   packageCache?: PackageCache;
@@ -65,10 +64,6 @@ const makeProjectFileLoader = (root: string): TypstFileLoader => ({
     };
   },
 });
-
-const loadConfiguredWasmBytes = (options: TypstPluginOptions) =>
-  options.loadWasmBytes ??
-  (async () => new Uint8Array(await readFile(wasmUrl)));
 
 const loadConfiguredFontBytes = async (
   font: (typeof defaultFonts)[number],
@@ -136,7 +131,7 @@ const compileTypst = async (
   };
 };
 
-export const typst = (options: TypstPluginOptions = {}): Plugin => {
+export const typst = (options: TypstPluginOptions): Plugin => {
   let config: ResolvedConfig | undefined;
   let compilerPromise: Promise<TypstCompiler> | undefined;
   let transformQueue: Promise<void> = Promise.resolve();
@@ -155,7 +150,7 @@ export const typst = (options: TypstPluginOptions = {}): Plugin => {
 
     compilerPromise ??= (async () => {
       const compiler = await createTypstCompiler({
-        loadWasmBytes: loadConfiguredWasmBytes(options),
+        loadWasmBytes: options.loadWasmBytes,
         backend: options.backend,
         fileLoaders: [
           ...(options.fileLoaders ?? []),

@@ -26,10 +26,6 @@
     "./files": {
       "types": "./dist/files.d.ts",
       "default": "./dist/files.js"
-    },
-    "./wasm": {
-      "types": "./dist/wasm.d.ts",
-      "default": "./dist/wasm.js"
     }
   },
   "files": [

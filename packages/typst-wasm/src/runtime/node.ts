@@ -5,11 +5,7 @@ import {
   supportsWorkerBackend,
 } from "../backends/capabilities";
 import type { WorkerHost } from "../worker/host";
-import { loadDefaultWasmBytes, wasmBinaryUrl } from "./node-loader";
 import { loadWasmModule } from "./instantiate";
-
-export { wasmBinaryUrl };
-export default wasmBinaryUrl;
 
 const workerUrl = new URL("./worker/node.js", import.meta.url);
 
@@ -28,8 +24,7 @@ const createNodeWorkerHost = (): WorkerHost => {
 export const nodeRuntime: TypstRuntime = {
   createWorker: createNodeWorkerHost,
   loadWasmModule,
-  loadWasmBytes: (options) =>
-    options.loadWasmBytes?.() ?? loadDefaultWasmBytes(),
+  loadWasmBytes: (options) => options.loadWasmBytes(),
   supportsWorkerBackend,
   supportsJspiBackend,
 };

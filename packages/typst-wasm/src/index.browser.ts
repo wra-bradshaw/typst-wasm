@@ -6,7 +6,7 @@ import { browserRuntime } from "./runtime/browser";
 type BackendSelection = "worker" | "jspi" | "none";
 
 export const createTypstCompiler = (
-  options: TypstCompilerOptions = {},
+  options: TypstCompilerOptions,
 ): Promise<TypstCompiler> =>
   createTypstCompilerWithRuntime(options, browserRuntime);
 

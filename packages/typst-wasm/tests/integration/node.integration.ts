@@ -4,8 +4,12 @@ import { readFile } from "node:fs/promises";
 import { defaultFonts } from "@typst-wasm/fonts";
 import { describe, expect, it } from "vitest";
 import { supportsJspiBackend } from "../../src";
-import { wasmBinaryUrl } from "../../src/wasm";
 import { runCompilerIntegrationScenario } from "./scenario";
+
+const wasmPath = new URL(
+  "../../../engine-wasm/dist/typst_wasm_bg.wasm",
+  import.meta.url,
+);
 
 describe("node integration (jspi backend)", () => {
   const runIfJspi = supportsJspiBackend() ? it : it.skip;
@@ -26,7 +30,7 @@ describe("node integration (jspi backend)", () => {
 
       const result = await runCompilerIntegrationScenario({
         runtime: "node",
-        loadWasmBytes: () => readFile(wasmBinaryUrl),
+        loadWasmBytes: () => readFile(wasmPath),
         fontData,
         backend: "jspi",
       });

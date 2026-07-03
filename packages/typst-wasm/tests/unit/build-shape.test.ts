@@ -46,6 +46,7 @@ describe("build shape", () => {
 
     const nodeEntry = await readFile(join(distRoot, "index.js"), "utf8");
     expect(nodeEntry).toContain("./worker/node.js");
+    expect(nodeEntry).not.toMatch(/require\.resolve|typst_wasm_bg\.wasm/);
   });
 
   it("keeps the built workerd entry free of Node loader code and inferred glue assets", async () => {

@@ -28,9 +28,9 @@ const typstWasm = vi.hoisted(() => {
 });
 
 vi.mock("typst-wasm", () => typstWasm);
-vi.mock("typst-wasm/wasm", () => ({ default: "/typst.wasm" }));
 
 const projectRoot = path.resolve("/project");
+const loadWasmBytes = async () => new Uint8Array([1]);
 
 const makeConfig = (): ResolvedConfig =>
   ({
@@ -124,7 +124,9 @@ describe("typst vite plugin compiler lifecycle", () => {
   test("reuses one compiler for multiple Typst entry modules", async () => {
     const compiler = makeCompiler();
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ includeDefaultFonts: false }));
+    const plugin = resolvePlugin(
+      typst({ includeDefaultFonts: false, loadWasmBytes }),
+    );
     const { context } = makeTransformContext();
 
     await transformTypst(
@@ -172,7 +174,9 @@ describe("typst vite plugin compiler lifecycle", () => {
       },
     ]);
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ includeDefaultFonts: false }));
+    const plugin = resolvePlugin(
+      typst({ includeDefaultFonts: false, loadWasmBytes }),
+    );
     const { context, watchedFiles } = makeTransformContext();
 
     await transformTypst(
@@ -192,7 +196,9 @@ describe("typst vite plugin compiler lifecycle", () => {
   test("disposes the shared compiler when the plugin closes", async () => {
     const compiler = makeCompiler();
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ includeDefaultFonts: false }));
+    const plugin = resolvePlugin(
+      typst({ includeDefaultFonts: false, loadWasmBytes }),
+    );
     const { context } = makeTransformContext();
 
     await transformTypst(
