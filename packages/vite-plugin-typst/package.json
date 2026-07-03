@@ -55,6 +55,7 @@
     "vitest": "^4.0.16"
   },
   "dependencies": {
+    "@typst-wasm/fonts": "workspace:*",
     "parse5": "^8.0.1",
     "typst-wasm": "workspace:*"
   }

@@ -3,8 +3,8 @@ import path from "node:path";
 import {
   CompileError,
   createTypstCompiler,
-  defaultFonts,
   loadDefaultFonts,
+  type defaultFonts,
   type PackageCache,
   type TypstCompiler,
   type TypstCompilerOptions,

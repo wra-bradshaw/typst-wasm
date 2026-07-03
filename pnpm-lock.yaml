@@ -170,6 +170,9 @@ importers:
 
   packages/vite-plugin-typst:
     dependencies:
+      '@typst-wasm/fonts':
+        specifier: workspace:*
+        version: link:../fonts
       parse5:
         specifier: ^8.0.1
         version: 8.0.1
