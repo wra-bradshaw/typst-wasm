@@ -39,7 +39,7 @@ jobs:
         working-directory: packages/example-typst-playground
 
       - name: Deploy to Vercel
-        run: npx vercel@latest deploy --prebuilt --prod --cwd packages/example-typst-playground --archive=tgz --token "$VERCEL_TOKEN"
+        run: npx vercel@latest deploy --prebuilt --prod --yes --cwd packages/example-typst-playground --archive=tgz --token "$VERCEL_TOKEN"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -70,12 +70,10 @@ jobs:
         working-directory: packages/example-typst-playground
 
       - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: packages/example-typst-playground
-          command: deploy --config .output/server/wrangler.json
+        run: nix develop .#ci -c pnpm --dir packages/example-typst-playground exec wrangler deploy --config .output/server/wrangler.json
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
   deploy-blog-cloudflare:
     name: Blog to Cloudflare Workers
@@ -102,9 +100,7 @@ jobs:
         working-directory: packages/example-typst-blog
 
       - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: packages/example-typst-blog
-          command: deploy --config wrangler.jsonc
+        run: nix develop .#ci -c pnpm --dir packages/example-typst-blog exec wrangler deploy --config wrangler.jsonc
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

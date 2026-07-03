@@ -63,6 +63,9 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      wrangler:
+        specifier: ^4.105.0
+        version: 4.105.0
 
   packages/example-typst-playground:
     dependencies:
