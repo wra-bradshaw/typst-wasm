@@ -1,4 +1,4 @@
-import { loadWasmModule } from "../runtime/browser-loader";
+import { loadWasmModule } from "../runtime/instantiate";
 import type { WorkerPort } from "./port";
 import { installTypstWorkerRuntime } from "./runtime";
 

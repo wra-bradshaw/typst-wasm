@@ -1,12 +1,24 @@
-export interface Font {
+export interface FontDescriptor {
+  id: string;
   name: string;
+  filename: string;
   weight: number;
   style: "normal" | "italic";
-  load: () => Promise<Uint8Array>;
 }
 
-export declare const newComputerModernMath: Font[];
-export declare const newComputerModernMathRegular: Font;
-export declare const newComputerModernMathBold: Font;
-export declare const newComputerModernMathBook: Font;
-export declare const defaultFonts: Font[];
+export interface FontCompiler {
+  addFont(data: Uint8Array): Promise<void>;
+}
+
+export type FontBytes = ArrayBuffer | Uint8Array;
+export type FontBytesLoader = (font: FontDescriptor) => Promise<FontBytes>;
+
+export declare const newComputerModernMath: FontDescriptor[];
+export declare const newComputerModernMathRegular: FontDescriptor;
+export declare const newComputerModernMathBold: FontDescriptor;
+export declare const newComputerModernMathBook: FontDescriptor;
+export declare const defaultFonts: FontDescriptor[];
+export declare const loadDefaultFonts: (
+  compiler: FontCompiler,
+  loadFontBytes: FontBytesLoader,
+) => Promise<void>;

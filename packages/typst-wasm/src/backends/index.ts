@@ -1,7 +1,7 @@
 import type { TypstCompilerOptions } from "../compiler/types";
 import type { FileLoaderManager } from "../files/loaders";
 import type {
-  WasmAssetUrls,
+  WasmBytes,
   WasmCompileOptions,
   WasmCompileOutput,
   WasmModule,
@@ -17,7 +17,7 @@ export type BackendKind = "auto" | "worker" | "jspi";
 export type BackendSelection = Exclude<BackendKind, "auto"> | "none";
 
 export type BackendService = {
-  init(assets: WasmAssetUrls): Promise<void>;
+  init(wasmBytes: WasmBytes): Promise<void>;
   dispose(): Promise<void>;
   addFont(data: Uint8Array): Promise<void>;
   addFile(path: string, data: Uint8Array): Promise<void>;
@@ -45,8 +45,8 @@ interface RuntimeWorkerHost {
 
 export interface TypstRuntime {
   createWorker(): RuntimeWorkerHost;
-  loadWasmModule(assets: WasmAssetUrls): Promise<WasmModule>;
-  resolveAssets(options: TypstCompilerOptions): WasmAssetUrls;
+  loadWasmModule(wasmBytes: WasmBytes): Promise<WasmModule>;
+  loadWasmBytes(options: TypstCompilerOptions): Promise<WasmBytes>;
   supportsWorkerBackend(): boolean;
   supportsJspiBackend(): boolean;
 }

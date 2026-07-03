@@ -4,6 +4,7 @@ import {
   CompileError,
   createTypstCompiler,
   defaultFonts,
+  loadDefaultFonts,
   type PackageCache,
   type TypstCompiler,
   type TypstCompilerOptions,
@@ -17,8 +18,7 @@ import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
 
 export interface TypstPluginOptions {
-  wasmURL?: TypstCompilerOptions["wasmURL"];
-  glueURL?: TypstCompilerOptions["glueURL"];
+  loadWasmBytes?: TypstCompilerOptions["loadWasmBytes"];
   backend?: TypstCompilerOptions["backend"];
   packageBaseUrl?: string;
   packageCache?: PackageCache;
@@ -66,11 +66,17 @@ const makeProjectFileLoader = (root: string): TypstFileLoader => ({
   },
 });
 
-const addDefaultFonts = async (
-  compiler: Awaited<ReturnType<typeof createTypstCompiler>>,
-): Promise<void> => {
-  const fonts = await Promise.all(defaultFonts.map((font) => font.load()));
-  await Promise.all(fonts.map((font) => compiler.addFont(font)));
+const loadConfiguredWasmBytes = (options: TypstPluginOptions) =>
+  options.loadWasmBytes ??
+  (async () => new Uint8Array(await readFile(wasmUrl)));
+
+const loadConfiguredFontBytes = async (
+  font: (typeof defaultFonts)[number],
+): Promise<Uint8Array> => {
+  const fontsEntry = import.meta.resolve("@typst-wasm/fonts");
+  return new Uint8Array(
+    await readFile(new URL(`./dist/files/${font.filename}`, fontsEntry)),
+  );
 };
 
 const serialize = (value: unknown): string => JSON.stringify(value);
@@ -149,8 +155,7 @@ export const typst = (options: TypstPluginOptions = {}): Plugin => {
 
     compilerPromise ??= (async () => {
       const compiler = await createTypstCompiler({
-        wasmURL: options.wasmURL ?? wasmUrl,
-        glueURL: options.glueURL,
+        loadWasmBytes: loadConfiguredWasmBytes(options),
         backend: options.backend,
         fileLoaders: [
           ...(options.fileLoaders ?? []),
@@ -162,7 +167,7 @@ export const typst = (options: TypstPluginOptions = {}): Plugin => {
       });
 
       if (options.includeDefaultFonts !== false) {
-        await addDefaultFonts(compiler);
+        await loadDefaultFonts(compiler, loadConfiguredFontBytes);
       }
 
       return compiler;

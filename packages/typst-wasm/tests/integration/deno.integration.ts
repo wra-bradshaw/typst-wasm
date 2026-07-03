@@ -1,6 +1,6 @@
 /// <reference types="deno" />
 
-import { wasmBinaryUrl, wasmGlueUrl } from "../../src/wasm.ts";
+import { wasmBinaryUrl } from "../../src/wasm.ts";
 import { runCompilerIntegrationScenario } from "./scenario.ts";
 
 Deno.test(
@@ -8,8 +8,7 @@ Deno.test(
   async () => {
     const result = await runCompilerIntegrationScenario({
       runtime: "deno",
-      wasmURL: wasmBinaryUrl.href,
-      glueURL: wasmGlueUrl.href,
+      loadWasmBytes: () => Deno.readFile(wasmBinaryUrl),
       backend: "worker",
     });
 

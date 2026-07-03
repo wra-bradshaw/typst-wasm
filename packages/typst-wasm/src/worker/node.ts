@@ -1,5 +1,5 @@
 import { parentPort } from "node:worker_threads";
-import { loadWasmModule } from "../runtime/node-loader";
+import { loadWasmModule } from "../runtime/instantiate";
 import type { WorkerPort } from "./port";
 import { installTypstWorkerRuntime } from "./runtime";
 

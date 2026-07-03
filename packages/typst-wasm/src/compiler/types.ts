@@ -1,4 +1,5 @@
 import type { PackageCache } from "../files";
+import type { WasmBytesLoader } from "../wasm/index";
 import type { WasmDiagnostic } from "../wasm/index";
 
 export type CompileFormat = "pdf" | "png" | "svg" | "html" | "bundle";
@@ -46,8 +47,7 @@ export interface TypstDocumentMetadata {
 }
 
 export interface TypstCompilerOptions {
-  wasmURL?: string | URL;
-  glueURL?: string | URL;
+  loadWasmBytes?: WasmBytesLoader;
   backend?: "auto" | "worker" | "jspi";
   fileLoaders?: TypstFileLoader[];
   fetch?: typeof fetch;

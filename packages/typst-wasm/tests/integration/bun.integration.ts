@@ -1,15 +1,14 @@
 /// <reference types="bun" />
 
 import { describe, expect, test } from "bun:test";
-import { wasmBinaryUrl, wasmGlueUrl } from "../../src/wasm";
+import { wasmBinaryUrl } from "../../src/wasm";
 import { runCompilerIntegrationScenario } from "./scenario";
 
 describe("bun integration (worker backend)", () => {
   test("covers compiler behavior across files, formats, options, and errors", async () => {
     const result = await runCompilerIntegrationScenario({
       runtime: "bun",
-      wasmURL: wasmBinaryUrl.href,
-      glueURL: wasmGlueUrl.href,
+      loadWasmBytes: () => Bun.file(wasmBinaryUrl).arrayBuffer(),
       backend: "worker",
     });
 

@@ -1,23 +1,22 @@
 import { createTypstCompilerWithRuntime } from "./compiler/index";
 import type { TypstCompiler, TypstCompilerOptions } from "./compiler/types";
-import { nodeRuntime, wasmBinaryUrl } from "./runtime/node";
 import { selectAutomaticBackendKind as selectAutomaticBackendKindForRuntime } from "./backends/index";
+import { workerdRuntime } from "./runtime/workerd";
 
 type BackendSelection = "worker" | "jspi" | "none";
 
 export const createTypstCompiler = (
   options: TypstCompilerOptions = {},
 ): Promise<TypstCompiler> =>
-  createTypstCompilerWithRuntime(options, nodeRuntime);
+  createTypstCompilerWithRuntime(options, workerdRuntime);
 
 export const supportsWorkerBackend = (): boolean =>
-  nodeRuntime.supportsWorkerBackend();
+  workerdRuntime.supportsWorkerBackend();
 
 export const supportsJspiBackend = (): boolean =>
-  nodeRuntime.supportsJspiBackend();
+  workerdRuntime.supportsJspiBackend();
 
 export const selectAutomaticBackendKind = (): BackendSelection =>
-  selectAutomaticBackendKindForRuntime(nodeRuntime);
+  selectAutomaticBackendKindForRuntime(workerdRuntime);
 
 export * from "./public-api";
-export { wasmBinaryUrl };

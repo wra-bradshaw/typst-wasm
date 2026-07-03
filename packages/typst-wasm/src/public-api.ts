@@ -1,4 +1,5 @@
 export type { WasmDiagnostic } from "./wasm/index";
+export type { PackageCache } from "./files";
 export type {
   BundleFile,
   CompileFormat,

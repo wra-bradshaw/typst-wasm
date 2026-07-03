@@ -19,6 +19,14 @@
         "types": "./index.d.ts",
         "default": "./index.browser.js"
       },
+      "workerd": {
+        "types": "./index.d.ts",
+        "default": "./index.browser.js"
+      },
+      "worker": {
+        "types": "./index.d.ts",
+        "default": "./index.browser.js"
+      },
       "default": "./index.js"
     }
   },

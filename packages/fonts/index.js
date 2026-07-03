@@ -1,25 +1,30 @@
 const fontDefinitions = [
-  { file: "NewCMMath-Regular.otf", weight: 400, style: "normal" },
-  { file: "NewCMMath-Bold.otf", weight: 700, style: "normal" },
-  { file: "NewCMMath-Book.otf", weight: 450, style: "normal" },
+  {
+    id: "new-computer-modern-math-regular",
+    file: "NewCMMath-Regular.otf",
+    weight: 400,
+    style: "normal",
+  },
+  {
+    id: "new-computer-modern-math-bold",
+    file: "NewCMMath-Bold.otf",
+    weight: 700,
+    style: "normal",
+  },
+  {
+    id: "new-computer-modern-math-book",
+    file: "NewCMMath-Book.otf",
+    weight: 450,
+    style: "normal",
+  },
 ];
 
-const loadFontBytes = async (url) => {
-  if (url.protocol === "file:") {
-    const { readFile } = await import("node:fs/promises");
-    return new Uint8Array(await readFile(url));
-  }
-
-  const response = await fetch(url);
-  return new Uint8Array(await response.arrayBuffer());
-};
-
 export const newComputerModernMath = fontDefinitions.map((font) => ({
+  id: font.id,
   name: "New Computer Modern Math",
+  filename: font.file,
   weight: font.weight,
   style: font.style,
-  load: async () =>
-    loadFontBytes(new URL(`./dist/files/${font.file}`, import.meta.url)),
 }));
 
 export const newComputerModernMathRegular = newComputerModernMath.find(
@@ -37,3 +42,12 @@ export const defaultFonts = [
   newComputerModernMathBold,
   newComputerModernMathBook,
 ];
+
+export const loadDefaultFonts = async (compiler, loadFontBytes) => {
+  for (const font of defaultFonts) {
+    const bytes = await loadFontBytes(font);
+    await compiler.addFont(
+      bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes),
+    );
+  }
+};

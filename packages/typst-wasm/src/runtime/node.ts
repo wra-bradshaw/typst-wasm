@@ -4,11 +4,11 @@ import {
   supportsJspiBackend,
   supportsWorkerBackend,
 } from "../backends/capabilities";
-import { normalizeAssetUrl } from "../wasm/index";
 import type { WorkerHost } from "../worker/host";
-import { loadWasmModule, wasmBinaryUrl, wasmGlueUrl } from "./node-loader";
+import { loadDefaultWasmBytes, wasmBinaryUrl } from "./node-loader";
+import { loadWasmModule } from "./instantiate";
 
-export { loadWasmModule, wasmBinaryUrl, wasmGlueUrl };
+export { wasmBinaryUrl };
 export default wasmBinaryUrl;
 
 const workerUrl = new URL("./worker/node.js", import.meta.url);
@@ -28,10 +28,8 @@ const createNodeWorkerHost = (): WorkerHost => {
 export const nodeRuntime: TypstRuntime = {
   createWorker: createNodeWorkerHost,
   loadWasmModule,
-  resolveAssets: (options) => ({
-    wasmURL: normalizeAssetUrl(options.wasmURL) ?? wasmBinaryUrl.href,
-    glueURL: normalizeAssetUrl(options.glueURL) ?? wasmGlueUrl.href,
-  }),
+  loadWasmBytes: (options) =>
+    options.loadWasmBytes?.() ?? loadDefaultWasmBytes(),
   supportsWorkerBackend,
   supportsJspiBackend,
 };

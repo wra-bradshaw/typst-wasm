@@ -12,7 +12,7 @@ import {
 import type {
   InitOutput,
   TypstCompilerInstance,
-  WasmAssetUrls,
+  WasmBytes,
   WasmModule,
 } from "../wasm/index";
 
@@ -58,7 +58,7 @@ const toWorkerCommandError = (
 
 export const installTypstWorkerRuntime = (
   port: WorkerPort,
-  loadWorkerWasmModule: (assets: WasmAssetUrls) => Promise<WasmModule>,
+  loadWorkerWasmModule: (wasmBytes: WasmBytes) => Promise<WasmModule>,
 ): void => {
   let compiler: TypstCompilerInstance | null = null;
   let sharedMemoryCommunication: SharedMemoryCommunication | null = null;
@@ -197,10 +197,7 @@ export const installTypstWorkerRuntime = (
         );
         let wasmModule: Awaited<ReturnType<typeof loadWorkerWasmModule>>;
         try {
-          wasmModule = await loadWorkerWasmModule({
-            wasmURL: request.payload.wasmURL,
-            glueURL: request.payload.glueURL,
-          });
+          wasmModule = await loadWorkerWasmModule(request.payload.wasmBytes);
         } catch (cause) {
           throw new WorkerCommandError(
             request.requestId,

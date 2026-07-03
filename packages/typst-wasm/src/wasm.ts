@@ -1,9 +1,9 @@
 export {
-  normalizeAssetUrl,
   toWasmCompileOptions,
   type InitOutput,
   type TypstCompilerInstance,
-  type WasmAssetUrls,
+  type WasmBytes,
+  type WasmBytesLoader,
   type WasmBundleFile,
   type WasmCompileOptions,
   type WasmCompileOutput,
@@ -12,6 +12,6 @@ export {
   type WasmModuleLoader,
   type WasmPageOutput,
 } from "./wasm/index";
-export { wasmBinaryUrl, wasmGlueUrl } from "./runtime/node-loader";
+export { wasmBinaryUrl } from "./runtime/node-loader";
 import { wasmBinaryUrl } from "./runtime/node-loader";
 export default wasmBinaryUrl;

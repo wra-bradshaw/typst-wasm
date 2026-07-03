@@ -10,7 +10,7 @@ import type { TypstWorkerProtocol } from "../worker/protocol";
 import { makeRpcClient, type RpcClient } from "../worker/rpc";
 import { makeWorkerTransport, type WorkerTransport } from "../worker/transport";
 import type {
-  WasmAssetUrls,
+  WasmBytes,
   WasmCompileOptions,
   WasmCompileOutput,
 } from "../wasm/index";
@@ -53,20 +53,19 @@ export class WorkerService {
       },
     );
 
-    this.initWorker = async (assets: WasmAssetUrls) => {
+    this.initWorker = async (wasmBytes: WasmBytes) => {
       await this.rpcClient.call("init", {
         sharedMemoryCommunication: fetchBridge.sharedMemoryCommunication,
-        wasmURL: assets.wasmURL,
-        glueURL: assets.glueURL,
+        wasmBytes,
       });
     };
   }
 
-  private readonly initWorker: (assets: WasmAssetUrls) => Promise<void>;
+  private readonly initWorker: (wasmBytes: WasmBytes) => Promise<void>;
 
-  async init(assets: WasmAssetUrls): Promise<void> {
+  async init(wasmBytes: WasmBytes): Promise<void> {
     this.assertNotDisposed();
-    this.initPromise ??= this.initWorker(assets);
+    this.initPromise ??= this.initWorker(wasmBytes);
     try {
       await this.initPromise;
     } catch (error) {

@@ -1,9 +1,10 @@
 /// <reference types="node" />
 
+import { readFile } from "node:fs/promises";
 import { defaultFonts } from "@typst-wasm/fonts";
 import { describe, expect, it } from "vitest";
 import { supportsJspiBackend } from "../../src";
-import { wasmBinaryUrl, wasmGlueUrl } from "../../src/wasm";
+import { wasmBinaryUrl } from "../../src/wasm";
 import { runCompilerIntegrationScenario } from "./scenario";
 
 describe("node integration (jspi backend)", () => {
@@ -13,13 +14,19 @@ describe("node integration (jspi backend)", () => {
     "covers compiler behavior across files, formats, options, and errors",
     async () => {
       const fontData = await Promise.all(
-        defaultFonts.map((font) => font.load()),
+        defaultFonts.map((font) =>
+          readFile(
+            new URL(
+              `../../../fonts/dist/files/${font.filename}`,
+              import.meta.url,
+            ),
+          ),
+        ),
       );
 
       const result = await runCompilerIntegrationScenario({
         runtime: "node",
-        wasmURL: wasmBinaryUrl.href,
-        glueURL: wasmGlueUrl.href,
+        loadWasmBytes: () => readFile(wasmBinaryUrl),
         fontData,
         backend: "jspi",
       });

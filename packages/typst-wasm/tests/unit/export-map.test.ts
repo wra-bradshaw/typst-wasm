@@ -30,7 +30,7 @@ describe("package exports", () => {
     ]);
   });
 
-  it("routes bundlers to the browser entry and direct runtimes to the default entry", async () => {
+  it("routes bundlers and workerd runtimes before the default Node entry", async () => {
     const packageJson = await readPackageJson();
 
     expect(packageJson.exports["."]).toEqual({
@@ -39,8 +39,19 @@ describe("package exports", () => {
         types: "./dist/index.browser.d.ts",
         default: "./dist/index.browser.js",
       },
+      workerd: {
+        types: "./dist/index.workerd.d.ts",
+        default: "./dist/index.workerd.js",
+      },
+      worker: {
+        types: "./dist/index.workerd.d.ts",
+        default: "./dist/index.workerd.js",
+      },
       default: "./dist/index.js",
     });
+    expect(
+      Object.keys(packageJson.exports["."] as Record<string, unknown>),
+    ).toEqual(["types", "browser", "workerd", "worker", "default"]);
     expect(packageJson.exports["./wasm"]).toEqual({
       types: "./dist/wasm.d.ts",
       default: "./dist/wasm.js",
@@ -60,7 +71,18 @@ describe("package exports", () => {
         types: "./index.d.ts",
         default: "./index.browser.js",
       },
+      workerd: {
+        types: "./index.d.ts",
+        default: "./index.browser.js",
+      },
+      worker: {
+        types: "./index.d.ts",
+        default: "./index.browser.js",
+      },
       default: "./index.js",
     });
+    expect(
+      Object.keys(packageJson.exports["."] as Record<string, unknown>),
+    ).toEqual(["types", "browser", "workerd", "worker", "default"]);
   });
 });

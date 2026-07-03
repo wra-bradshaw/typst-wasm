@@ -1,16 +1,16 @@
 import {
   createTypstCompiler,
-  defaultFonts,
+  loadDefaultFonts,
   type CompileResult,
   type TypstCompiler,
+  type WasmBytesLoader,
 } from "typst-wasm";
 
 export type RuntimeName = "bun" | "node" | "deno";
 
 export type IntegrationScenarioOptions = {
   runtime: RuntimeName;
-  wasmURL: string | URL;
-  glueURL: string | URL;
+  loadWasmBytes: WasmBytesLoader;
   fontData?: Uint8Array[];
   backend?: "auto" | "worker" | "jspi";
 };
@@ -71,21 +71,26 @@ const addDefaultFonts = async (
   compiler: TypstCompiler,
   fontData?: Uint8Array[],
 ): Promise<void> => {
-  const fonts = fontData
-    ? fontData
-    : await Promise.all(defaultFonts.map((font) => font.load()));
-
-  for (const data of fonts) {
-    await compiler.addFont(data);
+  if (fontData) {
+    for (const data of fontData) {
+      await compiler.addFont(data);
+    }
+    return;
   }
+
+  await loadDefaultFonts(compiler, async (font) => {
+    const response = await fetch(
+      new URL(`../../../fonts/dist/files/${font.filename}`, import.meta.url),
+    );
+    return new Uint8Array(await response.arrayBuffer());
+  });
 };
 
 export const makeCompiler = async (
   options: IntegrationScenarioOptions,
 ): Promise<TypstCompiler> => {
   const compiler = await createTypstCompiler({
-    wasmURL: options.wasmURL,
-    glueURL: options.glueURL,
+    loadWasmBytes: options.loadWasmBytes,
     backend: options.backend,
   });
 

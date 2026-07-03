@@ -6,5 +6,7 @@ blockExoticSubdeps: true
 strictDepBuilds: true
 allowBuilds:
   esbuild: true
+  sharp: true
+  workerd: true
 overrides:
   semver: ^7.8.5

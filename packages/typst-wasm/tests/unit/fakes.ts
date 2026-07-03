@@ -1,15 +1,18 @@
 import type { DirectServiceInternals } from "../../src/backends/direct";
 import type { TypstWorkerFactory } from "../../src/backends/worker";
 import type { WorkerHost } from "../../src/worker/host";
-import type { WasmCompileOutput, WasmModule } from "../../src/wasm/index";
+import type {
+  WasmBytes,
+  WasmCompileOutput,
+  WasmModule,
+} from "../../src/wasm/index";
 
 type WorkerMessage =
   | {
       kind: "init";
       requestId: number;
       payload: {
-        wasmURL: string;
-        glueURL: string;
+        wasmBytes: WasmBytes;
       };
     }
   | {
@@ -40,10 +43,10 @@ export const makeFakeWorkerFactory = (
       const msg = message as WorkerMessage;
 
       if (msg.kind === "init") {
-        const payload = msg.payload as { wasmURL: string; glueURL: string };
+        const payload = msg.payload as { wasmBytes: WasmBytes };
         state.initMessages.push(msg);
         queueMicrotask(() => {
-          if (payload.wasmURL === "bad.wasm") {
+          if (new Uint8Array(payload.wasmBytes as Uint8Array)[0] === 0) {
             this.onMessage?.({
               requestId: msg.requestId,
               error: { message: "init failed" },
@@ -175,8 +178,8 @@ export const makeFakeDirectServiceHost = (): FakeDirectServiceHost => {
       unregisterHostFetch: (hostId) => {
         hostFetchers.delete(hostId);
       },
-      loadWasmModule: async (assets) => {
-        if (assets.wasmURL === "bad.wasm") {
+      loadWasmModule: async (wasmBytes) => {
+        if (new Uint8Array(wasmBytes as Uint8Array)[0] === 0) {
           throw new Error("failed to load wasm");
         }
         return wasmModule;

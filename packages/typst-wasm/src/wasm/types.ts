@@ -8,10 +8,9 @@ import type {
 } from "@typst-wasm/engine-wasm";
 import type { CompileOptions, TypstDocumentMetadata } from "../compiler/types";
 
-export type WasmAssetUrls = {
-  wasmURL?: string;
-  glueURL?: string;
-};
+export type WasmBytes = ArrayBuffer | Uint8Array;
+
+export type WasmBytesLoader = () => Promise<WasmBytes>;
 
 export interface InitOutput {
   memory: WebAssembly.Memory;
@@ -39,10 +38,7 @@ export type WasmCompileOutput = EngineCompileOutput & {
   metadata?: TypstDocumentMetadata | null;
 };
 
-export type WasmModuleLoader = (assets: WasmAssetUrls) => Promise<WasmModule>;
-
-export const normalizeAssetUrl = (url: string | URL | undefined) =>
-  url instanceof URL ? url.href : url;
+export type WasmModuleLoader = (wasmBytes: WasmBytes) => Promise<WasmModule>;
 
 export const toWasmCompileOptions = (
   options: CompileOptions = {},

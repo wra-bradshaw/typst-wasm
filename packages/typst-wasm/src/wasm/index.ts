@@ -1,9 +1,9 @@
 export {
-  normalizeAssetUrl,
   toWasmCompileOptions,
   type InitOutput,
   type TypstCompilerInstance,
-  type WasmAssetUrls,
+  type WasmBytes,
+  type WasmBytesLoader,
   type WasmBundleFile,
   type WasmCompileOptions,
   type WasmCompileOutput,

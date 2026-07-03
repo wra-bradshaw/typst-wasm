@@ -26,22 +26,21 @@ describe("worker service lifecycle", () => {
   it("treats repeated init as idempotent", async () => {
     const workerService = await makeService();
 
-    await workerService.init({ wasmURL: "first.wasm", glueURL: "first.js" });
-    await workerService.init({ wasmURL: "second.wasm", glueURL: "second.js" });
+    await workerService.init(new Uint8Array([1]));
+    await workerService.init(new Uint8Array([2]));
 
     expect(workerState.initMessages).toHaveLength(1);
     expect(workerState.initMessages[0]?.kind).toBe("init");
-    expect(workerState.initMessages[0]?.payload).toMatchObject({
-      wasmURL: "first.wasm",
-      glueURL: "first.js",
-    });
+    expect(workerState.initMessages[0]?.payload.wasmBytes).toEqual(
+      new Uint8Array([1]),
+    );
     await workerService.dispose();
   });
 
   it("makes dispose idempotent", async () => {
     const workerService = await makeService();
 
-    await workerService.init({ wasmURL: "first.wasm", glueURL: "first.js" });
+    await workerService.init(new Uint8Array([1]));
     await workerService.dispose();
     await workerService.dispose();
 
@@ -51,7 +50,7 @@ describe("worker service lifecycle", () => {
   it("rejects commands after dispose", async () => {
     const workerService = await makeService();
 
-    await workerService.init({ wasmURL: "first.wasm", glueURL: "first.js" });
+    await workerService.init(new Uint8Array([1]));
     await workerService.dispose();
 
     expect(() =>
@@ -69,11 +68,11 @@ describe("worker service lifecycle", () => {
   it("surfaces init failures and allows a later retry", async () => {
     const workerService = await makeService();
 
+    await expect(workerService.init(new Uint8Array([0]))).rejects.toThrow(
+      "Worker command failed: init",
+    );
     await expect(
-      workerService.init({ wasmURL: "bad.wasm", glueURL: "bad.js" }),
-    ).rejects.toThrow("Worker command failed: init");
-    await expect(
-      workerService.init({ wasmURL: "good.wasm", glueURL: "good.js" }),
+      workerService.init(new Uint8Array([1])),
     ).resolves.toBeUndefined();
 
     expect(workerState.initMessages).toHaveLength(2);

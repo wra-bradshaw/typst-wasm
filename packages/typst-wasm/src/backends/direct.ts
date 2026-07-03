@@ -12,7 +12,7 @@ import type { FileLoaderManager } from "../files/loaders";
 import type {
   InitOutput,
   TypstCompilerInstance,
-  WasmAssetUrls,
+  WasmBytes,
   WasmCompileOptions,
   WasmCompileOutput,
   WasmModule,
@@ -28,7 +28,7 @@ type WasmBindgenPointer = {
 };
 
 export interface DirectServiceInternals {
-  loadWasmModule?: (assets: WasmAssetUrls) => Promise<WasmModule>;
+  loadWasmModule?: (wasmBytes: WasmBytes) => Promise<WasmModule>;
   registerHostFetch?: typeof defaultRegisterHostFetch;
   unregisterHostFetch?: typeof defaultUnregisterHostFetch;
 }
@@ -65,9 +65,9 @@ export class DirectService {
     private readonly internals: DirectServiceInternals = {},
   ) {}
 
-  async init(assets: WasmAssetUrls): Promise<void> {
+  async init(wasmBytes: WasmBytes): Promise<void> {
     this.assertNotDisposed();
-    this.initPromise ??= this.initDirect(assets);
+    this.initPromise ??= this.initDirect(wasmBytes);
     try {
       await this.initPromise;
     } catch (error) {
@@ -147,7 +147,7 @@ export class DirectService {
     }
   }
 
-  private async initDirect(assets: WasmAssetUrls): Promise<void> {
+  private async initDirect(wasmBytes: WasmBytes): Promise<void> {
     if (!supportsJspiBackend()) {
       throw new WorkerError("JSPI is unavailable in this runtime");
     }
@@ -159,7 +159,7 @@ export class DirectService {
     const register =
       this.internals.registerHostFetch ?? defaultRegisterHostFetch;
 
-    const wasmModule = await loadWasmModule(assets);
+    const wasmModule = await loadWasmModule(wasmBytes);
     const { Suspending } = getJspiWebAssembly<WasmCompileOptions>();
     if (!Suspending) {
       throw new WorkerError("JSPI is unavailable in this runtime");

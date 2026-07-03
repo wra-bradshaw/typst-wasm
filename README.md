@@ -5,18 +5,24 @@
 ## Usage
 
 ```ts
-import { createTypstCompiler, defaultFonts } from "typst-wasm";
+import { createTypstCompiler, loadDefaultFonts } from "typst-wasm";
 import wasmUrl from "typst-wasm/wasm";
 
 const compiler = await createTypstCompiler({
-  wasmURL: wasmUrl,
+  loadWasmBytes: async () => {
+    const response = await fetch(wasmUrl);
+    return response.arrayBuffer();
+  },
   backend: "auto",
 });
 
 try {
-  for (const font of defaultFonts) {
-    await compiler.addFont(await font.load());
-  }
+  await loadDefaultFonts(compiler, async (font) => {
+    const response = await fetch(
+      new URL(`./fonts/${font.filename}`, import.meta.url),
+    );
+    return response.arrayBuffer();
+  });
 
   await compiler.addSource("main.typ", "= Hello from Typst");
 

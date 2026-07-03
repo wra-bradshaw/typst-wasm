@@ -1,5 +1,6 @@
+import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import typst from "../src";
 import { buildFixture, getChunk } from "./helpers";
@@ -9,10 +10,6 @@ const wasmPath = path.resolve(
   dirname,
   "../../engine-wasm/dist/typst_wasm_bg.wasm",
 );
-const gluePath = path.resolve(
-  dirname,
-  "../../engine-wasm/dist/typst_wasm_bg.js",
-);
 
 describe("vite-plugin-typst fixtures", () => {
   test("builds a typst import into a JS module", async () => {
@@ -20,8 +17,7 @@ describe("vite-plugin-typst fixtures", () => {
       "basic",
       typst({
         backend: "jspi",
-        wasmURL: pathToFileURL(wasmPath),
-        glueURL: pathToFileURL(gluePath),
+        loadWasmBytes: () => readFile(wasmPath),
       }),
     );
     try {

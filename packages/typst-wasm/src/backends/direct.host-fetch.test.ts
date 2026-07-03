@@ -37,12 +37,10 @@ describe("DirectService host fetch routing", () => {
       host.internals,
     );
 
-    await expect(
-      service.init({ wasmURL: "bad.wasm", glueURL: "bad.js" }),
-    ).rejects.toThrow("failed to load wasm");
-    await expect(
-      service.init({ wasmURL: "good.wasm", glueURL: "good.js" }),
-    ).resolves.toBeUndefined();
+    await expect(service.init(new Uint8Array([0]))).rejects.toThrow(
+      "failed to load wasm",
+    );
+    await expect(service.init(new Uint8Array([1]))).resolves.toBeUndefined();
 
     await service.dispose();
   });

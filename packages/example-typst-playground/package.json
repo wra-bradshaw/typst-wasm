@@ -27,6 +27,7 @@
     "@tailwindcss/typography": "^0.5.20",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.105.0"
   }
 }

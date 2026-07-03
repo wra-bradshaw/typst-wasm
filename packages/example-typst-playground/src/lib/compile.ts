@@ -1,10 +1,14 @@
 import {
   CompileError,
   createTypstCompiler,
-  defaultFonts,
+  loadDefaultFonts,
   type TypstCompiler,
   type WasmDiagnostic,
 } from "typst-wasm";
+import wasmUrl from "../../../engine-wasm/dist/typst_wasm_bg.wasm?url";
+import newComputerModernMathBoldUrl from "../../../fonts/dist/files/NewCMMath-Bold.otf?url";
+import newComputerModernMathBookUrl from "../../../fonts/dist/files/NewCMMath-Book.otf?url";
+import newComputerModernMathRegularUrl from "../../../fonts/dist/files/NewCMMath-Regular.otf?url";
 
 export interface CompileView {
   html: string;
@@ -14,14 +18,30 @@ export interface CompileView {
 let browserCompiler: Promise<TypstCompiler> | undefined;
 let browserCompileQueue: Promise<void> = Promise.resolve();
 
+const fontUrls: Record<string, string> = {
+  "NewCMMath-Bold.otf": newComputerModernMathBoldUrl,
+  "NewCMMath-Book.otf": newComputerModernMathBookUrl,
+  "NewCMMath-Regular.otf": newComputerModernMathRegularUrl,
+};
+
+const fetchBytes = async (url: string): Promise<Uint8Array> => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch asset: ${response.status}`);
+  }
+  return new Uint8Array(await response.arrayBuffer());
+};
+
 const createInitializedCompiler = async (): Promise<TypstCompiler> => {
   const compiler = await createTypstCompiler({
     backend: "auto",
+    loadWasmBytes: () => fetchBytes(wasmUrl),
   });
 
   try {
-    const fonts = await Promise.all(defaultFonts.map((font) => font.load()));
-    await Promise.all(fonts.map((font) => compiler.addFont(font)));
+    await loadDefaultFonts(compiler, (font) =>
+      fetchBytes(fontUrls[font.filename]),
+    );
     return compiler;
   } catch (error) {
     await compiler.dispose();
@@ -72,7 +92,9 @@ const compileWithBrowserCompiler = (source: string): Promise<CompileView> => {
   return compile;
 };
 
-export const compileTypstHtml = async (source: string): Promise<CompileView> => {
+export const compileTypstHtml = async (
+  source: string,
+): Promise<CompileView> => {
   if (typeof window !== "undefined") {
     return compileWithBrowserCompiler(source);
   }

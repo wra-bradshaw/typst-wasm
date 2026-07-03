@@ -145,7 +145,9 @@ describe("typst vite plugin compiler lifecycle", () => {
       expect.objectContaining({
         backend: undefined,
         fileLoaders: expect.any(Array) as TypstCompilerOptions["fileLoaders"],
-        wasmURL: "/typst.wasm",
+        loadWasmBytes: expect.any(
+          Function,
+        ) as TypstCompilerOptions["loadWasmBytes"],
       }),
     );
     expect(compiler.addSource).toHaveBeenNthCalledWith(1, "one.typ", "= One");
