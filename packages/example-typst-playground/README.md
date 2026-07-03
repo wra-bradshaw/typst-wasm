@@ -7,17 +7,17 @@ hydration, editor changes compile in the browser with the same public
 `typst-wasm` API.
 
 ```sh
-nix develop -c pnpm --filter @typst-wasm/example-playground dev
+nix develop -c pnpm --filter @typst-wasm/example-typst-playground dev
 ```
 
 Deployment builds:
 
 ```sh
-nix develop -c pnpm --filter @typst-wasm/example-playground build:cloudflare
-nix develop -c pnpm --filter @typst-wasm/example-playground build:vercel
+nix develop -c pnpm --filter @typst-wasm/example-typst-playground build:cloudflare
+nix develop -c pnpm --filter @typst-wasm/example-typst-playground build:vercel
 ```
 
-Both scripts build the same TanStack Start SSR app. Use the generated `dist`
-and `.output` output with the Cloudflare or Vercel deployment flow configured
-for your project. The scripts select `NITRO_PRESET=cloudflare-module` and
+Both scripts build the same TanStack Start SSR app. Use the generated
+`.output` output for Cloudflare Workers and `.vercel/output` output for
+Vercel. The scripts select `NITRO_PRESET=cloudflare_module` and
 `NITRO_PRESET=vercel` respectively.

@@ -9,6 +9,7 @@ out
 dist
 .output
 .vercel
+.wrangler
 .release/
 *.tgz
 target

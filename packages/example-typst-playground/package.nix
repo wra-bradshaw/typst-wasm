@@ -3,6 +3,8 @@
   engineWasm,
   fonts,
   typstWasm,
+  nitroPreset ? null,
+  artifactPath ? ".output",
   nativeBuildInputs ? [ ],
 }:
 
@@ -20,9 +22,15 @@ let
     pkgs.pnpm
   ];
 
-  buildBundle = ''
-    pnpm --dir ${packageDir} exec vite build
-  '';
+  buildBundle =
+    if nitroPreset == null then
+      ''
+        pnpm --dir ${packageDir} exec vite build
+      ''
+    else
+      ''
+        NITRO_PRESET=${nitroPreset} pnpm --dir ${packageDir} exec vite build
+      '';
 
   prepareBuildArtifacts = prepareWorkspaceArtifacts [
     {
@@ -57,8 +65,8 @@ pkgs.stdenvNoCC.mkDerivation {
 
   installPhase = ''
     runHook preInstall
-    mkdir -p "$out"
-    cp -r packages/example-typst-playground/.output "$out/.output"
+    mkdir -p "$out/$(dirname ${artifactPath})"
+    cp -r packages/example-typst-playground/${artifactPath} "$out/${artifactPath}"
     runHook postInstall
   '';
 }

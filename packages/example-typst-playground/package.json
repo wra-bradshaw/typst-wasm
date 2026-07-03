@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "nix run ../..#build-artifact -- example-typst-playground .output",
+    "build:cloudflare": "nix run ../..#build-artifact -- example-typst-playground-cloudflare .output",
+    "build:vercel": "nix run ../..#build-artifact -- example-typst-playground-vercel .vercel/output",
     "dev": "node --experimental-wasm-jspi ./node_modules/vite/bin/vite.js dev",
     "preview": "node --experimental-wasm-jspi ./node_modules/vite/bin/vite.js preview",
     "typecheck": "tsc --noEmit"

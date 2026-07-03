@@ -5,5 +5,16 @@ import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [tanstackStart(), nitro(), react(), tailwindcss()],
+  plugins: [
+    tanstackStart(),
+    nitro({
+      cloudflare: {
+        wrangler: {
+          name: "typst-wasm-playground",
+        },
+      },
+    }),
+    react(),
+    tailwindcss(),
+  ],
 });
