@@ -24,8 +24,31 @@ const fontUrls: Record<string, string> = {
   "NewCMMath-Regular.otf": newComputerModernMathRegularUrl,
 };
 
+const isAbsoluteUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const resolveFetchUrl = async (url: string): Promise<string> => {
+  if (!import.meta.env.SSR || isAbsoluteUrl(url)) {
+    return url;
+  }
+
+  const { getRequestUrl } = await import(
+    "@tanstack/start-server-core/request-response"
+  );
+  return new URL(
+    url,
+    getRequestUrl({ xForwardedHost: true, xForwardedProto: true }),
+  ).href;
+};
+
 const fetchBytes = async (url: string): Promise<Uint8Array> => {
-  const response = await fetch(url);
+  const response = await fetch(await resolveFetchUrl(url));
   if (!response.ok) {
     throw new Error(`Failed to fetch asset: ${response.status}`);
   }
