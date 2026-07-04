@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    lockDistDir: false,
+  },
   serverExternalPackages: [
     "@typst-wasm/engine-wasm",
     "@typst-wasm/fonts",
