@@ -34,12 +34,22 @@ jobs:
       - name: Install dependencies
         run: nix develop .#ci -c pnpm install --frozen-lockfile
 
+      - name: Pull Vercel environment
+        run: npx vercel@latest pull --yes --environment=production --cwd packages/example-typst-playground-next --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PLAYGROUND }}
+
       - name: Build Vercel artifact
-        run: nix run ../..#build-artifact -- example-typst-playground-vercel .vercel/output
-        working-directory: packages/example-typst-playground
+        run: npx vercel@latest build --prod --cwd packages/example-typst-playground-next --token "$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PLAYGROUND }}
 
       - name: Deploy to Vercel
-        run: npx vercel@latest deploy --prebuilt --prod --yes --cwd packages/example-typst-playground --archive=tgz --token "$VERCEL_TOKEN"
+        run: npx vercel@latest deploy --prebuilt --prod --yes --cwd packages/example-typst-playground-next --archive=tgz --token "$VERCEL_TOKEN"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -66,11 +76,11 @@ jobs:
         run: nix develop .#ci -c pnpm install --frozen-lockfile
 
       - name: Build Cloudflare artifact
-        run: nix run ../..#build-artifact -- example-typst-playground-cloudflare .output
-        working-directory: packages/example-typst-playground
+        run: nix run ../..#build-artifact -- example-typst-playground-cloudflare dist
+        working-directory: packages/example-typst-playground-cloudflare
 
       - name: Deploy to Cloudflare Workers
-        run: nix develop .#ci -c pnpm --dir packages/example-typst-playground exec wrangler deploy --config .output/server/wrangler.json
+        run: nix develop .#ci -c pnpm --dir packages/example-typst-playground-cloudflare exec wrangler deploy --config dist/server/wrangler.json
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
