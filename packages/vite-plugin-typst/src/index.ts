@@ -3,8 +3,6 @@ import path from "node:path";
 import {
   CompileError,
   createTypstCompiler,
-  loadDefaultFonts,
-  type defaultFonts,
   type PackageCache,
   type TypstCompiler,
   type TypstCompilerOptions,
@@ -17,13 +15,13 @@ import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
 
 export interface TypstPluginOptions {
-  loadWasmBytes: TypstCompilerOptions["loadWasmBytes"];
+  assets: TypstCompilerOptions["assets"];
   backend?: TypstCompilerOptions["backend"];
   packageBaseUrl?: string;
   packageCache?: PackageCache;
   memoryPackageCacheCapacity?: number;
   fileLoaders?: TypstFileLoader[];
-  includeDefaultFonts?: boolean;
+  configureCompiler?: (compiler: TypstCompiler) => Promise<void> | void;
 }
 
 export interface TypstCompiledModule {
@@ -64,15 +62,6 @@ const makeProjectFileLoader = (root: string): TypstFileLoader => ({
     };
   },
 });
-
-const loadConfiguredFontBytes = async (
-  font: (typeof defaultFonts)[number],
-): Promise<Uint8Array> => {
-  const fontsEntry = import.meta.resolve("@typst-wasm/fonts");
-  return new Uint8Array(
-    await readFile(new URL(`./dist/files/${font.filename}`, fontsEntry)),
-  );
-};
 
 const serialize = (value: unknown): string => JSON.stringify(value);
 
@@ -150,7 +139,7 @@ export const typst = (options: TypstPluginOptions): Plugin => {
 
     compilerPromise ??= (async () => {
       const compiler = await createTypstCompiler({
-        loadWasmBytes: options.loadWasmBytes,
+        assets: options.assets,
         backend: options.backend,
         fileLoaders: [
           ...(options.fileLoaders ?? []),
@@ -161,9 +150,7 @@ export const typst = (options: TypstPluginOptions): Plugin => {
         memoryPackageCacheCapacity: options.memoryPackageCacheCapacity,
       });
 
-      if (options.includeDefaultFonts !== false) {
-        await loadDefaultFonts(compiler, loadConfiguredFontBytes);
-      }
+      await options.configureCompiler?.(compiler);
 
       return compiler;
     })().catch((error) => {

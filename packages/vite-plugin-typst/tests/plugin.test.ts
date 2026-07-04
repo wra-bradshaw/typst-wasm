@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createWorkerHost } from "typst-wasm/node";
 import { describe, expect, test } from "vitest";
 import typst from "../src";
 import { buildFixture, getChunk } from "./helpers";
@@ -16,8 +17,14 @@ describe("vite-plugin-typst fixtures", () => {
     const build = await buildFixture(
       "basic",
       typst({
-        backend: "jspi",
-        loadWasmBytes: () => readFile(wasmPath),
+        backend: "worker",
+        assets: {
+          worker: () =>
+            createWorkerHost(
+              new URL(import.meta.resolve("typst-wasm/worker/node")),
+            ),
+          wasm: () => readFile(wasmPath),
+        },
       }),
     );
     try {
