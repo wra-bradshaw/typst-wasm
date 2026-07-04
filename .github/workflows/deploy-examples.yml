@@ -34,10 +34,33 @@ jobs:
       - name: Install dependencies
         run: nix develop .#ci -c pnpm install --frozen-lockfile
 
-      - name: Pull Vercel environment
-        run: nix develop .#ci -c pnpm exec vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+      - name: Configure Vercel project settings
+        run: |
+          mkdir -p .vercel
+          node -e '
+            const { writeFileSync } = require("node:fs");
+            const projectPath = ".vercel/project.json";
+            const projectId = process.env.VERCEL_PROJECT_ID;
+            const orgId = process.env.VERCEL_ORG_ID;
+
+            if (!projectId) {
+              throw new Error("VERCEL_PROJECT_ID_PLAYGROUND is required");
+            }
+
+            const project = {
+              projectId,
+              orgId: orgId || undefined,
+              settings: {
+                rootDirectory: "packages/example-typst-playground-next",
+                framework: "nextjs",
+                buildCommand: "pnpm build:local",
+                outputDirectory: null
+              }
+            };
+
+            writeFileSync(projectPath, `${JSON.stringify(project, null, 2)}\n`);
+          '
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PLAYGROUND }}
 
