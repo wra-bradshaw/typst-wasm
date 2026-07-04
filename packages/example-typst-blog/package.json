@@ -11,11 +11,13 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "4.3.1",
+    "@typst-wasm/fonts": "workspace:*",
     "@typst-wasm/vite-plugin-typst": "workspace:*",
     "@vitejs/plugin-react": "^6.0.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "tailwindcss": "4.3.1",
+    "typst-wasm": "workspace:*",
     "vite": "^8.0.3"
   },
   "devDependencies": {

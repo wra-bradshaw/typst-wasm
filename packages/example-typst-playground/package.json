@@ -16,6 +16,7 @@
     "@tanstack/react-router": "^1.170.16",
     "@tanstack/react-start": "^1.168.26",
     "@tanstack/start-server-core": "^1.169.15",
+    "@typst-wasm/fonts": "workspace:*",
     "@vitejs/plugin-react": "^6.0.3",
     "nitro": "3.0.260610-beta",
     "react": "^19.2.7",

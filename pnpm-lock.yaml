@@ -35,6 +35,9 @@ importers:
       '@tailwindcss/vite':
         specifier: 4.3.1
         version: 4.3.1(vite@8.0.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
+      '@typst-wasm/fonts':
+        specifier: workspace:*
+        version: link:../fonts
       '@typst-wasm/vite-plugin-typst':
         specifier: workspace:*
         version: link:../vite-plugin-typst
@@ -50,6 +53,9 @@ importers:
       tailwindcss:
         specifier: 4.3.1
         version: 4.3.1
+      typst-wasm:
+        specifier: workspace:*
+        version: link:../typst-wasm
       vite:
         specifier: ^8.0.3
         version: 8.0.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0)
@@ -81,6 +87,9 @@ importers:
       '@tanstack/start-server-core':
         specifier: ^1.169.15
         version: 1.169.15(crossws@0.4.6(srvx@0.11.17))
+      '@typst-wasm/fonts':
+        specifier: workspace:*
+        version: link:../fonts
       '@vitejs/plugin-react':
         specifier: ^6.0.3
         version: 6.0.3(vite@8.0.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.7.0)(yaml@2.9.0))
@@ -130,9 +139,6 @@ importers:
       '@typst-wasm/engine-wasm':
         specifier: workspace:*
         version: link:../engine-wasm
-      '@typst-wasm/fonts':
-        specifier: workspace:*
-        version: link:../fonts
       nanotar:
         specifier: ^0.2.0
         version: 0.2.1
@@ -176,9 +182,6 @@ importers:
 
   packages/vite-plugin-typst:
     dependencies:
-      '@typst-wasm/fonts':
-        specifier: workspace:*
-        version: link:../fonts
       parse5:
         specifier: ^8.0.1
         version: 8.0.1

@@ -1,28 +1,29 @@
 import {
   CompileError,
   createTypstCompiler,
-  loadDefaultFonts,
+  createWorkerHost,
   type TypstCompiler,
   type WasmDiagnostic,
 } from "typst-wasm";
+import newComputerModernMathBoldUrl from "@typst-wasm/fonts/NewCMMath-Bold.otf?url";
+import newComputerModernMathBookUrl from "@typst-wasm/fonts/NewCMMath-Book.otf?url";
+import newComputerModernMathRegularUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
+import browserWorkerUrl from "typst-wasm/worker/browser?url";
 import wasmUrl from "../../../engine-wasm/dist/typst_wasm_bg.wasm?url";
-import newComputerModernMathBoldUrl from "../../../fonts/dist/files/NewCMMath-Bold.otf?url";
-import newComputerModernMathBookUrl from "../../../fonts/dist/files/NewCMMath-Book.otf?url";
-import newComputerModernMathRegularUrl from "../../../fonts/dist/files/NewCMMath-Regular.otf?url";
 
 export interface CompileView {
   html: string;
   diagnostics: WasmDiagnostic[];
 }
 
-let browserCompiler: Promise<TypstCompiler> | undefined;
-let browserCompileQueue: Promise<void> = Promise.resolve();
+let compilerPromise: Promise<TypstCompiler> | undefined;
+let compileQueue: Promise<void> = Promise.resolve();
 
-const fontUrls: Record<string, string> = {
-  "NewCMMath-Bold.otf": newComputerModernMathBoldUrl,
-  "NewCMMath-Book.otf": newComputerModernMathBookUrl,
-  "NewCMMath-Regular.otf": newComputerModernMathRegularUrl,
-};
+const fontUrls = [
+  newComputerModernMathRegularUrl,
+  newComputerModernMathBoldUrl,
+  newComputerModernMathBookUrl,
+];
 
 const isAbsoluteUrl = (url: string): boolean => {
   try {
@@ -38,9 +39,8 @@ const resolveFetchUrl = async (url: string): Promise<string> => {
     return url;
   }
 
-  const { getRequestUrl } = await import(
-    "@tanstack/start-server-core/request-response"
-  );
+  const { getRequestUrl } =
+    await import("@tanstack/start-server-core/request-response");
   return new URL(
     url,
     getRequestUrl({ xForwardedHost: true, xForwardedProto: true }),
@@ -55,16 +55,24 @@ const fetchBytes = async (url: string): Promise<Uint8Array> => {
   return new Uint8Array(await response.arrayBuffer());
 };
 
+const resolveWorkerUrl = (): string | URL =>
+  import.meta.env.SSR
+    ? new URL(import.meta.resolve("typst-wasm/worker/node"))
+    : browserWorkerUrl;
+
 const createInitializedCompiler = async (): Promise<TypstCompiler> => {
   const compiler = await createTypstCompiler({
     backend: "auto",
-    loadWasmBytes: () => fetchBytes(wasmUrl),
+    assets: {
+      wasm: () => fetchBytes(wasmUrl),
+      worker: () => createWorkerHost(resolveWorkerUrl()),
+    },
   });
 
   try {
-    await loadDefaultFonts(compiler, (font) =>
-      fetchBytes(fontUrls[font.filename]),
-    );
+    for (const fontUrl of fontUrls) {
+      await compiler.addFont(await fetchBytes(fontUrl));
+    }
     return compiler;
   } catch (error) {
     await compiler.dispose();
@@ -72,13 +80,13 @@ const createInitializedCompiler = async (): Promise<TypstCompiler> => {
   }
 };
 
-const getBrowserCompiler = (): Promise<TypstCompiler> => {
-  browserCompiler ??= createInitializedCompiler().catch((error: unknown) => {
-    browserCompiler = undefined;
+const getCompiler = (): Promise<TypstCompiler> => {
+  compilerPromise ??= createInitializedCompiler().catch((error: unknown) => {
+    compilerPromise = undefined;
     throw error;
   });
 
-  return browserCompiler;
+  return compilerPromise;
 };
 
 const compileWithCompiler = async (
@@ -102,12 +110,12 @@ const compileWithCompiler = async (
   };
 };
 
-const compileWithBrowserCompiler = (source: string): Promise<CompileView> => {
-  const compile = browserCompileQueue.then(async () =>
-    compileWithCompiler(await getBrowserCompiler(), source),
+const compileWithSharedCompiler = (source: string): Promise<CompileView> => {
+  const compile = compileQueue.then(async () =>
+    compileWithCompiler(await getCompiler(), source),
   );
 
-  browserCompileQueue = compile.then(
+  compileQueue = compile.then(
     () => undefined,
     () => undefined,
   );
@@ -118,17 +126,7 @@ const compileWithBrowserCompiler = (source: string): Promise<CompileView> => {
 export const compileTypstHtml = async (
   source: string,
 ): Promise<CompileView> => {
-  if (typeof window !== "undefined") {
-    return compileWithBrowserCompiler(source);
-  }
-
-  const compiler = await createInitializedCompiler();
-
-  try {
-    return await compileWithCompiler(compiler, source);
-  } finally {
-    await compiler.dispose();
-  }
+  return compileWithSharedCompiler(source);
 };
 
 export const formatCompileError = (error: unknown): string => {
