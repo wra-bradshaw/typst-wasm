@@ -5,18 +5,22 @@ import { selectAutomaticBackendKind as selectAutomaticBackendKindForRuntime } fr
 
 type BackendSelection = "worker" | "jspi" | "none";
 
+export { createNodeWorkerHost, createWorkerHost } from "./runtime/node";
+
 export const createTypstCompiler = (
   options: TypstCompilerOptions,
 ): Promise<TypstCompiler> =>
   createTypstCompilerWithRuntime(options, nodeRuntime);
 
-export const supportsWorkerBackend = (): boolean =>
-  nodeRuntime.supportsWorkerBackend();
+export const supportsWorkerBackend = (options: TypstCompilerOptions): boolean =>
+  nodeRuntime.supportsWorkerBackend(options);
 
 export const supportsJspiBackend = (): boolean =>
   nodeRuntime.supportsJspiBackend();
 
-export const selectAutomaticBackendKind = (): BackendSelection =>
-  selectAutomaticBackendKindForRuntime(nodeRuntime);
+export const selectAutomaticBackendKind = (
+  options: TypstCompilerOptions,
+): BackendSelection =>
+  selectAutomaticBackendKindForRuntime(nodeRuntime, options);
 
 export * from "./public-api";

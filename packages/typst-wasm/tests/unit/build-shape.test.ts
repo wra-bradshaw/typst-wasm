@@ -21,6 +21,7 @@ describe("build shape", () => {
     );
 
     expect(config).toContain('"worker/node": "./src/worker/node.ts"');
+    expect(config).toContain('"worker/browser": "./src/worker/browser.ts"');
     expect(config).toContain('"node:worker_threads"');
   });
 
@@ -33,7 +34,7 @@ describe("build shape", () => {
     expect(config).toContain('"index.workerd": "./src/index.workerd.ts"');
   });
 
-  it("emits a standalone Node worker and references it from the Node entry", async () => {
+  it("emits standalone workers without hardwiring them into the Node entry", async () => {
     const distRoot = join(packageRoot, "dist");
 
     if (!(await fileExists(join(distRoot, "index.js")))) {
@@ -43,9 +44,12 @@ describe("build shape", () => {
     await expect(access(join(distRoot, "worker/node.js"))).resolves.toBe(
       undefined,
     );
+    await expect(access(join(distRoot, "worker/browser.js"))).resolves.toBe(
+      undefined,
+    );
 
     const nodeEntry = await readFile(join(distRoot, "index.js"), "utf8");
-    expect(nodeEntry).toContain("./worker/node.js");
+    expect(nodeEntry).not.toContain("./worker/node.js");
     expect(nodeEntry).not.toMatch(/require\.resolve|typst_wasm_bg\.wasm/);
   });
 

@@ -10,7 +10,7 @@ import type { CompileOptions, TypstDocumentMetadata } from "../compiler/types";
 
 export type WasmBytes = ArrayBuffer | Uint8Array;
 
-export type WasmBytesLoader = () => Promise<WasmBytes>;
+export type WasmModuleSource = WebAssembly.Module;
 
 export interface InitOutput {
   memory: WebAssembly.Memory;
@@ -38,7 +38,9 @@ export type WasmCompileOutput = EngineCompileOutput & {
   metadata?: TypstDocumentMetadata | null;
 };
 
-export type WasmModuleLoader = (wasmBytes: WasmBytes) => Promise<WasmModule>;
+export type WasmModuleLoader = (
+  wasmSource: WasmBytes | WasmModuleSource,
+) => Promise<WasmModule>;
 
 export const toWasmCompileOptions = (
   options: CompileOptions = {},

@@ -51,6 +51,7 @@ export default defineConfig([
     ...common,
     entry: {
       "worker/node": "./src/worker/node.ts",
+      "worker/browser": "./src/worker/browser.ts",
     },
     clean: false,
   },

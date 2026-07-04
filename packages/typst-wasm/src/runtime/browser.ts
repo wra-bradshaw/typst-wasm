@@ -4,11 +4,12 @@ import {
   supportsWorkerBackend as supportsWorkerBackendPrimitive,
 } from "../backends/capabilities";
 import type { WorkerHost } from "../worker/host";
-import BrowserTypstWorker from "../worker/browser.ts?worker";
 import { loadWasmModule } from "./instantiate";
 
-const createBrowserWorkerHost = (): WorkerHost => {
-  const worker = new BrowserTypstWorker();
+export const createBrowserWorkerHost = (
+  workerUrl: string | URL,
+): WorkerHost => {
+  const worker = new Worker(workerUrl, { type: "module" });
   return {
     listen: (onMessage, onError) => {
       worker.onmessage = (event: MessageEvent) => onMessage(event.data);
@@ -20,18 +21,24 @@ const createBrowserWorkerHost = (): WorkerHost => {
   };
 };
 
+export const createWorkerHost = createBrowserWorkerHost;
+
 const supportsBrowserWorkerBackend = (): boolean =>
   supportsWorkerBackendPrimitive() && typeof Worker !== "undefined";
 
 export const browserRuntime: TypstRuntime = {
-  createWorker: createBrowserWorkerHost,
-  loadWasmModule,
-  loadWasmBytes: (options) => {
-    if (!options.loadWasmBytes) {
-      throw new Error("typst-wasm browser entry requires loadWasmBytes");
+  createWorker: (options) => {
+    if (!options.assets.worker) {
+      throw new Error("Worker backend requires assets.worker");
     }
-    return options.loadWasmBytes();
+    return options.assets.worker();
   },
-  supportsWorkerBackend: supportsBrowserWorkerBackend,
+  loadWasmModule,
+  loadWasmSource: (options) =>
+    typeof options.assets.wasm === "function"
+      ? options.assets.wasm()
+      : options.assets.wasm,
+  supportsWorkerBackend: (options) =>
+    Boolean(options.assets.worker) && supportsBrowserWorkerBackend(),
   supportsJspiBackend,
 };

@@ -1,4 +1,5 @@
-export type { WasmBytesLoader, WasmDiagnostic } from "./wasm/index";
+export type { WasmDiagnostic, WasmModuleSource } from "./wasm/index";
+export type { WorkerHost } from "./worker/host";
 export type { PackageCache } from "./files";
 export type {
   BundleFile,
@@ -17,6 +18,9 @@ export type {
   TypstFileLoaderResult,
   TypstFileRequest,
   TypstLoadedFile,
+  RuntimeAsset,
+  TypstRuntimeAssets,
+  TypstWasmAsset,
+  TypstWorkerAsset,
 } from "./compiler/types";
-export * from "@typst-wasm/fonts";
 export * from "./errors";

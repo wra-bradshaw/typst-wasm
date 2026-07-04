@@ -5,18 +5,22 @@ import { browserRuntime } from "./runtime/browser";
 
 type BackendSelection = "worker" | "jspi" | "none";
 
+export { createBrowserWorkerHost, createWorkerHost } from "./runtime/browser";
+
 export const createTypstCompiler = (
   options: TypstCompilerOptions,
 ): Promise<TypstCompiler> =>
   createTypstCompilerWithRuntime(options, browserRuntime);
 
-export const supportsWorkerBackend = (): boolean =>
-  browserRuntime.supportsWorkerBackend();
+export const supportsWorkerBackend = (options: TypstCompilerOptions): boolean =>
+  browserRuntime.supportsWorkerBackend(options);
 
 export const supportsJspiBackend = (): boolean =>
   browserRuntime.supportsJspiBackend();
 
-export const selectAutomaticBackendKind = (): BackendSelection =>
-  selectAutomaticBackendKindForRuntime(browserRuntime);
+export const selectAutomaticBackendKind = (
+  options: TypstCompilerOptions,
+): BackendSelection =>
+  selectAutomaticBackendKindForRuntime(browserRuntime, options);
 
 export * from "./public-api";

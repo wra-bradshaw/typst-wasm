@@ -13,6 +13,7 @@ import type {
   WasmBytes,
   WasmCompileOptions,
   WasmCompileOutput,
+  WasmModuleSource,
 } from "../wasm/index";
 
 export type TypstWorkerFactory = () => WorkerHost;
@@ -63,9 +64,12 @@ export class WorkerService {
 
   private readonly initWorker: (wasmBytes: WasmBytes) => Promise<void>;
 
-  async init(wasmBytes: WasmBytes): Promise<void> {
+  async init(wasmSource?: WasmBytes | WasmModuleSource): Promise<void> {
     this.assertNotDisposed();
-    this.initPromise ??= this.initWorker(wasmBytes);
+    if (!wasmSource || wasmSource instanceof WebAssembly.Module) {
+      throw new Error("Worker backend requires assets.wasm bytes");
+    }
+    this.initPromise ??= this.initWorker(wasmSource);
     try {
       await this.initPromise;
     } catch (error) {

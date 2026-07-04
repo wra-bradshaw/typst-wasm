@@ -102,6 +102,25 @@ describe("runtime boundary", () => {
     expect(reachable).not.toContain("runtime/node.ts");
   });
 
+  it("keeps public runtime entries free of hidden worker asset imports", async () => {
+    const browserRuntime = await readFile(
+      join(srcRoot, "runtime/browser.ts"),
+      "utf8",
+    );
+    const nodeRuntime = await readFile(
+      join(srcRoot, "runtime/node.ts"),
+      "utf8",
+    );
+    const workerdRuntime = await readFile(
+      join(srcRoot, "runtime/workerd.ts"),
+      "utf8",
+    );
+
+    expect(browserRuntime).not.toMatch(/\?worker|worker\/browser/);
+    expect(nodeRuntime).not.toContain("./worker/node.js");
+    expect(workerdRuntime).not.toMatch(/node:|\?worker|worker_threads/);
+  });
+
   it("keeps runtime-bound backend capability wrappers at the public entries", async () => {
     const nodeEntry = await readFile(join(srcRoot, "index.ts"), "utf8");
     const browserEntry = await readFile(
@@ -113,9 +132,11 @@ describe("runtime boundary", () => {
       "utf8",
     );
 
-    expect(nodeEntry).toContain("nodeRuntime.supportsWorkerBackend()");
+    expect(nodeEntry).toContain("nodeRuntime.supportsWorkerBackend(options)");
     expect(nodeEntry).toContain("nodeRuntime.supportsJspiBackend()");
-    expect(browserEntry).toContain("browserRuntime.supportsWorkerBackend()");
+    expect(browserEntry).toContain(
+      "browserRuntime.supportsWorkerBackend(options)",
+    );
     expect(browserEntry).toContain("browserRuntime.supportsJspiBackend()");
     expect(browserRuntime).toContain('typeof Worker !== "undefined"');
   });

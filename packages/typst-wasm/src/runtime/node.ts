@@ -1,15 +1,10 @@
 import { Worker } from "node:worker_threads";
 import type { TypstRuntime } from "../backends/index";
-import {
-  supportsJspiBackend,
-  supportsWorkerBackend,
-} from "../backends/capabilities";
+import { supportsJspiBackend } from "../backends/capabilities";
 import type { WorkerHost } from "../worker/host";
 import { loadWasmModule } from "./instantiate";
 
-const workerUrl = new URL("./worker/node.js", import.meta.url);
-
-const createNodeWorkerHost = (): WorkerHost => {
+export const createNodeWorkerHost = (workerUrl: string | URL): WorkerHost => {
   const worker = new Worker(workerUrl, { execArgv: [] });
   return {
     listen: (onMessage, onError) => {
@@ -21,10 +16,20 @@ const createNodeWorkerHost = (): WorkerHost => {
   };
 };
 
+export const createWorkerHost = createNodeWorkerHost;
+
 export const nodeRuntime: TypstRuntime = {
-  createWorker: createNodeWorkerHost,
+  createWorker: (options) => {
+    if (!options.assets.worker) {
+      throw new Error("Worker backend requires assets.worker");
+    }
+    return options.assets.worker();
+  },
   loadWasmModule,
-  loadWasmBytes: (options) => options.loadWasmBytes(),
-  supportsWorkerBackend,
+  loadWasmSource: (options) =>
+    typeof options.assets.wasm === "function"
+      ? options.assets.wasm()
+      : options.assets.wasm,
+  supportsWorkerBackend: (options) => Boolean(options.assets.worker),
   supportsJspiBackend,
 };

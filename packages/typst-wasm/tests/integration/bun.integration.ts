@@ -12,8 +12,7 @@ describe("bun integration (worker backend)", () => {
   test("covers compiler behavior across files, formats, options, and errors", async () => {
     const result = await runCompilerIntegrationScenario({
       runtime: "bun",
-      loadWasmBytes: () => Bun.file(wasmPath).arrayBuffer(),
-      backend: "worker",
+      wasm: () => Bun.file(wasmPath).arrayBuffer(),
     });
 
     expect(result.runtime).toBe("bun");

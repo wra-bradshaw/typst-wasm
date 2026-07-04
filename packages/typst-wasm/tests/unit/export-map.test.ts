@@ -20,10 +20,18 @@ const readFontsPackageJson = async (): Promise<PackageJson> =>
   ) as PackageJson;
 
 describe("package exports", () => {
-  it("keeps the public surface to the main API and file helpers", async () => {
+  it("keeps explicit public runtime surfaces", async () => {
     const packageJson = await readPackageJson();
 
-    expect(Object.keys(packageJson.exports).sort()).toEqual([".", "./files"]);
+    expect(Object.keys(packageJson.exports).sort()).toEqual([
+      ".",
+      "./browser",
+      "./files",
+      "./node",
+      "./worker/browser",
+      "./worker/node",
+      "./workerd",
+    ]);
   });
 
   it("routes bundlers and workerd runtimes before the default Node entry", async () => {
@@ -52,29 +60,37 @@ describe("package exports", () => {
       types: "./dist/files.d.ts",
       default: "./dist/files.js",
     });
+    expect(packageJson.exports["./browser"]).toEqual({
+      types: "./dist/index.browser.d.ts",
+      default: "./dist/index.browser.js",
+    });
+    expect(packageJson.exports["./node"]).toEqual({
+      types: "./dist/index.d.ts",
+      default: "./dist/index.js",
+    });
+    expect(packageJson.exports["./workerd"]).toEqual({
+      types: "./dist/index.workerd.d.ts",
+      default: "./dist/index.workerd.js",
+    });
+    expect(packageJson.exports["./worker/node"]).toEqual({
+      types: "./dist/worker/node.d.ts",
+      default: "./dist/worker/node.js",
+    });
+    expect(packageJson.exports["./worker/browser"]).toEqual({
+      types: "./dist/worker/browser.d.ts",
+      default: "./dist/worker/browser.js",
+    });
   });
 
-  it("routes fonts browser consumers to the fetch-only font entry", async () => {
+  it("exports fonts as files only", async () => {
     const packageJson = await readFontsPackageJson();
 
-    expect(packageJson.exports["."]).toEqual({
-      types: "./index.d.ts",
-      browser: {
-        types: "./index.d.ts",
-        default: "./index.browser.js",
-      },
-      workerd: {
-        types: "./index.d.ts",
-        default: "./index.browser.js",
-      },
-      worker: {
-        types: "./index.d.ts",
-        default: "./index.browser.js",
-      },
-      default: "./index.js",
+    expect(packageJson.exports).toEqual({
+      "./NewCMMath-Bold.otf": "./dist/files/NewCMMath-Bold.otf",
+      "./NewCMMath-Book.otf": "./dist/files/NewCMMath-Book.otf",
+      "./NewCMMath-Regular.otf": "./dist/files/NewCMMath-Regular.otf",
     });
-    expect(
-      Object.keys(packageJson.exports["."] as Record<string, unknown>),
-    ).toEqual(["types", "browser", "workerd", "worker", "default"]);
+    expect(packageJson).not.toHaveProperty("main");
+    expect(packageJson).not.toHaveProperty("types");
   });
 });

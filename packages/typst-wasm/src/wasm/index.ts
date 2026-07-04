@@ -3,13 +3,13 @@ export {
   type InitOutput,
   type TypstCompilerInstance,
   type WasmBytes,
-  type WasmBytesLoader,
   type WasmBundleFile,
   type WasmCompileOptions,
   type WasmCompileOutput,
   type WasmDiagnostic,
   type WasmModule,
   type WasmModuleLoader,
+  type WasmModuleSource,
   type WasmPageOutput,
 } from "./types";
 export { getJspiWebAssembly } from "./jspi";

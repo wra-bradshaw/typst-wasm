@@ -195,8 +195,9 @@ export const createTypstCompilerWithRuntime = async (
       fileLoaderManager,
     },
     runtime,
+    options,
   );
 
-  await backend.init(await runtime.loadWasmBytes(options));
+  await backend.init(await runtime.loadWasmSource(options));
   return new PromiseTypstCompiler(backend, fileLoaderManager);
 };

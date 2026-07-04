@@ -1,16 +1,15 @@
 import {
   createTypstCompiler,
-  loadDefaultFonts,
   type CompileResult,
   type TypstCompiler,
-  type WasmBytesLoader,
+  type TypstWasmAsset,
 } from "typst-wasm";
 
 export type RuntimeName = "bun" | "node" | "deno";
 
 export type IntegrationScenarioOptions = {
   runtime: RuntimeName;
-  loadWasmBytes: WasmBytesLoader;
+  wasm: TypstWasmAsset;
   fontData?: Uint8Array[];
   backend?: "auto" | "worker" | "jspi";
 };
@@ -41,6 +40,12 @@ export const assertRejects = async (
 
 export const textBytes = (text: string): Uint8Array =>
   new TextEncoder().encode(text);
+
+export const fontFilenames = [
+  "NewCMMath-Regular.otf",
+  "NewCMMath-Bold.otf",
+  "NewCMMath-Book.otf",
+];
 
 export const assertIncludes = (
   values: string[],
@@ -78,19 +83,21 @@ const addDefaultFonts = async (
     return;
   }
 
-  await loadDefaultFonts(compiler, async (font) => {
+  for (const filename of fontFilenames) {
     const response = await fetch(
-      new URL(`../../../fonts/dist/files/${font.filename}`, import.meta.url),
+      new URL(`../../../fonts/dist/files/${filename}`, import.meta.url),
     );
-    return new Uint8Array(await response.arrayBuffer());
-  });
+    await compiler.addFont(new Uint8Array(await response.arrayBuffer()));
+  }
 };
 
 export const makeCompiler = async (
   options: IntegrationScenarioOptions,
 ): Promise<TypstCompiler> => {
   const compiler = await createTypstCompiler({
-    loadWasmBytes: options.loadWasmBytes,
+    assets: {
+      wasm: options.wasm,
+    },
     backend: options.backend,
   });
 

@@ -10,7 +10,6 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "paths": {
-      "@typst-wasm/fonts": ["../fonts"],
       "@typst-wasm/engine-wasm": ["../engine-wasm"]
     },
     "types": ["tsdown-plugin-worker/types"]

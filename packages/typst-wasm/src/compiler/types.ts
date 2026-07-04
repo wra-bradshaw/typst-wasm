@@ -1,6 +1,10 @@
 import type { PackageCache } from "../files";
-import type { WasmBytesLoader } from "../wasm/index";
-import type { WasmDiagnostic } from "../wasm/index";
+import type {
+  WasmBytes,
+  WasmDiagnostic,
+  WasmModuleSource,
+} from "../wasm/index";
+import type { WorkerHost } from "../worker/host";
 
 export type CompileFormat = "pdf" | "png" | "svg" | "html" | "bundle";
 export type TypstFileKind = "project" | "package" | "url";
@@ -46,8 +50,18 @@ export interface TypstDocumentMetadata {
   custom: TypstCustomMetadata[];
 }
 
+export type RuntimeAsset<T> = T | (() => T | Promise<T>);
+
+export type TypstWasmAsset = RuntimeAsset<WasmBytes | WasmModuleSource>;
+export type TypstWorkerAsset = () => WorkerHost;
+
+export interface TypstRuntimeAssets {
+  wasm: TypstWasmAsset;
+  worker?: TypstWorkerAsset;
+}
+
 export interface TypstCompilerOptions {
-  loadWasmBytes: WasmBytesLoader;
+  assets: TypstRuntimeAssets;
   backend?: "auto" | "worker" | "jspi";
   fileLoaders?: TypstFileLoader[];
   fetch?: typeof fetch;

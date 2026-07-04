@@ -12,8 +12,7 @@ Deno.test(
   async () => {
     const result = await runCompilerIntegrationScenario({
       runtime: "deno",
-      loadWasmBytes: () => Deno.readFile(wasmPath),
-      backend: "worker",
+      wasm: () => Deno.readFile(wasmPath),
     });
 
     if (result.runtime !== "deno") {

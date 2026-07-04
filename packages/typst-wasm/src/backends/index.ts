@@ -5,6 +5,7 @@ import type {
   WasmCompileOptions,
   WasmCompileOutput,
   WasmModule,
+  WasmModuleSource,
 } from "../wasm/index";
 import { supportsJspiBackend, supportsWorkerBackend } from "./capabilities";
 import { DirectService } from "./direct";
@@ -17,7 +18,7 @@ export type BackendKind = "auto" | "worker" | "jspi";
 export type BackendSelection = Exclude<BackendKind, "auto"> | "none";
 
 export type BackendService = {
-  init(wasmBytes: WasmBytes): Promise<void>;
+  init(wasmSource?: WasmBytes | WasmModuleSource): Promise<void>;
   dispose(): Promise<void>;
   addFont(data: Uint8Array): Promise<void>;
   addFile(path: string, data: Uint8Array): Promise<void>;
@@ -44,17 +45,21 @@ interface RuntimeWorkerHost {
 }
 
 export interface TypstRuntime {
-  createWorker(): RuntimeWorkerHost;
-  loadWasmModule(wasmBytes: WasmBytes): Promise<WasmModule>;
-  loadWasmBytes(options: TypstCompilerOptions): Promise<WasmBytes>;
-  supportsWorkerBackend(): boolean;
+  createWorker(options: TypstCompilerOptions): RuntimeWorkerHost;
+  loadWasmModule(wasmSource: WasmBytes | WasmModuleSource): Promise<WasmModule>;
+  loadWasmSource(
+    options: TypstCompilerOptions,
+  ): Promise<WasmBytes | WasmModuleSource | undefined>;
+  supportsWorkerBackend(options: TypstCompilerOptions): boolean;
   supportsJspiBackend(): boolean;
+  unavailableWorkerMessage?: string;
 }
 
 export const selectAutomaticBackendKind = (
   runtime: TypstRuntime,
+  options: TypstCompilerOptions,
 ): BackendSelection => {
-  if (runtime.supportsWorkerBackend()) return "worker";
+  if (runtime.supportsWorkerBackend(options)) return "worker";
   if (runtime.supportsJspiBackend()) return "jspi";
   return "none";
 };
@@ -63,14 +68,23 @@ export const createRuntimeBackend = (
   backend: BackendKind,
   options: BackendOptions,
   runtime: TypstRuntime,
+  compilerOptions: TypstCompilerOptions,
 ): BackendService => {
   const selected =
-    backend === "auto" ? selectAutomaticBackendKind(runtime) : backend;
+    backend === "auto"
+      ? selectAutomaticBackendKind(runtime, compilerOptions)
+      : backend;
 
   switch (selected) {
     case "worker":
+      if (!runtime.supportsWorkerBackend(compilerOptions)) {
+        throw new Error(
+          runtime.unavailableWorkerMessage ??
+            "Worker backend requires assets.worker",
+        );
+      }
       return new WorkerService(options.fileLoaderManager, {
-        createWorker: runtime.createWorker,
+        createWorker: () => runtime.createWorker(compilerOptions),
       });
     case "jspi":
       return new DirectService(options.fileLoaderManager, {

@@ -26,6 +26,26 @@
     "./files": {
       "types": "./dist/files.d.ts",
       "default": "./dist/files.js"
+    },
+    "./browser": {
+      "types": "./dist/index.browser.d.ts",
+      "default": "./dist/index.browser.js"
+    },
+    "./node": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./workerd": {
+      "types": "./dist/index.workerd.d.ts",
+      "default": "./dist/index.workerd.js"
+    },
+    "./worker/node": {
+      "types": "./dist/worker/node.d.ts",
+      "default": "./dist/worker/node.js"
+    },
+    "./worker/browser": {
+      "types": "./dist/worker/browser.d.ts",
+      "default": "./dist/worker/browser.js"
     }
   },
   "files": [
@@ -70,7 +90,6 @@
   },
   "dependencies": {
     "@typst-wasm/engine-wasm": "workspace:*",
-    "@typst-wasm/fonts": "workspace:*",
     "nanotar": "^0.2.0",
     "tsdown-plugin-worker": "^0.1.6"
   }

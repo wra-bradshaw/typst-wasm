@@ -31,9 +31,10 @@ describe("worker service lifecycle", () => {
 
     expect(workerState.initMessages).toHaveLength(1);
     expect(workerState.initMessages[0]?.kind).toBe("init");
-    expect(workerState.initMessages[0]?.payload.wasmBytes).toEqual(
-      new Uint8Array([1]),
-    );
+    expect(
+      (workerState.initMessages[0]?.payload as { wasmBytes: Uint8Array })
+        .wasmBytes,
+    ).toEqual(new Uint8Array([1]));
     await workerService.dispose();
   });
 

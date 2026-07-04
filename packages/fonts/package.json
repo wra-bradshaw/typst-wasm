@@ -2,8 +2,6 @@
   "name": "@typst-wasm/fonts",
   "version": "0.3.0",
   "type": "module",
-  "main": "./index.js",
-  "types": "./index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wra-bradshaw/typst-wasm.git"
@@ -13,22 +11,9 @@
   },
   "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
   "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "browser": {
-        "types": "./index.d.ts",
-        "default": "./index.browser.js"
-      },
-      "workerd": {
-        "types": "./index.d.ts",
-        "default": "./index.browser.js"
-      },
-      "worker": {
-        "types": "./index.d.ts",
-        "default": "./index.browser.js"
-      },
-      "default": "./index.js"
-    }
+    "./NewCMMath-Bold.otf": "./dist/files/NewCMMath-Bold.otf",
+    "./NewCMMath-Book.otf": "./dist/files/NewCMMath-Book.otf",
+    "./NewCMMath-Regular.otf": "./dist/files/NewCMMath-Regular.otf"
   },
   "scripts": {
     "build": "nix run ../..#build-artifact -- fonts",
@@ -37,9 +22,6 @@
     "format:fix": "pnpm exec prettier . --write"
   },
   "files": [
-    "index.js",
-    "index.browser.js",
-    "index.d.ts",
     "dist"
   ],
   "devDependencies": {
