@@ -35,21 +35,21 @@ jobs:
         run: nix develop .#ci -c pnpm install --frozen-lockfile
 
       - name: Pull Vercel environment
-        run: nix develop .#ci -c npx vercel@latest pull --yes --environment=production --cwd packages/example-typst-playground-next --token "$VERCEL_TOKEN"
+        run: nix develop .#ci -c pnpm exec vercel pull --yes --environment=production --cwd packages/example-typst-playground-next --token "$VERCEL_TOKEN"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PLAYGROUND }}
 
       - name: Build Vercel artifact
-        run: nix develop .#ci -c npx vercel@latest build --prod --cwd packages/example-typst-playground-next --token "$VERCEL_TOKEN"
+        run: nix develop .#ci -c pnpm exec vercel build --prod --cwd packages/example-typst-playground-next --token "$VERCEL_TOKEN"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PLAYGROUND }}
 
       - name: Deploy to Vercel
-        run: nix develop .#ci -c npx vercel@latest deploy --prebuilt --prod --yes --cwd packages/example-typst-playground-next --archive=tgz --token "$VERCEL_TOKEN"
+        run: nix develop .#ci -c pnpm exec vercel deploy --prebuilt --prod --yes --cwd packages/example-typst-playground-next --archive=tgz --token "$VERCEL_TOKEN"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
