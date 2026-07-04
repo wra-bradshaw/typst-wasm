@@ -3,15 +3,13 @@
   engineWasm,
   fonts,
   typstWasm,
-  nitroPreset ? null,
-  artifactPath ? ".output",
   nativeBuildInputs ? [ ],
 }:
 
 let
   workspaceRoot = ../..;
-  pname = "example-typst-playground";
-  packageDir = "packages/example-typst-playground";
+  pname = "example-typst-playground-next";
+  packageDir = "packages/example-typst-playground-next";
   version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
   pnpmDeps = import ../../nix/pnpm-deps.nix { inherit pkgs workspaceRoot; };
   prepareWorkspaceArtifacts = import ../../nix/workspace-artifacts.nix { lib = pkgs.lib; };
@@ -21,16 +19,6 @@ let
     pkgs.pnpmConfigHook
     pkgs.pnpm
   ];
-
-  buildBundle =
-    if nitroPreset == null then
-      ''
-        pnpm --dir ${packageDir} exec vite build
-      ''
-    else
-      ''
-        NITRO_PRESET=${nitroPreset} pnpm --dir ${packageDir} exec vite build
-      '';
 
   prepareBuildArtifacts = prepareWorkspaceArtifacts [
     {
@@ -59,14 +47,15 @@ pkgs.stdenvNoCC.mkDerivation {
 
     ${prepareBuildArtifacts}
 
-    ${buildBundle}
+    NEXT_TELEMETRY_DISABLED=1 pnpm --dir ${packageDir} exec next build --webpack
+
     runHook postBuild
   '';
 
   installPhase = ''
     runHook preInstall
-    mkdir -p "$out/$(dirname ${artifactPath})"
-    cp -r packages/example-typst-playground/${artifactPath} "$out/${artifactPath}"
+    mkdir -p "$out"
+    cp -r packages/example-typst-playground-next/.next "$out/.next"
     runHook postInstall
   '';
 }

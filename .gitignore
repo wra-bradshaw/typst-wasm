@@ -7,6 +7,7 @@ result-*
 # outputs
 out
 dist
+.next
 .output
 .vercel
 .wrangler

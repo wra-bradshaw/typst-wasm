@@ -21,7 +21,7 @@
         "scripts/**",
         "src/**"
       ],
-      "outputs": ["dist/**", ".output/**"]
+      "outputs": ["dist/**", ".next/**", ".output/**"]
     },
     "lint": {
       "dependsOn": []

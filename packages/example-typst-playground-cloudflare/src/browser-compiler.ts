@@ -4,12 +4,12 @@ import {
   createWorkerHost,
   type TypstCompiler,
   type WasmDiagnostic,
-} from "typst-wasm";
+} from "typst-wasm/browser";
 import newComputerModernMathBoldUrl from "@typst-wasm/fonts/NewCMMath-Bold.otf?url";
 import newComputerModernMathBookUrl from "@typst-wasm/fonts/NewCMMath-Book.otf?url";
 import newComputerModernMathRegularUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
+import wasmUrl from "@typst-wasm/engine-wasm/typst_wasm_bg.wasm?url";
 import browserWorkerUrl from "typst-wasm/worker/browser?url";
-import wasmUrl from "../../../engine-wasm/dist/typst_wasm_bg.wasm?url";
 
 export interface CompileView {
   html: string;
@@ -25,47 +25,20 @@ const fontUrls = [
   newComputerModernMathBookUrl,
 ];
 
-const isAbsoluteUrl = (url: string): boolean => {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const resolveFetchUrl = async (url: string): Promise<string> => {
-  if (!import.meta.env.SSR || isAbsoluteUrl(url)) {
-    return url;
-  }
-
-  const { getRequestUrl } =
-    await import("@tanstack/start-server-core/request-response");
-  return new URL(
-    url,
-    getRequestUrl({ xForwardedHost: true, xForwardedProto: true }),
-  ).href;
-};
-
 const fetchBytes = async (url: string): Promise<Uint8Array> => {
-  const response = await fetch(await resolveFetchUrl(url));
+  const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Failed to fetch asset: ${response.status}`);
+    throw new Error(`Failed to fetch asset ${url}: ${response.status}`);
   }
   return new Uint8Array(await response.arrayBuffer());
 };
-
-const resolveWorkerUrl = (): string | URL =>
-  import.meta.env.SSR
-    ? new URL(import.meta.resolve("typst-wasm/worker/node"))
-    : browserWorkerUrl;
 
 const createInitializedCompiler = async (): Promise<TypstCompiler> => {
   const compiler = await createTypstCompiler({
     backend: "auto",
     assets: {
       wasm: () => fetchBytes(wasmUrl),
-      worker: () => createWorkerHost(resolveWorkerUrl()),
+      worker: () => createWorkerHost(browserWorkerUrl),
     },
   });
 
@@ -110,7 +83,7 @@ const compileWithCompiler = async (
   };
 };
 
-const compileWithSharedCompiler = (source: string): Promise<CompileView> => {
+export const compileTypstHtml = (source: string): Promise<CompileView> => {
   const compile = compileQueue.then(async () =>
     compileWithCompiler(await getCompiler(), source),
   );
@@ -121,12 +94,6 @@ const compileWithSharedCompiler = (source: string): Promise<CompileView> => {
   );
 
   return compile;
-};
-
-export const compileTypstHtml = async (
-  source: string,
-): Promise<CompileView> => {
-  return compileWithSharedCompiler(source);
 };
 
 export const formatCompileError = (error: unknown): string => {
