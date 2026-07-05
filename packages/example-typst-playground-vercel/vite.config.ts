@@ -10,5 +10,19 @@ export default defineConfig({
       "Cross-Origin-Embedder-Policy": "require-corp",
     },
   },
-  plugins: [tanstackStart(), nitro({ preset: "vercel" }), react()],
+  plugins: [
+    tanstackStart(),
+    nitro({
+      preset: "vercel",
+      routeRules: {
+        "/**": {
+          headers: {
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Embedder-Policy": "require-corp",
+          },
+        },
+      },
+    }),
+    react(),
+  ],
 });
