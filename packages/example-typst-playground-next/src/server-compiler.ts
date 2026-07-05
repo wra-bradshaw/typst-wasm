@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   CompileError,
   createTypstCompiler,
@@ -28,6 +28,17 @@ const resolveNextAsset = (assetPath: string): URL => {
   return pathToFileURL(join(process.cwd(), ".next", relativePath));
 };
 
+const resolveNextServerChunkAsset = (assetUrl: URL): string => {
+  if (assetUrl.protocol === "file:") {
+    return fileURLToPath(assetUrl);
+  }
+
+  const relativePath = assetUrl.href
+    .replace(/^\/?_next\//, "")
+    .replace(/^\//, "");
+  return join(process.cwd(), ".next", "server", "chunks", relativePath);
+};
+
 const wasmUrl = resolveNextAsset(wasmPath);
 
 const fontUrls = [
@@ -36,23 +47,15 @@ const fontUrls = [
   resolveNextAsset(newComputerModernMathBookPath),
 ];
 
-const getNodeWorkerPath = (): string => {
-  const { createRequire } = process.getBuiltinModule(
-    "module",
-  ) as typeof import("node:module");
-  const nodeRequire = createRequire(join(process.cwd(), "package.json"));
-  const packageName = "typst" + "-wasm";
-  const workerExport = "worker/node";
-  return nodeRequire.resolve(`${packageName}/${workerExport}`);
-};
+const nodeWorkerUrl = new URL("typst-wasm/worker/node", import.meta.url);
+const nodeWorkerPath = resolveNextServerChunkAsset(nodeWorkerUrl);
 
 const createInitializedCompiler = async (): Promise<TypstCompiler> => {
-  const workerPath = getNodeWorkerPath();
   const compiler = await createTypstCompiler({
     backend: "worker",
     assets: {
       wasm: () => readFile(wasmUrl),
-      worker: () => createWorkerHost(workerPath),
+      worker: () => createWorkerHost(nodeWorkerPath),
     },
   });
 

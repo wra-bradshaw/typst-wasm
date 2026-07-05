@@ -5,7 +5,7 @@ import type { WorkerHost } from "../worker/host";
 import { loadWasmModule } from "./instantiate";
 
 export const createNodeWorkerHost = (workerUrl: string | URL): WorkerHost => {
-  const worker = new Worker(workerUrl, { execArgv: [] });
+  const worker = new Worker(workerUrl, { execArgv: [], type: "module" });
   return {
     listen: (onMessage, onError) => {
       worker.on("message", onMessage);

@@ -49,8 +49,18 @@ export default defineConfig([
   },
   {
     ...common,
+    external: ["node:worker_threads"],
+    noExternal: [/^@typst-wasm\/engine-wasm/],
     entry: {
       "worker/node": "./src/worker/node.ts",
+    },
+    clean: false,
+  },
+  {
+    ...common,
+    external: [],
+    noExternal: [/^@typst-wasm\/engine-wasm/],
+    entry: {
       "worker/browser": "./src/worker/browser.ts",
     },
     clean: false,
