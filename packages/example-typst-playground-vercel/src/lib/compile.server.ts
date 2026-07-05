@@ -7,9 +7,6 @@ import {
   type WasmDiagnostic,
 } from "typst-wasm";
 import wasmUrl from "@typst-wasm/engine-wasm/typst_wasm_bg.wasm?url";
-import newComputerModernMathBoldUrl from "@typst-wasm/fonts/NewCMMath-Bold.otf?url";
-import newComputerModernMathBookUrl from "@typst-wasm/fonts/NewCMMath-Book.otf?url";
-import newComputerModernMathRegularUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
 import nodeWorkerSource from "typst-wasm/worker/node?raw";
 
 export interface CompileView {
@@ -20,19 +17,16 @@ export interface CompileView {
 let compilerPromise: Promise<TypstCompiler> | undefined;
 let compileQueue: Promise<void> = Promise.resolve();
 
-const fonts = [
-  newComputerModernMathRegularUrl,
-  newComputerModernMathBoldUrl,
-  newComputerModernMathBookUrl,
-];
-
 const nodeWorkerUrl = new URL(
   `data:text/javascript;base64,${Buffer.from(nodeWorkerSource).toString(
     "base64",
   )}`,
 );
 
-const fetchBytes = async (url: string, assetOrigin: string): Promise<Uint8Array> => {
+const fetchBytes = async (
+  url: string,
+  assetOrigin: string,
+): Promise<Uint8Array> => {
   const response = await fetch(new URL(url, assetOrigin));
   if (!response.ok) {
     throw new Error(`Failed to fetch asset ${url}: ${response.status}`);
@@ -43,23 +37,13 @@ const fetchBytes = async (url: string, assetOrigin: string): Promise<Uint8Array>
 const createInitializedCompiler = async (
   assetOrigin: string,
 ): Promise<TypstCompiler> => {
-  const compiler = await createTypstCompiler({
+  return await createTypstCompiler({
     backend: "worker",
     assets: {
       wasm: () => fetchBytes(wasmUrl, assetOrigin),
       worker: () => createWorkerHost(nodeWorkerUrl),
     },
   });
-
-  try {
-    for (const font of fonts) {
-      await compiler.addFont(await fetchBytes(font, assetOrigin));
-    }
-    return compiler;
-  } catch (error) {
-    await compiler.dispose();
-    throw error;
-  }
 };
 
 const getCompiler = (assetOrigin: string): Promise<TypstCompiler> => {

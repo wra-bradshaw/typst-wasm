@@ -10,9 +10,8 @@ import { sampleSource } from "../sample";
 import useAbortableCallback from "../lib/useAbortableCallback";
 
 const getInitialPreview = createServerFn({ method: "GET" }).handler(async () => {
-  const { getRequestUrl } = await import("@tanstack/react-start/server");
   const { compileTypstHtml } = await import("../lib/compile.server");
-  return compileTypstHtml(sampleSource, getRequestUrl().origin);
+  return compileTypstHtml(sampleSource);
 });
 
 export const Route = createFileRoute("/")({

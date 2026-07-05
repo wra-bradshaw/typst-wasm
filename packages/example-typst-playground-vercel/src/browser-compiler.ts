@@ -5,9 +5,6 @@ import {
   type TypstCompiler,
   type WasmDiagnostic,
 } from "typst-wasm/browser";
-import newComputerModernMathBoldUrl from "@typst-wasm/fonts/NewCMMath-Bold.otf?url";
-import newComputerModernMathBookUrl from "@typst-wasm/fonts/NewCMMath-Book.otf?url";
-import newComputerModernMathRegularUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
 import wasmUrl from "@typst-wasm/engine-wasm/typst_wasm_bg.wasm?url";
 import browserWorkerUrl from "typst-wasm/worker/browser?url";
 
@@ -19,12 +16,6 @@ export interface CompileView {
 let compilerPromise: Promise<TypstCompiler> | undefined;
 let compileQueue: Promise<void> = Promise.resolve();
 
-const fontUrls = [
-  newComputerModernMathRegularUrl,
-  newComputerModernMathBoldUrl,
-  newComputerModernMathBookUrl,
-];
-
 const fetchBytes = async (url: string): Promise<Uint8Array> => {
   const response = await fetch(url);
   if (!response.ok) {
@@ -34,23 +25,13 @@ const fetchBytes = async (url: string): Promise<Uint8Array> => {
 };
 
 const createInitializedCompiler = async (): Promise<TypstCompiler> => {
-  const compiler = await createTypstCompiler({
+  return await createTypstCompiler({
     backend: "auto",
     assets: {
       wasm: () => fetchBytes(wasmUrl),
       worker: () => createWorkerHost(browserWorkerUrl),
     },
   });
-
-  try {
-    for (const fontUrl of fontUrls) {
-      await compiler.addFont(await fetchBytes(fontUrl));
-    }
-    return compiler;
-  } catch (error) {
-    await compiler.dispose();
-    throw error;
-  }
 };
 
 const getCompiler = (): Promise<TypstCompiler> => {

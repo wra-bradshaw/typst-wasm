@@ -5,9 +5,6 @@ import {
   type WasmDiagnostic,
 } from "typst-wasm/workerd";
 import wasmModule from "@typst-wasm/engine-wasm/typst_wasm_bg.wasm?module";
-import newComputerModernMathBoldUrl from "@typst-wasm/fonts/NewCMMath-Bold.otf?url";
-import newComputerModernMathBookUrl from "@typst-wasm/fonts/NewCMMath-Book.otf?url";
-import newComputerModernMathRegularUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
 
 export interface CompileView {
   html: string;
@@ -17,48 +14,19 @@ export interface CompileView {
 let compilerPromise: Promise<TypstCompiler> | undefined;
 let compileQueue: Promise<void> = Promise.resolve();
 
-const fonts = [
-  newComputerModernMathRegularUrl,
-  newComputerModernMathBoldUrl,
-  newComputerModernMathBookUrl,
-];
-
-const fetchBytes = async (url: string, assetOrigin: string): Promise<Uint8Array> => {
-  const response = await fetch(new URL(url, assetOrigin));
-  if (!response.ok) {
-    throw new Error(`Failed to fetch asset ${url}: ${response.status}`);
-  }
-  return new Uint8Array(await response.arrayBuffer());
-};
-
-const createInitializedCompiler = async (
-  assetOrigin: string,
-): Promise<TypstCompiler> => {
-  const compiler = await createTypstCompiler({
+const createInitializedCompiler = (): Promise<TypstCompiler> =>
+  createTypstCompiler({
     backend: "jspi",
     assets: {
       wasm: wasmModule,
     },
   });
 
-  try {
-    for (const font of fonts) {
-      await compiler.addFont(await fetchBytes(font, assetOrigin));
-    }
-    return compiler;
-  } catch (error) {
-    await compiler.dispose();
+const getCompiler = (): Promise<TypstCompiler> => {
+  compilerPromise ??= createInitializedCompiler().catch((error: unknown) => {
+    compilerPromise = undefined;
     throw error;
-  }
-};
-
-const getCompiler = (assetOrigin: string): Promise<TypstCompiler> => {
-  compilerPromise ??= createInitializedCompiler(assetOrigin).catch(
-    (error: unknown) => {
-      compilerPromise = undefined;
-      throw error;
-    },
-  );
+  });
 
   return compilerPromise;
 };
@@ -84,12 +52,9 @@ const compileWithCompiler = async (
   };
 };
 
-export const compileTypstHtml = (
-  source: string,
-  assetOrigin: string,
-): Promise<CompileView> => {
+export const compileTypstHtml = (source: string): Promise<CompileView> => {
   const compile = compileQueue.then(async () =>
-    compileWithCompiler(await getCompiler(assetOrigin), source),
+    compileWithCompiler(await getCompiler(), source),
   );
 
   compileQueue = compile.then(
