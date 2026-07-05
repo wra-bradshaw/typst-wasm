@@ -34,9 +34,6 @@ jobs:
       - name: Install dependencies
         run: nix develop .#ci -c pnpm install --frozen-lockfile
 
-      - name: Build Vercel workspace dependencies
-        run: nix develop .#ci -c pnpm exec turbo run build --filter @typst-wasm/example-typst-playground-vercel^...
-
       - name: Build Vercel artifact
         run: nix run .#build-artifact -- example-typst-playground-vercel .vercel/output
 
