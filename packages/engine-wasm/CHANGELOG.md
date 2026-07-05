@@ -1,5 +1,11 @@
 # @typst-wasm/engine-wasm
 
+## 1.0.0
+
+### Minor Changes
+
+- [`e606dc9`](https://github.com/wra-bradshaw/typst-wasm/commit/e606dc944050090dc13b8f0cfc79f65ce62e198d) Thanks [@wra-bradshaw](https://github.com/wra-bradshaw)! - add examples, change instantiation APIs to be more flexible, improve performance
+
 ## 0.3.0
 
 ### Minor Changes

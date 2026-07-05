@@ -1,5 +1,17 @@
 # @typst-wasm/fonts
 
+## 1.0.0
+
+### Major Changes
+
+- [`f82e2e4`](https://github.com/wra-bradshaw/typst-wasm/commit/f82e2e4f100a301ce65252b7b0c67546cb22ef98) Thanks [@wra-bradshaw](https://github.com/wra-bradshaw)! - Make `@typst-wasm/fonts` a file-only package.
+
+  The fonts package no longer exports JavaScript descriptors or `loadDefaultFonts`; it only exposes the bundled `.otf` files as explicit package subpaths. `typst-wasm` no longer re-exports the fonts package, and the Vite plugin no longer loads bundled fonts implicitly. Applications should import or resolve the font files they need and add them with `compiler.addFont(...)`.
+
+### Minor Changes
+
+- [`e606dc9`](https://github.com/wra-bradshaw/typst-wasm/commit/e606dc944050090dc13b8f0cfc79f65ce62e198d) Thanks [@wra-bradshaw](https://github.com/wra-bradshaw)! - add examples, change instantiation APIs to be more flexible, improve performance
+
 ## 0.3.0
 
 ### Minor Changes

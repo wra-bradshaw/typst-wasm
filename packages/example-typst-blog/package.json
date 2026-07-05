@@ -2,7 +2,7 @@
   "name": "@typst-wasm/example-typst-blog",
   "private": true,
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "scripts": {
     "build": "nix run ../..#build-artifact -- example-typst-blog",
     "dev": "node --experimental-wasm-jspi ./node_modules/vite/bin/vite.js dev",

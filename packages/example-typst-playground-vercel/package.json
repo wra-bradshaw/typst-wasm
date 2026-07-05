@@ -1,7 +1,7 @@
 {
   "name": "@typst-wasm/example-typst-playground-vercel",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "build": "nix run ../..#build-artifact -- example-typst-playground-vercel .vercel/output",

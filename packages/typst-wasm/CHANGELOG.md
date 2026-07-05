@@ -1,5 +1,30 @@
 # typst-wasm
 
+## 1.0.0
+
+### Major Changes
+
+- [`f82e2e4`](https://github.com/wra-bradshaw/typst-wasm/commit/f82e2e4f100a301ce65252b7b0c67546cb22ef98) Thanks [@wra-bradshaw](https://github.com/wra-bradshaw)! - Make runtime asset and worker configuration explicit.
+
+  The Node runtime no longer auto-selects or auto-spawns worker threads. Runtime assets now use one `assets` object: `assets.wasm` is required, and `assets.worker` is a `WorkerHost` factory. Browser and Node entries expose `createWorkerHost(url)` helpers for turning explicit worker URLs into runtime-specific hosts. Workerd rejects worker backends with a clear configuration error. Added explicit `typst-wasm/browser`, `typst-wasm/node`, `typst-wasm/workerd`, and worker subpath exports for bundler-controlled setup.
+
+- [`d5698ef`](https://github.com/wra-bradshaw/typst-wasm/commit/d5698efac67cb9f674a473189ab8f3e091973cf3) Thanks [@wra-bradshaw](https://github.com/wra-bradshaw)! - Require callers to provide `assets.wasm` explicitly and remove the default packaged WASM resolver.
+
+  The `typst-wasm/wasm` subpath and root `wasmBinaryUrl` export have been removed. This avoids eager Node asset resolution during SSR imports and makes WASM loading fully controlled by the consumer or bundler.
+
+- [`f82e2e4`](https://github.com/wra-bradshaw/typst-wasm/commit/f82e2e4f100a301ce65252b7b0c67546cb22ef98) Thanks [@wra-bradshaw](https://github.com/wra-bradshaw)! - Make `@typst-wasm/fonts` a file-only package.
+
+  The fonts package no longer exports JavaScript descriptors or `loadDefaultFonts`; it only exposes the bundled `.otf` files as explicit package subpaths. `typst-wasm` no longer re-exports the fonts package, and the Vite plugin no longer loads bundled fonts implicitly. Applications should import or resolve the font files they need and add them with `compiler.addFont(...)`.
+
+### Minor Changes
+
+- [`e606dc9`](https://github.com/wra-bradshaw/typst-wasm/commit/e606dc944050090dc13b8f0cfc79f65ce62e198d) Thanks [@wra-bradshaw](https://github.com/wra-bradshaw)! - add examples, change instantiation APIs to be more flexible, improve performance
+
+### Patch Changes
+
+- Updated dependencies [[`e606dc9`](https://github.com/wra-bradshaw/typst-wasm/commit/e606dc944050090dc13b8f0cfc79f65ce62e198d)]:
+  - @typst-wasm/engine-wasm@1.0.0
+
 ## 0.3.0
 
 ### Minor Changes
