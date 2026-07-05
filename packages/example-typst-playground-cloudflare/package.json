@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "vite build",
+    "build": "nix run ../..#build-artifact -- example-typst-playground-cloudflare dist",
+    "build:local": "vite build",
     "cf-typegen": "wrangler types",
     "deploy": "pnpm run build && wrangler deploy",
     "dev": "vite dev",
