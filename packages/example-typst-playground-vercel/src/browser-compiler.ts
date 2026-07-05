@@ -4,7 +4,7 @@ import {
   createWorkerHost,
   type TypstCompiler,
   type WasmDiagnostic,
-} from "typst-wasm/browser";
+} from "typst-wasm";
 import wasmUrl from "@typst-wasm/engine-wasm/typst_wasm_bg.wasm?url";
 import browserWorkerUrl from "typst-wasm/worker/browser?url";
 

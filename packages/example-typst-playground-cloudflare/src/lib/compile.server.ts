@@ -3,7 +3,7 @@ import {
   createTypstCompiler,
   type TypstCompiler,
   type WasmDiagnostic,
-} from "typst-wasm/workerd";
+} from "typst-wasm";
 import wasmModule from "@typst-wasm/engine-wasm/typst_wasm_bg.wasm?module";
 
 export interface CompileView {

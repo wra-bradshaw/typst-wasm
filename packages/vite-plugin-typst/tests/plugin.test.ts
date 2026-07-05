@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createWorkerHost } from "typst-wasm/node";
+import { createWorkerHost } from "typst-wasm";
 import { describe, expect, test } from "vitest";
 import typst from "../src";
 import { buildFixture, getChunk } from "./helpers";

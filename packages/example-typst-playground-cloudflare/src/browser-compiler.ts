@@ -4,7 +4,7 @@ import {
   createWorkerHost,
   type TypstCompiler,
   type WasmDiagnostic,
-} from "typst-wasm/browser";
+} from "typst-wasm";
 import newComputerModernMathBoldUrl from "@typst-wasm/fonts/NewCMMath-Bold.otf?url";
 import newComputerModernMathBookUrl from "@typst-wasm/fonts/NewCMMath-Book.otf?url";
 import newComputerModernMathRegularUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
