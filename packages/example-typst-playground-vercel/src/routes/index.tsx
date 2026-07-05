@@ -1,45 +1,57 @@
-"use client";
-
+import { createFileRoute } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import {
   compileTypstHtml,
   formatCompileError,
   type CompileView,
-} from "./browser-compiler";
+} from "../browser-compiler";
+import useAbortableCallback from "../lib/useAbortableCallback";
+import { sampleSource } from "../sample";
 
-interface PlaygroundProps {
-  initial: CompileView;
-  source: string;
-}
+const getInitialPreview = createServerFn({ method: "GET" }).handler(async () => {
+  const { getRequestUrl } = await import("@tanstack/react-start/server");
+  const { compileTypstHtml } = await import("../lib/compile.server");
+  return compileTypstHtml(sampleSource, getRequestUrl().origin);
+});
 
-export default function Playground({ initial, source }: PlaygroundProps) {
+export const Route = createFileRoute("/")({
+  loader: () => getInitialPreview(),
+  component: Playground,
+});
+
+function Playground() {
+  const initial = Route.useLoaderData() as CompileView;
   const [preview, setPreview] = useState(initial.html);
   const [diagnostics, setDiagnostics] = useState(initial.diagnostics);
   const [error, setError] = useState<string | null>(null);
-  const [isCompiling, setIsCompiling] = useState(false);
+  const [isCompiling, setIsCompiling] = useState<boolean>(false);
+
+  const { run } = useAbortableCallback(async (signal, source: string) => {
+    setIsCompiling(true);
+
+    await compileTypstHtml(source)
+      .then((result) => {
+        if (signal.aborted) return;
+        setPreview(result.html);
+        setDiagnostics(result.diagnostics);
+        setError(null);
+      })
+      .catch((reason: unknown) => {
+        if (signal.aborted) return;
+        setError(formatCompileError(reason));
+      });
+
+    if (!signal.aborted) {
+      setIsCompiling(false);
+    }
+  });
 
   const status = useMemo(() => {
     if (isCompiling) return "Compiling";
     if (error) return "Compile error";
     return "Browser preview";
   }, [error, isCompiling]);
-
-  const compile = (nextSource: string): void => {
-    setIsCompiling(true);
-
-    compileTypstHtml(nextSource)
-      .then((result) => {
-        setPreview(result.html);
-        setDiagnostics(result.diagnostics);
-        setError(null);
-      })
-      .catch((reason: unknown) => {
-        setError(formatCompileError(reason));
-      })
-      .finally(() => {
-        setIsCompiling(false);
-      });
-  };
 
   return (
     <main className="shell">
@@ -50,8 +62,8 @@ export default function Playground({ initial, source }: PlaygroundProps) {
         <textarea
           className="source"
           spellCheck={false}
-          defaultValue={source}
-          onChange={(event) => compile(event.currentTarget.value)}
+          defaultValue={sampleSource}
+          onChange={(event) => run(event.target.value)}
         />
       </section>
 

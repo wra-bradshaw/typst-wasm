@@ -7,7 +7,7 @@
       ...
     }:
     let
-      example-typst-playground-next = pkgs.callPackage ./package.nix {
+      example-typst-playground-vercel = pkgs.callPackage ./package.nix {
         engineWasm = config.packages.wasm;
         fonts = config.packages.fonts;
         typstWasm = config.packages.typst-wasm;
@@ -18,9 +18,9 @@
       };
     in
     {
-      packages.example-typst-playground-next = example-typst-playground-next;
+      packages.example-typst-playground-vercel = example-typst-playground-vercel;
 
-      devShells.example-typst-playground-next = pkgs.mkShell {
+      devShells.example-typst-playground-vercel = pkgs.mkShell {
         packages = with pkgs; [
           nodejs
           pnpm

@@ -100,6 +100,10 @@ h2 {
   white-space: pre-wrap;
 }
 
+[hidden] {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .shell {
     grid-template-columns: 1fr;

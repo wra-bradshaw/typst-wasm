@@ -24,7 +24,7 @@
         ./packages/typst-wasm/flake-module.nix
         ./packages/vite-plugin-typst/flake-module.nix
         ./packages/example-typst-playground-cloudflare/flake-module.nix
-        ./packages/example-typst-playground-next/flake-module.nix
+        ./packages/example-typst-playground-vercel/flake-module.nix
         ./packages/example-typst-blog/flake-module.nix
       ];
 

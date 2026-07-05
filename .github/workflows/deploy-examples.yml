@@ -35,7 +35,7 @@ jobs:
         run: nix develop .#ci -c pnpm install --frozen-lockfile
 
       - name: Build Vercel workspace dependencies
-        run: nix develop .#ci -c pnpm exec turbo run build --filter @typst-wasm/example-typst-playground-next^...
+        run: nix develop .#ci -c pnpm exec turbo run build --filter @typst-wasm/example-typst-playground-vercel^...
 
       - name: Pull Vercel environment
         run: nix develop .#ci -c pnpm exec vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
@@ -45,11 +45,7 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PLAYGROUND }}
 
       - name: Build Vercel artifact
-        run: nix develop .#ci -c pnpm exec vercel build --prod --token "$VERCEL_TOKEN"
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PLAYGROUND }}
+        run: nix run .#build-artifact -- example-typst-playground-vercel .vercel/output
 
       - name: Deploy to Vercel
         run: nix develop .#ci -c pnpm exec vercel deploy --prebuilt --prod --yes --archive=tgz --token "$VERCEL_TOKEN"

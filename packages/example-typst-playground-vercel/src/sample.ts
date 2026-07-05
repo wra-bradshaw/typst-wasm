@@ -4,14 +4,14 @@ export const sampleSource = `#set document(title: "Typst WASM Playground", autho
 
 = Typst WASM Playground
 
-This preview was rendered by Next.js for the first request. After hydration,
+This preview was rendered on Vercel for the first request. After hydration,
 edits compile in the browser.
 
 #let total = 42
 
 - Fast local previews
 - Same compiler API on server and client
-- Deployable to Vercel with Next.js
+- Deployable to Vercel with TanStack Start and Nitro
 
 $ integral_0^1 x^2 dif x = 1/3 $
 

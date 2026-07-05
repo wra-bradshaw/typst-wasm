@@ -8,8 +8,8 @@
 
 let
   workspaceRoot = ../..;
-  pname = "example-typst-playground-next";
-  packageDir = "packages/example-typst-playground-next";
+  pname = "example-typst-playground-vercel";
+  packageDir = "packages/example-typst-playground-vercel";
   version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
   pnpmDeps = import ../../nix/pnpm-deps.nix { inherit pkgs workspaceRoot; };
   prepareWorkspaceArtifacts = import ../../nix/workspace-artifacts.nix { lib = pkgs.lib; };
@@ -47,7 +47,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
     ${prepareBuildArtifacts}
 
-    NEXT_TELEMETRY_DISABLED=1 pnpm --dir ${packageDir} exec next build --webpack
+    pnpm --dir ${packageDir} exec vite build
 
     runHook postBuild
   '';
@@ -55,7 +55,7 @@ pkgs.stdenvNoCC.mkDerivation {
   installPhase = ''
     runHook preInstall
     mkdir -p "$out"
-    cp -r packages/example-typst-playground-next/.next "$out/.next"
+    cp -r packages/example-typst-playground-vercel/.vercel "$out/.vercel"
     runHook postInstall
   '';
 }

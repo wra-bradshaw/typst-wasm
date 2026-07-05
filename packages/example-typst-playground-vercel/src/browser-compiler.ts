@@ -1,5 +1,3 @@
-"use client";
-
 import {
   CompileError,
   createTypstCompiler,
@@ -7,12 +5,11 @@ import {
   type TypstCompiler,
   type WasmDiagnostic,
 } from "typst-wasm/browser";
-import newComputerModernMathBoldUrl from "@typst-wasm/fonts/NewCMMath-Bold.otf";
-import newComputerModernMathBookUrl from "@typst-wasm/fonts/NewCMMath-Book.otf";
-import newComputerModernMathRegularUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf";
-import wasmUrl from "@typst-wasm/engine-wasm/typst_wasm_bg.wasm";
-
-const browserWorkerUrl = new URL("typst-wasm/worker/browser", import.meta.url);
+import newComputerModernMathBoldUrl from "@typst-wasm/fonts/NewCMMath-Bold.otf?url";
+import newComputerModernMathBookUrl from "@typst-wasm/fonts/NewCMMath-Book.otf?url";
+import newComputerModernMathRegularUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
+import wasmUrl from "@typst-wasm/engine-wasm/typst_wasm_bg.wasm?url";
+import browserWorkerUrl from "typst-wasm/worker/browser?url";
 
 export interface CompileView {
   html: string;
