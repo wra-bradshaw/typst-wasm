@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy-playground-vercel:
-    name: Playground to Vercel
+  deploy-examples:
+    name: Deploy examples
     runs-on: ubuntu-latest
     environment: examples
 
@@ -37,68 +37,28 @@ jobs:
       - name: Build Vercel artifact
         run: nix run .#build-artifact -- example-typst-playground-vercel .vercel/output
 
-      - name: Deploy to Vercel
+      - name: Deploy playground to Vercel
         run: nix develop .#ci -c pnpm exec vercel deploy --prebuilt --prod --yes --archive=tgz --token "$VERCEL_TOKEN"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PLAYGROUND }}
 
-  deploy-playground-cloudflare:
-    name: Playground to Cloudflare Workers
-    runs-on: ubuntu-latest
-    environment: examples
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
-
-      - name: Setup Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
-        with:
-          use-flakehub: false
-
-      - name: Install dependencies
-        run: nix develop .#ci -c pnpm install --frozen-lockfile
-
-      - name: Build Cloudflare artifact
+      - name: Build playground Cloudflare artifact
         run: nix run ../..#build-artifact -- example-typst-playground-cloudflare dist
         working-directory: packages/example-typst-playground-cloudflare
 
-      - name: Deploy to Cloudflare Workers
+      - name: Deploy playground to Cloudflare Workers
         run: nix develop .#ci -c pnpm --dir packages/example-typst-playground-cloudflare exec wrangler deploy --config dist/server/wrangler.json
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-  deploy-blog-cloudflare:
-    name: Blog to Cloudflare Workers
-    runs-on: ubuntu-latest
-    environment: examples
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
-
-      - name: Setup Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
-        with:
-          use-flakehub: false
-
-      - name: Install dependencies
-        run: nix develop .#ci -c pnpm install --frozen-lockfile
-
-      - name: Build static artifact
+      - name: Build blog static artifact
         run: nix run ../..#build-artifact -- example-typst-blog dist
         working-directory: packages/example-typst-blog
 
-      - name: Deploy to Cloudflare Workers
+      - name: Deploy blog to Cloudflare Workers
         run: nix develop .#ci -c pnpm --dir packages/example-typst-blog exec wrangler deploy --config wrangler.jsonc
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
