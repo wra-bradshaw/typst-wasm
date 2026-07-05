@@ -3,7 +3,7 @@
   "framework": null,
   "headers": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "headers": [
         {
           "key": "Cross-Origin-Opener-Policy",
