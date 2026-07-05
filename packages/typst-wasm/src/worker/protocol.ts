@@ -4,10 +4,6 @@ import type {
   WasmCompileOutput,
 } from "../wasm/index";
 
-const INITIAL_SAB_SIZE = 1024 * 1024;
-const MAX_SAB_SIZE = 4 * 1024 * 1024 * 1024;
-const DEFAULT_FETCH_TIMEOUT = 30000;
-
 export const SharedMemoryCommunicationStatus = {
   None: 0,
   Pending: 1,
@@ -18,50 +14,86 @@ export const SharedMemoryCommunicationStatus = {
 export type SharedMemoryCommunicationStatus =
   (typeof SharedMemoryCommunicationStatus)[keyof typeof SharedMemoryCommunicationStatus];
 
+const MiB = 1024 * 1024;
+
+const INITIAL_SAB_SIZE = 1 * MiB;
+const MAX_SAB_SIZE = 256 * MiB;
+const DEFAULT_FETCH_TIMEOUT = 30_000;
+
 export class SharedMemoryCommunication {
   dataBuf: SharedArrayBuffer;
   statusBuf: SharedArrayBuffer;
   sizeBuf: SharedArrayBuffer;
 
-  constructor() {
+  constructor(maxByteLength = MAX_SAB_SIZE) {
     this.dataBuf = new SharedArrayBuffer(INITIAL_SAB_SIZE, {
-      maxByteLength: MAX_SAB_SIZE,
+      maxByteLength,
     });
-    this.statusBuf = new SharedArrayBuffer(4);
-    this.sizeBuf = new SharedArrayBuffer(4);
+    this.statusBuf = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
+    this.sizeBuf = new SharedArrayBuffer(Uint32Array.BYTES_PER_ELEMENT);
+  }
+
+  private statusView(): Int32Array {
+    return new Int32Array(this.statusBuf);
+  }
+
+  private sizeView(): Uint32Array {
+    return new Uint32Array(this.sizeBuf);
   }
 
   getStatus(): SharedMemoryCommunicationStatus {
     return Atomics.load(
-      new Int32Array(this.statusBuf),
+      this.statusView(),
       0,
     ) as SharedMemoryCommunicationStatus;
   }
 
   setStatus(status: SharedMemoryCommunicationStatus): void {
-    const statusView = new Int32Array(this.statusBuf);
-    Atomics.store(statusView, 0, status);
-    Atomics.notify(statusView, 0, 1);
+    const view = this.statusView();
+
+    Atomics.store(view, 0, status);
+    Atomics.notify(view, 0, 1);
   }
 
   setBuffer(buf: Uint8Array): void {
     const needed = buf.byteLength;
-    if (needed > MAX_SAB_SIZE) {
-      throw new Error(
-        `File too large: ${needed} bytes. Maximum allowed: ${MAX_SAB_SIZE} bytes.`,
+    const maximum = this.dataBuf.maxByteLength;
+
+    if (needed > maximum) {
+      throw new RangeError(
+        `File too large: ${needed} bytes. Maximum allowed: ${maximum} bytes.`,
       );
     }
 
     if (needed > this.dataBuf.byteLength) {
-      this.dataBuf.grow(needed);
+      try {
+        this.dataBuf.grow(needed);
+      } catch (cause) {
+        throw new Error(
+          `Unable to grow shared buffer from ` +
+            `${this.dataBuf.byteLength} to ${needed} bytes.`,
+          { cause },
+        );
+      }
     }
 
-    new Uint8Array(this.dataBuf).set(buf);
-    Atomics.store(new Int32Array(this.sizeBuf), 0, needed);
+    // Use an explicitly bounded view rather than a view over all capacity.
+    new Uint8Array(this.dataBuf, 0, needed).set(buf);
+
+    // Publish the size after writing the data.
+    Atomics.store(this.sizeView(), 0, needed);
   }
 
   getBuffer(): Uint8Array {
-    const size = Atomics.load(new Int32Array(this.sizeBuf), 0);
+    const size = Atomics.load(this.sizeView(), 0);
+
+    if (size > this.dataBuf.byteLength) {
+      throw new Error(
+        `Invalid shared buffer size ${size}; ` +
+          `current buffer length is ${this.dataBuf.byteLength}.`,
+      );
+    }
+
     return new Uint8Array(this.dataBuf, 0, size);
   }
 
@@ -69,89 +101,28 @@ export class SharedMemoryCommunication {
     expectedStatus: SharedMemoryCommunicationStatus,
     timeoutMs = DEFAULT_FETCH_TIMEOUT,
   ): boolean {
-    return (
-      Atomics.wait(
-        new Int32Array(this.statusBuf),
-        0,
-        expectedStatus,
-        timeoutMs,
-      ) === "ok"
-    );
+    const view = this.statusView();
+    const deadline = Date.now() + timeoutMs;
+
+    while (Atomics.load(view, 0) === expectedStatus) {
+      const remaining = deadline - Date.now();
+
+      if (remaining <= 0) {
+        return false;
+      }
+
+      const result = Atomics.wait(view, 0, expectedStatus, remaining);
+
+      if (result === "timed-out" && Atomics.load(view, 0) === expectedStatus) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   static hydrateObj(obj: SharedMemoryCommunication): SharedMemoryCommunication {
-    // Structured cloning preserves the SharedArrayBuffers but drops the class
-    // prototype, so the worker rehydrates the plain cloned object before using
-    // the SharedMemoryCommunication methods.
-    const instantiation = new SharedMemoryCommunication();
-    instantiation.dataBuf = obj.dataBuf;
-    instantiation.statusBuf = obj.statusBuf;
-    instantiation.sizeBuf = obj.sizeBuf;
-    return instantiation;
+    Object.setPrototypeOf(obj, SharedMemoryCommunication.prototype);
+    return obj;
   }
 }
-
-export interface TypstWorkerProtocol {
-  init: {
-    request: {
-      sharedMemoryCommunication: SharedMemoryCommunication;
-      wasmBytes: WasmBytes;
-    };
-    response: void;
-  };
-  add_file: {
-    request: { path: string; data: Uint8Array };
-    response: void;
-  };
-  add_source: {
-    request: { path: string; text: string };
-    response: void;
-  };
-  add_font: {
-    request: { data: Uint8Array };
-    response: void;
-  };
-  remove_file: {
-    request: { path: string };
-    response: void;
-  };
-  clear_files: {
-    request: void;
-    response: void;
-  };
-  set_main: {
-    request: { path: string };
-    response: void;
-  };
-  compile: {
-    request: { options: WasmCompileOptions };
-    response: WasmCompileOutput;
-  };
-  list_files: {
-    request: void;
-    response: string[];
-  };
-  has_file: {
-    request: { path: string };
-    response: boolean;
-  };
-}
-
-type NoPayload = Record<never, never>;
-
-export type ExcludePayloadIfEmpty<P> = P extends void
-  ? NoPayload
-  : { payload: P };
-
-export type RpcRequestMessage<T> = {
-  [K in keyof T]: {
-    kind: K;
-    requestId: number;
-  } & (T[K] extends { request: infer P }
-    ? ExcludePayloadIfEmpty<P>
-    : NoPayload);
-}[keyof T];
-
-export type RpcResponseMessage<TResult = unknown, TError = unknown> =
-  | { requestId: number; result: TResult }
-  | { requestId: number; error: TError };
