@@ -42,3 +42,4 @@ logs
 
 # direnv
 .direnv/
+.env*.local
