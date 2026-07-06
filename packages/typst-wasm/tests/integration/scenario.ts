@@ -12,6 +12,7 @@ import {
   type CompileFormatResult,
 } from "./formats.scenario.ts";
 import { runOptionsAndErrorsScenario } from "./errors.scenario.ts";
+import { runImportScenario } from "./import.scenario.ts";
 
 type IntegrationScenarioResult = {
   runtime: IntegrationScenarioOptions["runtime"];
@@ -28,6 +29,7 @@ export const runCompilerIntegrationScenario = async (
     const fileLifecycle = await runFileLifecycleScenario(compiler, options);
     const formats = await runCompileFormatScenario(compiler, options);
     await runOptionsAndErrorsScenario(compiler, options);
+    await runImportScenario(compiler, options);
 
     result = {
       runtime: options.runtime,
