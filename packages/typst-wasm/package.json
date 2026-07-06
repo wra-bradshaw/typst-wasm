@@ -57,8 +57,8 @@
     "test:unit": "pnpm exec vitest run",
     "test:integration": "pnpm run test:integration:node && pnpm run test:integration:bun && pnpm run test:integration:deno",
     "test:integration:node": "node --experimental-wasm-stack-switching ./node_modules/vitest/vitest.mjs run -c vitest.integration.config.ts --pool vmThreads",
-    "test:integration:bun": "sh -c 'if command -v bun >/dev/null 2>&1; then bun test ./tests/integration/bun.integration.ts; else echo \"Skipping Bun integration: bun not found\"; fi'",
-    "test:integration:deno": "sh -c 'if command -v deno >/dev/null 2>&1; then deno test --no-check --allow-read --allow-net tests/integration/deno.integration.ts; else echo \"Skipping Deno integration: deno not found\"; fi'",
+    "test:integration:bun": "bun test ./tests/integration/bun.integration.ts",
+    "test:integration:deno": "deno test --no-check --allow-read --allow-net tests/integration/deno.integration.ts",
     "format": "pnpm exec prettier . --check",
     "format:fix": "pnpm exec prettier . --write",
     "knip": "pnpm exec knip"
@@ -71,6 +71,7 @@
     "eslint": "^10.0.0",
     "knip": "^6.17.1",
     "prettier": "^3.8.4",
+    "tsc": "^2.0.4",
     "tsdown": "^0.20.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.55.0",
