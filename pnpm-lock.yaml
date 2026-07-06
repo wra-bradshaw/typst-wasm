@@ -207,6 +207,9 @@ importers:
       prettier:
         specifier: ^3.8.4
         version: 3.8.4
+      tsc:
+        specifier: ^2.0.4
+        version: 2.0.4
       tsdown:
         specifier: ^0.20.3
         version: 0.20.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(oxc-resolver@11.21.3)(typescript@5.9.3)
@@ -4539,6 +4542,11 @@ packages:
 
   ts-toolbelt@6.15.5:
     resolution: {integrity: sha512-FZIXf1ksVyLcfr7M317jbB67XFJhOO1YqdTcuGaq9q5jLUoTikukZ+98TPjKiP2jC5CgmYdWWYs0s2nLSU0/1A==}
+
+  tsc@2.0.4:
+    resolution: {integrity: sha512-fzoSieZI5KKJVBYGvwbVZs/J5za84f2lSTLPYf6AGiIf43tZ3GNrI1QzTLcjtyDDP4aLxd46RTZq1nQxe7+k5Q==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+    hasBin: true
 
   tsdown-plugin-worker@0.1.9:
     resolution: {integrity: sha512-XY5XTB7DoXCqpCSOzk+xnqs9TI4Qiz7I0ThNgtlLC7JLS3HYecYyuWHYwn8ZetE9B9AOu/T0YPF/eNdWGJq/PQ==}
@@ -9091,6 +9099,8 @@ snapshots:
       code-block-writer: 10.1.1
 
   ts-toolbelt@6.15.5: {}
+
+  tsc@2.0.4: {}
 
   tsdown-plugin-worker@0.1.9(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(oxc-resolver@11.21.3)(typescript@5.9.3):
     dependencies:
