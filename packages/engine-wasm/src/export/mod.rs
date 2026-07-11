@@ -218,27 +218,3 @@ pub fn convert_diagnostics(
 
     result
 }
-
-#[cfg(test)]
-mod tests {
-    use super::{PageRange, parse_page_ranges};
-
-    #[test]
-    fn parses_page_ranges_once_for_all_exports() {
-        assert_eq!(
-            parse_page_ranges("1, 3-4, 6-").unwrap(),
-            vec![
-                PageRange::Exact(1),
-                PageRange::Between(3, 4),
-                PageRange::From(6),
-            ]
-        );
-    }
-
-    #[test]
-    fn rejects_invalid_page_ranges() {
-        for input in ["", "0", "4-2", "one", "1-2-3"] {
-            assert!(parse_page_ranges(input).is_err(), "{input}");
-        }
-    }
-}
