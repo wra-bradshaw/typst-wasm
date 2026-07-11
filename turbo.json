@@ -29,11 +29,18 @@
     "test": {
       "dependsOn": ["build"]
     },
+    "test:unit": {
+      "dependsOn": ["build"]
+    },
     "format": {
       "dependsOn": []
     },
     "test:integration": {
       "dependsOn": ["^build", "build"]
+    },
+    "test:browser": {
+      "dependsOn": ["^build", "build"],
+      "cache": false
     }
   }
 }

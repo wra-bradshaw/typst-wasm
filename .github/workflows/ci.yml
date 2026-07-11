@@ -13,25 +13,220 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CI_ARTIFACT_DIR: .ci-artifacts
+
 jobs:
-  ci:
-    name: Turbo CI
+  unit:
+    name: Lint, build, and unit tests
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
-
-      - name: Setup Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
         with:
           use-flakehub: false
-
       - name: Install dependencies
         run: nix develop .#ci -c pnpm install --frozen-lockfile
+      - name: Lint, build, and unit tests
+        run: nix develop .#ci -c pnpm turbo run lint build test:unit
+      - name: Preserve build and test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-diagnostics
+          path: |
+            packages/**/dist/**
+            packages/**/.turbo/**
+            ${{ env.CI_ARTIFACT_DIR }}/**
+          if-no-files-found: ignore
 
-      - name: Lint, build, test, and integration
-        run: nix develop .#ci -c pnpm turbo run lint build test test:integration
+  node-worker:
+    name: Node worker backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+      - name: Install dependencies
+        run: nix develop .#ci -c pnpm install --frozen-lockfile
+      - name: Build published artifacts
+        run: nix develop .#ci -c pnpm turbo run build --filter=typst-wasm...
+      - name: Report runtime/backend matrix
+        run: echo 'runtime=node backend=worker required=true'
+      - name: Run Node worker integration
+        run: |
+          set -o pipefail
+          mkdir -p "$CI_ARTIFACT_DIR"
+          nix develop .#ci -c pnpm test:runtime:node-worker 2>&1 | tee "$CI_ARTIFACT_DIR/node-worker.log"
+      - name: Preserve Node worker diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-worker-diagnostics
+          path: |
+            packages/typst-wasm/dist/**
+            packages/engine-wasm/dist/**
+            packages/typst-wasm/.cache/**
+            packages/typst-wasm/tests/fixtures/**
+            ${{ env.CI_ARTIFACT_DIR }}/**
+          if-no-files-found: ignore
+
+  node-jspi:
+    name: Node JSPI backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+      - name: Install dependencies
+        run: nix develop .#ci -c pnpm install --frozen-lockfile
+      - name: Build published artifacts
+        run: nix develop .#ci -c pnpm turbo run build --filter=typst-wasm...
+      - name: Report runtime/backend matrix
+        run: echo 'runtime=node backend=jspi required=true'
+      - name: Run Node JSPI integration
+        run: |
+          set -o pipefail
+          mkdir -p "$CI_ARTIFACT_DIR"
+          nix develop .#ci -c pnpm test:runtime:node-jspi 2>&1 | tee "$CI_ARTIFACT_DIR/node-jspi.log"
+      - name: Preserve Node JSPI diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-jspi-diagnostics
+          path: |
+            packages/typst-wasm/dist/**
+            packages/engine-wasm/dist/**
+            ${{ env.CI_ARTIFACT_DIR }}/**
+          if-no-files-found: ignore
+
+  bun-worker:
+    name: Bun worker backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+      - name: Install dependencies
+        run: nix develop .#ci -c pnpm install --frozen-lockfile
+      - name: Build published artifacts
+        run: nix develop .#ci -c pnpm turbo run build --filter=typst-wasm...
+      - name: Report runtime/backend matrix
+        run: echo 'runtime=bun backend=worker required=true'
+      - name: Run Bun worker integration
+        run: |
+          set -o pipefail
+          mkdir -p "$CI_ARTIFACT_DIR"
+          nix develop .#ci -c pnpm test:runtime:bun-worker 2>&1 | tee "$CI_ARTIFACT_DIR/bun-worker.log"
+      - name: Preserve Bun diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bun-worker-diagnostics
+          path: |
+            packages/typst-wasm/dist/**
+            packages/engine-wasm/dist/**
+            ${{ env.CI_ARTIFACT_DIR }}/**
+          if-no-files-found: ignore
+
+  deno-worker:
+    name: Deno worker backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+      - name: Install dependencies
+        run: nix develop .#ci -c pnpm install --frozen-lockfile
+      - name: Build published artifacts
+        run: nix develop .#ci -c pnpm turbo run build --filter=typst-wasm...
+      - name: Report runtime/backend matrix
+        run: echo 'runtime=deno backend=worker required=true'
+      - name: Run Deno worker integration
+        run: |
+          set -o pipefail
+          mkdir -p "$CI_ARTIFACT_DIR"
+          nix develop .#ci -c pnpm test:runtime:deno-worker 2>&1 | tee "$CI_ARTIFACT_DIR/deno-worker.log"
+      - name: Preserve Deno diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deno-worker-diagnostics
+          path: |
+            packages/typst-wasm/dist/**
+            packages/engine-wasm/dist/**
+            ${{ env.CI_ARTIFACT_DIR }}/**
+          if-no-files-found: ignore
+
+  browser:
+    name: Chromium browser worker backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+      - name: Install dependencies
+        run: nix develop .#ci -c pnpm install --frozen-lockfile
+      - name: Build published artifacts
+        run: nix develop .#ci -c pnpm turbo run build --filter=typst-wasm...
+      - name: Install Chromium
+        run: nix develop .#ci -c pnpm --filter typst-wasm exec playwright install --with-deps chromium
+      - name: Report runtime/backend matrix
+        run: echo 'runtime=browser backend=worker required=true'
+      - name: Run browser tests
+        run: |
+          set -o pipefail
+          mkdir -p "$CI_ARTIFACT_DIR"
+          nix develop .#ci -c pnpm test:runtime:browser 2>&1 | tee "$CI_ARTIFACT_DIR/browser.log"
+      - name: Preserve browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-diagnostics
+          path: |
+            packages/typst-wasm/dist/**
+            packages/engine-wasm/dist/**
+            packages/typst-wasm/test-results/**
+            packages/typst-wasm/playwright-report/**
+            ${{ env.CI_ARTIFACT_DIR }}/**
+          if-no-files-found: ignore
+
+  workerd:
+    name: Workerd/Miniflare artifact boundary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+        with:
+          use-flakehub: false
+      - name: Install dependencies
+        run: nix develop .#ci -c pnpm install --frozen-lockfile
+      - name: Report runtime/backend matrix
+        run: echo 'runtime=workerd backend=workerd-module required=true'
+      - name: Validate Miniflare/workerd bundle
+        run: |
+          set -o pipefail
+          mkdir -p "$CI_ARTIFACT_DIR"
+          nix develop .#ci -c pnpm test:runtime:workerd 2>&1 | tee "$CI_ARTIFACT_DIR/workerd.log"
+      - name: Preserve workerd diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workerd-diagnostics
+          path: |
+            packages/**/dist/**
+            packages/**/.workerd-artifact/**
+            ${{ env.CI_ARTIFACT_DIR }}/**
+          if-no-files-found: ignore
