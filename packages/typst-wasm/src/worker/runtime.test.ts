@@ -98,7 +98,7 @@ describe("installTypstWorkerRuntime", () => {
       "listFiles",
       "hasFile",
     ] as const) {
-      const original = compiler[name];
+      const original = compiler[name] as (...args: never[]) => unknown;
       compiler[name] = ((...args: never[]) => {
         calls.push(name);
         return original(...args);

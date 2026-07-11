@@ -108,8 +108,24 @@ const createDenoWorkerHost = (workerUrl: string | URL): WorkerHost => {
 export const makeCompiler = async (
   options: IntegrationScenarioOptions,
 ): Promise<TypstCompiler> => {
+  const getCoreModule = async (name: string): Promise<WebAssembly.Module> => {
+    const url = new URL(
+      `../../../engine-wasm/dist/worker/${name}`,
+      import.meta.url,
+    );
+    if (options.runtime !== "deno") {
+      const { readFile } = await import("node:fs/promises");
+      return WebAssembly.compile(await readFile(url));
+    }
+
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Failed to load ${name}`);
+    return WebAssembly.compile(await response.arrayBuffer());
+  };
+
   const compiler = await createTypstCompiler({
     engine: options.engine,
+    getCoreModule,
     ...(options.runtime !== "deno" && {
       worker: () =>
         createNodeWorkerHost(

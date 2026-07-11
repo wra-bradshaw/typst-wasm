@@ -49,7 +49,8 @@ export default defineConfig([
   },
   {
     ...common,
-    external: ["node:worker_threads", "@typst-wasm/engine-wasm/worker"],
+    external: ["node:worker_threads", "node:fs/promises"],
+    noExternal: ["@typst-wasm/engine-wasm/worker"],
     entry: {
       "worker/node": "./src/worker/node.ts",
     },

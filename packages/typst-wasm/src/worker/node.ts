@@ -18,4 +18,4 @@ const nodePort: WorkerPort = {
   postMessage: (data) => port.postMessage(data),
 };
 
-installTypstWorkerRuntime(nodePort, async () => engine);
+installTypstWorkerRuntime(nodePort, async () => engine, true);

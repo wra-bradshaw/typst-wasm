@@ -165,6 +165,7 @@ export interface TypstWorkerProtocol {
   init: {
     request: {
       sharedMemoryCommunication: SharedMemoryCommunication;
+      coreModules?: Record<string, WebAssembly.Module>;
     };
     response: void;
   };

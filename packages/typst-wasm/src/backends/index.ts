@@ -79,6 +79,7 @@ export const createRuntimeBackend = (
       }
       return new WorkerService(options.fileLoaderManager, {
         createWorker: () => runtime.createWorker(compilerOptions),
+        getCoreModule: compilerOptions.getCoreModule,
         logger: options.logger,
       });
     case "jspi":

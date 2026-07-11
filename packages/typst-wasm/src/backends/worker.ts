@@ -10,6 +10,7 @@ import { makeWorkerTransport, type WorkerTransport } from "../worker/transport";
 import type {
   EngineCompileOptions,
   EngineCompileSuccess,
+  EngineCoreModuleLoader,
   EngineFetchRequest,
 } from "../engine/types";
 
@@ -17,6 +18,7 @@ export type TypstWorkerFactory = () => WorkerHost;
 
 export interface WorkerServiceInternals {
   createWorker?: TypstWorkerFactory;
+  getCoreModule?: EngineCoreModuleLoader;
   logger?: ResolvedLogger;
 }
 
@@ -67,8 +69,25 @@ export class WorkerService {
     );
 
     this.initWorker = async () => {
+      const coreModuleNames = [
+        "engine.core.wasm",
+        "engine.core2.wasm",
+        "engine.core3.wasm",
+      ];
+      const getCoreModule = internals.getCoreModule;
+      const coreModules = getCoreModule
+        ? Object.fromEntries(
+            await Promise.all(
+              coreModuleNames.map(
+                async (name) => [name, await getCoreModule(name)] as const,
+              ),
+            ),
+          )
+        : undefined;
+
       await this.rpcClient.call("init", {
         sharedMemoryCommunication: fetchBridge.sharedMemoryCommunication,
+        coreModules,
       });
     };
   }
