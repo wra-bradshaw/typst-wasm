@@ -177,7 +177,7 @@ export const installTypstWorkerRuntime = (
 
   const handleRequest = async (
     request: MainToWorkerMessage,
-  ): Promise<WorkerRpcResponse> => {
+  ): Promise<WorkerRpcResponse | undefined> => {
     switch (request.kind) {
       case "init": {
         sharedMemoryCommunication = SharedMemoryCommunication.hydrateObj(
@@ -279,6 +279,10 @@ export const installTypstWorkerRuntime = (
           serializeErrorCause(commandError.cause),
         );
       })
-      .then((result) => port.postMessage(result));
+      .then((result) => {
+        // The structural message guard intentionally only validates the common
+        // RPC envelope. Unknown command kinds must not produce a response.
+        if (result) port.postMessage(result);
+      });
   });
 };

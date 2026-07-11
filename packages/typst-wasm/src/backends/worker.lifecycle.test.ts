@@ -21,6 +21,9 @@ describe("worker service lifecycle", () => {
   beforeEach(() => {
     workerState.initMessages = [];
     workerState.terminateCount = 0;
+    workerState.autoRespond = true;
+    workerState.rejectInitialization = false;
+    workerState.pendingMessages = [];
   });
 
   it("treats repeated init as idempotent", async () => {
@@ -63,11 +66,64 @@ describe("worker service lifecycle", () => {
     ).toThrow("Compiler has been disposed");
   });
 
-  it("surfaces init failures and allows a later retry", async () => {
+  it("surfaces init failures, clears the promise, and allows a later retry", async () => {
     const workerService = await makeService();
+    workerState.rejectInitialization = true;
 
+    await expect(workerService.init()).rejects.toThrow(
+      "Worker command failed: init",
+    );
+    workerState.rejectInitialization = false;
     await expect(workerService.init()).resolves.toBeUndefined();
-    expect(workerState.initMessages).toHaveLength(1);
+    expect(workerState.initMessages).toHaveLength(2);
     await workerService.dispose();
+  });
+
+  it("rejects all outstanding commands when the worker fails", async () => {
+    const workerService = await makeService();
+    await workerService.init();
+    workerState.autoRespond = false;
+    const command = workerService.listFiles();
+
+    workerState.emitError?.(new Error("worker crashed"));
+    await expect(command).rejects.toThrow("Worker command failed: list_files");
+    await workerService.dispose();
+  });
+
+  it("rejects pending initialization when the worker fails", async () => {
+    const workerService = await makeService();
+    workerState.autoRespond = false;
+    const initialization = workerService.init();
+
+    workerState.emitError?.(new Error("worker crashed"));
+    await expect(initialization).rejects.toThrow("Worker command failed: init");
+    await workerService.dispose();
+  });
+
+  it("rejects initialization and commands with the disposal error", async () => {
+    const workerService = await makeService();
+    workerState.autoRespond = false;
+    const initialization = workerService.init();
+    await workerService.dispose();
+    await expect(initialization).rejects.toMatchObject({
+      cause: expect.objectContaining({ message: "Compiler has been disposed" }),
+    });
+
+    const second = await makeService();
+    workerState.autoRespond = true;
+    await second.init();
+    workerState.autoRespond = false;
+    const command = second.listFiles();
+    await second.dispose();
+    await expect(command).rejects.toMatchObject({
+      cause: expect.objectContaining({ message: "Compiler has been disposed" }),
+    });
+  });
+
+  it("terminates exactly once even when disposed repeatedly", async () => {
+    const workerService = await makeService();
+    await workerService.dispose();
+    await workerService.dispose();
+    expect(workerState.terminateCount).toBe(1);
   });
 });
