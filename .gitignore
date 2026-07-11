@@ -3,6 +3,8 @@ node_modules
 .pnpm-store/
 result
 result-*
+.pi-subagents
+.pi
 
 # outputs
 out
