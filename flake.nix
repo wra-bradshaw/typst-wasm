@@ -145,6 +145,7 @@
               config.formatter
               pkgs.nodejs
               pkgs.pnpm
+              pkgs.turbo
             ];
             shellHook = "";
           };
