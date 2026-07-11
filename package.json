@@ -4,7 +4,7 @@
   "packageManager": "pnpm@11.5.2",
   "scripts": {
     "build": "turbo run build",
-    "test": "pnpm -r --if-present test",
+    "test": "pnpm run build && pnpm -r --if-present test",
     "test:unit": "pnpm -r --if-present test:unit",
     "test:integration": "pnpm -r --if-present test:integration",
     "fix": "pnpm -r --if-present fix",

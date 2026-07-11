@@ -1,7 +1,14 @@
 packages:
   - packages/*
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  - "@bytecodealliance/jco"
+  - "@bytecodealliance/jco-transpile"
+  - "@bytecodealliance/componentize-js"
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  - "oxc-parser"
+  - "@oxc-parser/*"
 blockExoticSubdeps: true
 strictDepBuilds: true
 allowBuilds:

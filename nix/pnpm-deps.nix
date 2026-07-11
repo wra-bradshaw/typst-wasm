@@ -1,23 +1,20 @@
 { pkgs, workspaceRoot }:
 
 let
-  packagesDir = workspaceRoot + "/packages";
-  packageDirs = builtins.attrNames (
-    builtins.filterAttrs (
-      name: type: type == "directory" && builtins.pathExists (packagesDir + "/${name}/package.json")
-    ) (builtins.readDir packagesDir)
-  );
-  pnpmWorkspaces = builtins.map (
-    packageDir:
-    (builtins.fromJSON (builtins.readFile (packagesDir + "/${packageDir}/package.json"))).name
-  ) packageDirs;
+  workspaceFiles = import ./workspace-files.nix {
+    inherit (pkgs) lib;
+    inherit workspaceRoot;
+  };
 in
 pkgs.fetchPnpmDeps {
   pname = "typst-wasm-workspace";
   version = "deps";
-  src = workspaceRoot;
+
+  src = workspaceFiles.depsSource;
+
   pnpm = pkgs.pnpm;
-  inherit pnpmWorkspaces;
+  inherit (workspaceFiles) pnpmWorkspaces;
+
   fetcherVersion = 4;
-  hash = "sha256-uKKLqGWGl0a68Uy0CoHjNCzvDcZ9mGWT88MSuSZD0MM=";
+  hash = "sha256-tVj4EJmxFORe0fkw7vg7UeRHa2Wb2eP/HHwDiy6SGVc=";
 }
