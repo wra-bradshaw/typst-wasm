@@ -3,13 +3,14 @@ import type {
   RpcResponseMessage,
   TypstWorkerProtocol,
 } from "./protocol";
+import type { EngineFetchRequest } from "../engine/types";
 
 export type MainToWorkerMessage = RpcRequestMessage<TypstWorkerProtocol>;
 
 export type WorkerEventMessage = {
   kind: "web_fetch";
   payload: {
-    path: string;
+    request: EngineFetchRequest;
   };
 };
 
@@ -45,7 +46,15 @@ export const isWorkerEventMessage = (
 
   if (value.kind === "web_fetch") {
     if (!("payload" in value) || !isRecord(value.payload)) return false;
-    return typeof value.payload.path === "string";
+    if (!("request" in value.payload) || !isRecord(value.payload.request)) {
+      return false;
+    }
+    return (
+      typeof value.payload.request.path === "string" &&
+      (value.payload.request.kind === "project" ||
+        value.payload.request.kind === "package" ||
+        value.payload.request.kind === "url")
+    );
   }
 
   return false;

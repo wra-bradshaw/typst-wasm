@@ -50,10 +50,16 @@ describe("worker transport", () => {
     );
 
     worker.emit({ kind: "unknown_event" });
-    worker.emit({ kind: "web_fetch", payload: { path: "main.typ" } });
+    worker.emit({
+      kind: "web_fetch",
+      payload: { request: { path: "main.typ", kind: "project" } },
+    });
 
     expect(messages).toEqual([
-      { kind: "web_fetch", payload: { path: "main.typ" } },
+      {
+        kind: "web_fetch",
+        payload: { request: { path: "main.typ", kind: "project" } },
+      },
     ]);
   });
 

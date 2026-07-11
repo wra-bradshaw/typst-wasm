@@ -6,7 +6,11 @@ import {
 import { CompileError } from "../errors";
 import { FetchFileLoader, FileLoaderManager } from "../files/loaders";
 import { PackageFileLoader, PackageManager } from "../files/packages";
-import { toWasmCompileOptions, type WasmCompileOutput } from "../wasm/index";
+import type {
+  EngineCompileOptions,
+  EngineCompileSuccess,
+  EngineDiagnostic,
+} from "../engine/types";
 import type {
   CompileOptions,
   CompileResult,
@@ -16,7 +20,7 @@ import type {
   TypstLoadedFile,
 } from "./types";
 
-const hasErrorDiagnostics = (diagnostics: { severity: string }[]): boolean =>
+const hasErrorDiagnostics = (diagnostics: EngineDiagnostic[]): boolean =>
   diagnostics.some((diagnostic) => diagnostic.severity === "error");
 
 const extractErrorMessage = (error: unknown): string => {
@@ -30,84 +34,98 @@ const extractErrorMessage = (error: unknown): string => {
   }
 };
 
+const extractErrorPayload = (error: unknown): unknown => {
+  if (typeof error !== "object" || error === null) return undefined;
+  if ("payload" in error) return (error as { payload?: unknown }).payload;
+  if ("cause" in error) {
+    return extractErrorPayload((error as { cause?: unknown }).cause);
+  }
+  return undefined;
+};
+
 const normalizeMetadata = (
-  metadata: WasmCompileOutput["metadata"],
+  metadata: EngineCompileSuccess["metadata"],
 ): TypstDocumentMetadata | undefined => {
   if (!metadata) return undefined;
 
   return {
-    title: metadata.title ?? undefined,
-    description: metadata.description ?? undefined,
+    title: metadata.title,
+    description: metadata.description,
     author: metadata.author,
     keywords: metadata.keywords,
-    custom: metadata.custom.map((entry) => ({
-      label: entry.label ?? undefined,
-      value: entry.value,
-    })),
+    custom: metadata.custom.map((entry) => {
+      let value: unknown = entry.valueJson;
+      try {
+        value = JSON.parse(entry.valueJson);
+      } catch {
+        // Keep malformed custom metadata as its original string value.
+      }
+      return { label: entry.label, value };
+    }),
   };
 };
 
+const normalizeDependencies = (
+  dependencies: EngineCompileSuccess["dependencies"],
+): TypstLoadedFile[] => dependencies;
+
 const normalizeCompileResult = (
-  result: WasmCompileOutput,
-  dependencies: TypstLoadedFile[],
+  result: EngineCompileSuccess,
 ): CompileResult => {
-  const diagnostics = result.diagnostics;
   const base = {
-    diagnostics,
-    dependencies,
+    diagnostics: result.diagnostics,
+    dependencies: normalizeDependencies(result.dependencies),
     metadata: normalizeMetadata(result.metadata),
   };
 
-  switch (result.format) {
+  switch (result.output.tag) {
     case "pdf":
-      return {
-        ...base,
-        format: "pdf",
-        output: result.output_bytes ?? new Uint8Array(),
-      };
+      return { ...base, format: "pdf", output: result.output.val };
     case "png":
       return {
         ...base,
         format: "png",
-        pages: result.pages.map((page) => ({
+        pages: result.output.val.map((page) => ({
           page: page.page,
-          output: page.output_bytes ?? new Uint8Array(),
+          output: page.data,
         })),
       };
     case "svg":
       return {
         ...base,
         format: "svg",
-        pages: result.pages.map((page) => ({
+        pages: result.output.val.map((page) => ({
           page: page.page,
-          output: page.output_text ?? "",
+          output: page.data,
         })),
       };
     case "html":
-      return {
-        ...base,
-        format: "html",
-        output: result.output_text ?? "",
-      };
+      return { ...base, format: "html", output: result.output.val };
     case "bundle":
       return {
         ...base,
         format: "bundle",
-        files: result.files.map((file) => ({
+        files: result.output.val.map((file) => ({
           path: file.path,
           data: file.data,
-          mediaType: file.media_type ?? undefined,
+          mediaType: file.mediaType,
         })),
       };
-    default:
-      throw new CompileError(
-        `Unsupported compile output format: ${result.format}`,
-        {
-          diagnostics,
-        },
-      );
   }
 };
+
+const toEngineCompileOptions = (
+  options: CompileOptions = {},
+): EngineCompileOptions => ({
+  format: options.format,
+  main: options.main,
+  inputs: options.inputs
+    ? Object.entries(options.inputs).map(([key, value]) => ({ key, value }))
+    : undefined,
+  pages: options.pages,
+  pdfStandards: options.pdfStandards as EngineCompileOptions["pdfStandards"],
+  ppi: options.ppi,
+});
 
 class PromiseTypstCompiler implements TypstCompiler {
   constructor(
@@ -118,55 +136,59 @@ class PromiseTypstCompiler implements TypstCompiler {
   addFont(data: Uint8Array): Promise<void> {
     return this.backend.addFont(data);
   }
-
   addFile(path: string, data: Uint8Array): Promise<void> {
     return this.backend.addFile(path, data);
   }
-
   addSource(path: string, text: string): Promise<void> {
     return this.backend.addSource(path, text);
   }
-
   removeFile(path: string): Promise<void> {
     return this.backend.removeFile(path);
   }
-
   clearFiles(): Promise<void> {
     return this.backend.clearFiles();
   }
-
   listFiles(): Promise<string[]> {
     return this.backend.listFiles();
   }
-
   hasFile(path: string): Promise<boolean> {
     return this.backend.hasFile(path);
   }
-
   setMain(path: string): Promise<void> {
     return this.backend.setMain(path);
   }
 
   async compile(options: CompileOptions = {}): Promise<CompileResult> {
-    if (options.main) {
-      await this.setMain(options.main);
-    }
-
-    let rawResult: WasmCompileOutput;
+    if (options.main) await this.setMain(options.main);
     this.fileLoaderManager.resetTrace();
+
     try {
-      rawResult = await this.backend.compile(toWasmCompileOptions(options));
+      const result = await this.backend.compile(toEngineCompileOptions(options));
+      if (hasErrorDiagnostics(result.diagnostics)) {
+        throw new CompileError("Compilation failed", {
+          diagnostics: result.diagnostics,
+        });
+      }
+      return normalizeCompileResult(result);
     } catch (cause) {
+      const payload = extractErrorPayload(cause) ?? cause;
+      if (
+        typeof payload === "object" &&
+        payload !== null &&
+        "diagnostics" in payload
+      ) {
+        const failure = payload as {
+          diagnostics: EngineDiagnostic[];
+          message?: string;
+        };
+        throw new CompileError(failure.message ?? "Compilation failed", {
+          diagnostics: failure.diagnostics,
+          cause,
+        });
+      }
+      if (cause instanceof CompileError) throw cause;
       throw new CompileError(extractErrorMessage(cause), { cause });
     }
-
-    if (hasErrorDiagnostics(rawResult.diagnostics) || !rawResult.success) {
-      throw new CompileError(rawResult.internal_error ?? "Compilation failed", {
-        diagnostics: rawResult.diagnostics,
-      });
-    }
-
-    return normalizeCompileResult(rawResult, this.fileLoaderManager.getTrace());
   }
 
   dispose(): Promise<void> {
@@ -191,13 +213,11 @@ export const createTypstCompilerWithRuntime = async (
   ]);
   const backend = createRuntimeBackend(
     options.backend ?? "auto",
-    {
-      fileLoaderManager,
-    },
+    { fileLoaderManager },
     runtime,
     options,
   );
 
-  await backend.init(await runtime.loadWasmSource(options));
+  await backend.init();
   return new PromiseTypstCompiler(backend, fileLoaderManager);
 };

@@ -1,4 +1,4 @@
-import { loadWasmModule } from "../runtime/instantiate";
+import * as engine from "@typst-wasm/engine-wasm/worker";
 import type { WorkerPort } from "./port";
 import { installTypstWorkerRuntime } from "./runtime";
 
@@ -18,4 +18,4 @@ const browserPort: WorkerPort = {
   postMessage: (data) => scope.postMessage(data),
 };
 
-installTypstWorkerRuntime(browserPort, loadWasmModule);
+installTypstWorkerRuntime(browserPort, async () => engine);

@@ -1,4 +1,4 @@
-import { getJspiWebAssembly } from "../wasm/index";
+import { getJspiWebAssembly } from "../wasm/jspi";
 
 export const supportsWorkerBackend = (): boolean =>
   typeof SharedArrayBuffer !== "undefined" &&

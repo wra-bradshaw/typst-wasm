@@ -1,5 +1,5 @@
 import { parentPort } from "node:worker_threads";
-import { loadWasmModule } from "../runtime/instantiate";
+import * as engine from "@typst-wasm/engine-wasm/worker";
 import type { WorkerPort } from "./port";
 import { installTypstWorkerRuntime } from "./runtime";
 
@@ -18,4 +18,4 @@ const nodePort: WorkerPort = {
   postMessage: (data) => port.postMessage(data),
 };
 
-installTypstWorkerRuntime(nodePort, loadWasmModule);
+installTypstWorkerRuntime(nodePort, async () => engine);

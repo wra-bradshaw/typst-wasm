@@ -1,24 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   createRuntimeBackend,
   selectAutomaticBackendKind,
   type TypstRuntime,
   type BackendSelection,
 } from "./index";
-
-vi.mock("@typst-wasm/engine-wasm/bridge", () => ({
-  registerHostFetch: () => undefined,
-  unregisterHostFetch: () => undefined,
-}));
+import type { TypstCompilerOptions } from "../compiler/types";
 
 const makeRuntime = (worker: boolean, jspi: boolean): TypstRuntime => ({
   createWorker: (_options) => {
-    throw new Error("not used");
-  },
-  loadWasmModule: () => {
-    throw new Error("not used");
-  },
-  loadWasmSource: () => {
     throw new Error("not used");
   },
   supportsWorkerBackend: () => worker,
@@ -26,10 +16,9 @@ const makeRuntime = (worker: boolean, jspi: boolean): TypstRuntime => ({
 });
 
 const options = {
-  assets: {
-    wasm: async () => new Uint8Array([1]),
-  },
+  engine: { instantiate: () => ({ api: { Compiler: class {} } }) },
 };
+const compilerOptions = options as unknown as TypstCompilerOptions;
 
 describe("compiler backend selection", () => {
   it.each([
@@ -45,7 +34,7 @@ describe("compiler backend selection", () => {
     "selects $selected when runtime reports worker=$worker and jspi=$jspi",
     ({ worker, jspi, selected }) => {
       expect(
-        selectAutomaticBackendKind(makeRuntime(worker, jspi), options),
+        selectAutomaticBackendKind(makeRuntime(worker, jspi), compilerOptions),
       ).toBe(selected);
     },
   );
@@ -54,16 +43,18 @@ describe("compiler backend selection", () => {
     const nodeLikeRuntime = makeRuntime(true, false);
     const browserLikeRuntime = makeRuntime(false, true);
 
-    expect(selectAutomaticBackendKind(nodeLikeRuntime, options)).toBe("worker");
-    expect(selectAutomaticBackendKind(browserLikeRuntime, options)).toBe(
-      "jspi",
+    expect(selectAutomaticBackendKind(nodeLikeRuntime, compilerOptions)).toBe(
+      "worker",
     );
+    expect(
+      selectAutomaticBackendKind(browserLikeRuntime, compilerOptions),
+    ).toBe("jspi");
   });
 
   it("throws immediately when the worker backend is requested without worker configuration", () => {
     const runtime = {
       ...makeRuntime(false, true),
-      unavailableWorkerMessage: "Worker backend requires assets.worker",
+      unavailableWorkerMessage: "Worker backend requires worker",
     };
 
     expect(() =>
@@ -73,17 +64,28 @@ describe("compiler backend selection", () => {
           fileLoaderManager: {} as never,
         },
         runtime,
-        options,
+        compilerOptions,
       ),
-    ).toThrow("Worker backend requires assets.worker");
+    ).toThrow("Worker backend requires worker");
+  });
+
+  it("requires an engine when the JSPI backend is requested", () => {
+    expect(() =>
+      createRuntimeBackend(
+        "jspi",
+        { fileLoaderManager: {} as never },
+        makeRuntime(false, true),
+        {} as TypstCompilerOptions,
+      ),
+    ).toThrow("JSPI backend requires engine");
   });
 
   it("lets auto select worker only when the runtime says worker is configured", () => {
-    expect(selectAutomaticBackendKind(makeRuntime(false, true), options)).toBe(
-      "jspi",
-    );
-    expect(selectAutomaticBackendKind(makeRuntime(true, true), options)).toBe(
-      "worker",
-    );
+    expect(
+      selectAutomaticBackendKind(makeRuntime(false, true), compilerOptions),
+    ).toBe("jspi");
+    expect(
+      selectAutomaticBackendKind(makeRuntime(true, true), compilerOptions),
+    ).toBe("worker");
   });
 });

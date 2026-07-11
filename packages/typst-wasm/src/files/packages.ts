@@ -21,13 +21,13 @@ interface PackageSpec {
 export interface PackageManagerOptions {
   fetch?: typeof fetch;
   packageBaseUrl?: string;
-  cache?: PackageCache;
+  cache?: PackageCache | false;
   memoryPackageCacheCapacity?: number;
 }
 
 const parseSpec = (spec: string): PackageSpec => {
   const match = spec.match(
-    /^@([a-z0-9-]+)\/([a-z0-9_-]+):([0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9.-]+)?)\/(.+)$/,
+    /^@([a-z0-9-]+)\/([a-z0-9_-]+):([0-9]+\.[0-9]+\.[0-9]+(?:-[a-zA-Z0-9.-]+)?)(?:\/(.+))?$/,
   );
 
   if (!match) {
@@ -37,7 +37,7 @@ const parseSpec = (spec: string): PackageSpec => {
     );
   }
 
-  const [, namespace, name, version, filePath] = match;
+  const [, namespace, name, version, filePath = "lib.typ"] = match;
 
   if (namespace.startsWith("-") || namespace.endsWith("-")) {
     throw new PackageParseError(
@@ -56,84 +56,151 @@ const parseSpec = (spec: string): PackageSpec => {
   return { namespace, name, version, filePath };
 };
 
-const getFileCacheKey = (spec: PackageSpec, filePath: string): string =>
-  `@${spec.namespace}/${spec.name}:${spec.version}/${filePath}`;
-const getCacheKey = (spec: PackageSpec): string =>
-  getFileCacheKey(spec, spec.filePath);
 const getPackageKey = (spec: PackageSpec): string =>
   `@${spec.namespace}/${spec.name}:${spec.version}`;
+
+const packageFetchAttempts = 3;
+
+const fetchPackage = async (
+  fetchImpl: typeof fetch,
+  url: string,
+): Promise<Response> => {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < packageFetchAttempts; attempt++) {
+    try {
+      const response = await fetchImpl(url);
+      if (response.ok || attempt === packageFetchAttempts - 1) {
+        return response;
+      }
+      lastError = new Error(`Status ${response.status}`);
+    } catch (error) {
+      lastError = error;
+      if (attempt === packageFetchAttempts - 1) throw error;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 100 * 2 ** attempt));
+  }
+
+  throw lastError;
+};
 
 export class PackageManager {
   private readonly fetchImpl: typeof fetch;
   private readonly packageBaseUrl: string;
-  private readonly cache: PackageCache;
-  private readonly loadedPackages = new Set<string>();
-  private readonly loadingPackages = new Map<string, Promise<void>>();
+  private readonly cache: PackageCache | undefined;
+  private readonly loadedPackages = new Map<
+    string,
+    Promise<ReadonlyMap<string, Uint8Array>>
+  >();
 
   constructor(options: PackageManagerOptions = {}) {
     this.fetchImpl = options.fetch ?? fetch;
     this.packageBaseUrl =
       options.packageBaseUrl ?? "https://packages.typst.org";
     this.cache =
-      options.cache ??
-      makeDefaultPackageCache(options.memoryPackageCacheCapacity);
+      options.cache === false
+        ? undefined
+        : (options.cache ?? makeDefaultPackageCache());
   }
 
   async getFile(spec: string): Promise<Uint8Array> {
     const parsed = parseSpec(spec);
-    const cacheKey = getCacheKey(parsed);
-    const cached = await this.cache.get(cacheKey);
-    if (cached) return cached;
-
-    const packageKey = getPackageKey(parsed);
-    if (!this.loadedPackages.has(packageKey)) {
-      await this.loadPackageDeduped(parsed);
-    }
-
-    const file = await this.cache.get(cacheKey);
-    if (!file) {
-      throw new FileNotFoundError(parsed.filePath);
-    }
+    const files = await this.loadPackageDeduped(parsed);
+    const file = files.get(parsed.filePath);
+    if (!file) throw new FileNotFoundError(parsed.filePath);
     return file;
   }
 
-  private async loadPackageDeduped(spec: PackageSpec): Promise<void> {
+  private loadPackageDeduped(
+    spec: PackageSpec,
+  ): Promise<ReadonlyMap<string, Uint8Array>> {
     const packageKey = getPackageKey(spec);
-    const existing = this.loadingPackages.get(packageKey);
-    if (existing) {
-      await existing;
-      return;
-    }
+    const existing = this.loadedPackages.get(packageKey);
+    if (existing) return existing;
 
     const load = this.loadPackage(spec);
-    this.loadingPackages.set(packageKey, load);
-    try {
-      await load;
-      this.loadedPackages.add(packageKey);
-    } finally {
-      this.loadingPackages.delete(packageKey);
-    }
+    this.loadedPackages.set(packageKey, load);
+    void load.catch(() => {
+      if (this.loadedPackages.get(packageKey) === load) {
+        this.loadedPackages.delete(packageKey);
+      }
+    });
+    return load;
   }
 
-  private async loadPackage(spec: PackageSpec): Promise<void> {
-    const url = `${this.packageBaseUrl}/${spec.namespace}/${spec.name}-${spec.version}.tar.gz`;
+  private async loadPackage(
+    spec: PackageSpec,
+  ): Promise<ReadonlyMap<string, Uint8Array>> {
+    const url = new URL(
+      `${spec.namespace}/${spec.name}-${spec.version}.tar.gz`,
+      `${this.packageBaseUrl.replace(/\/$/, "")}/`,
+    ).toString();
 
     try {
-      const response = await this.fetchImpl(url);
-      if (!response.ok) {
-        throw new Error(`Status ${response.status}`);
+      let tarData: Uint8Array | undefined;
+      if (this.cache) {
+        const cached = await this.cache.match(url);
+        if (cached) {
+          try {
+            tarData = new Uint8Array(await cached.arrayBuffer());
+          } catch (cause) {
+            globalThis.console.error("Failed to read cached Typst package", {
+              url,
+              cause,
+            });
+          }
+        }
       }
 
-      const tarData = new Uint8Array(await response.arrayBuffer());
-      const files = await parseTarGzip(tarData);
+      if (!tarData) {
+        const response = await fetchPackage(this.fetchImpl, url);
+        if (!response.ok) throw new Error(`Status ${response.status}`);
+        tarData = new Uint8Array(await response.arrayBuffer());
+      }
 
-      await Promise.all(
-        files.map(async (file) => {
-          if (file.type === "file" && file.data) {
-            await this.cache.set(getFileCacheKey(spec, file.name), file.data);
-          }
-        }),
-      );
+      let files: ReadonlyMap<string, Uint8Array>;
+      try {
+        const archive = await parseTarGzip(tarData);
+        files = new Map(
+          archive.flatMap((file) =>
+            file.type === "file" && file.data
+              ? [[file.name, file.data] as const]
+              : [],
+          ),
+        );
+      } catch (cause) {
+        // A corrupt cached response should be replaced by a fresh download.
+        if (!this.cache || !tarData) {
+          throw new Error("Failed to parse package archive", { cause });
+        }
+        const response = await fetchPackage(this.fetchImpl, url);
+        if (!response.ok) {
+          throw new Error(`Status ${response.status}`, { cause });
+        }
+        tarData = new Uint8Array(await response.arrayBuffer());
+        const archive = await parseTarGzip(tarData);
+        files = new Map(
+          archive.flatMap((file) =>
+            file.type === "file" && file.data
+              ? [[file.name, file.data] as const]
+              : [],
+          ),
+        );
+      }
+
+      if (this.cache && tarData) {
+        await this.cache.put(
+          url,
+          new Response(tarData, {
+            headers: {
+              "Cache-Control": "public, max-age=31536000, immutable",
+              "Content-Type": "application/gzip",
+            },
+          }),
+        );
+      }
+      return files;
     } catch (cause) {
       throw new PackageFetchError(url, cause);
     }

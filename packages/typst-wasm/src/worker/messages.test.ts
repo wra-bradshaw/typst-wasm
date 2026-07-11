@@ -16,14 +16,14 @@ describe("message guards", () => {
     expect(
       isWorkerToMainMessage({
         kind: "web_fetch",
-        payload: { path: "main.typ" },
+        payload: { request: { path: "main.typ", kind: "project" } },
       }),
     ).toBe(true);
     expect(isWorkerToMainMessage({ kind: "web_fetch" })).toBe(false);
     expect(
       isWorkerToMainMessage({
         kind: "web_fetch",
-        payload: { path: 1 },
+        payload: { request: { path: 1, kind: "project" } },
       }),
     ).toBe(false);
     expect(isWorkerToMainMessage({ kind: "unknown" })).toBe(false);

@@ -1,12 +1,15 @@
 import type { FileLoaderManager } from "../files/loaders";
+import { FileNotFoundError, FetchError, PackageFetchError } from "../errors";
+import type { EngineFetchRequest } from "../engine/types";
 import {
   SharedMemoryCommunication,
+  SharedMemoryCommunicationError,
   SharedMemoryCommunicationStatus,
 } from "./protocol";
 
 export type FetchBridge = {
   readonly sharedMemoryCommunication: SharedMemoryCommunication;
-  readonly handleFetchRequest: (path: string) => Promise<void>;
+  readonly handleFetchRequest: (request: EngineFetchRequest) => Promise<void>;
 };
 
 export const makeFetchBridge = (
@@ -15,19 +18,31 @@ export const makeFetchBridge = (
 ): FetchBridge => {
   const sharedMemoryCommunication = new SharedMemoryCommunication();
 
-  const handleFetchRequest = async (path: string): Promise<void> => {
+  const handleFetchRequest = async (request: EngineFetchRequest): Promise<void> => {
     if (isDisposed()) return;
 
     try {
-      const bytes = await fileLoaderManager.load(path);
+      const loaded = await fileLoaderManager.loadFile(request);
       if (isDisposed()) return;
 
-      sharedMemoryCommunication.setBuffer(bytes);
+      sharedMemoryCommunication.setBuffer(loaded.data);
+      sharedMemoryCommunication.setError(SharedMemoryCommunicationError.Other);
       sharedMemoryCommunication.setStatus(
         SharedMemoryCommunicationStatus.Success,
       );
-    } catch {
+    } catch (error) {
+      // The engine only receives a shared-memory error code. Keep the original
+      // loader error visible in the host console instead of reducing it to the
+      // generic "failed to load file" diagnostic.
+      console.error("Typst file load failed", request.path, error);
       if (!isDisposed()) {
+        const code =
+          error instanceof FileNotFoundError
+            ? SharedMemoryCommunicationError.NotFound
+            : error instanceof FetchError || error instanceof PackageFetchError
+              ? SharedMemoryCommunicationError.Other
+              : SharedMemoryCommunicationError.Other;
+        sharedMemoryCommunication.setError(code);
         sharedMemoryCommunication.setStatus(
           SharedMemoryCommunicationStatus.Error,
         );

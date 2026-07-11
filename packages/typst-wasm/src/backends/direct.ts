@@ -1,76 +1,49 @@
 import {
-  registerHostFetch as defaultRegisterHostFetch,
-  unregisterHostFetch as defaultUnregisterHostFetch,
-} from "@typst-wasm/engine-wasm/bridge";
-import { supportsJspiBackend } from "./capabilities";
-import {
   CompilerDisposedError,
+  FileNotFoundError,
+  FetchError,
+  PackageFetchError,
   CompilerNotInitializedError,
   WorkerError,
 } from "../errors";
 import type { FileLoaderManager } from "../files/loaders";
 import type {
-  InitOutput,
-  TypstCompilerInstance,
-  WasmBytes,
-  WasmCompileOptions,
-  WasmCompileOutput,
-  WasmModule,
-  WasmModuleSource,
-} from "../wasm/index";
-import { getJspiWebAssembly } from "../wasm/index";
+  EngineCompileOptions,
+  EngineCompileSuccess,
+  EngineCompiler,
+  EngineCoreModuleLoader,
+  EngineHost,
+  EngineModule,
+} from "../engine/types";
 
-const MAX_FETCH_ATTEMPTS = 3;
-const textDecoder = new TextDecoder();
-let nextHostId = 1;
-
-type WasmBindgenPointer = {
-  readonly __wbg_ptr: number;
-};
-
-export interface DirectServiceInternals {
-  loadWasmModule?: (
-    wasmSource: WasmBytes | WasmModuleSource,
-  ) => Promise<WasmModule>;
-  registerHostFetch?: typeof defaultRegisterHostFetch;
-  unregisterHostFetch?: typeof defaultUnregisterHostFetch;
-}
-
-const retry = async <T>(
-  task: () => Promise<T>,
-  maxAttempts: number,
-): Promise<T> => {
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    try {
-      return await task();
-    } catch (error) {
-      lastError = error;
-    }
+const toFetchError = (error: unknown): never => {
+  if (error instanceof FileNotFoundError) throw { tag: "not-found" };
+  if (error instanceof FetchError || error instanceof PackageFetchError) {
+    throw { tag: "other", val: error.message };
   }
-
-  throw lastError ?? new Error("Unknown host fetch error");
+  throw {
+    tag: "other",
+    val: error instanceof Error ? error.message : String(error),
+  };
 };
 
 export class DirectService {
   private disposed = false;
   private initPromise: Promise<void> | null = null;
-  private compiler: TypstCompilerInstance | null = null;
-  private wasmExports: InitOutput | null = null;
-  private readonly hostId = nextHostId++;
+  private compiler: EngineCompiler | null = null;
   private compileAsync:
-    | ((options: WasmCompileOptions) => Promise<WasmCompileOutput>)
+    | ((options: EngineCompileOptions) => Promise<EngineCompileSuccess>)
     | null = null;
 
   constructor(
     private readonly fileLoaderManager: FileLoaderManager,
-    private readonly internals: DirectServiceInternals = {},
+    private readonly engine: EngineModule,
+    private readonly getCoreModule?: EngineCoreModuleLoader,
   ) {}
 
-  async init(wasmSource?: WasmBytes | WasmModuleSource): Promise<void> {
+  async init(): Promise<void> {
     this.assertNotDisposed();
-    this.initPromise ??= this.initDirect(wasmSource);
+    this.initPromise ??= this.initDirect();
     try {
       await this.initPromise;
     } catch (error) {
@@ -81,67 +54,56 @@ export class DirectService {
 
   async dispose(): Promise<void> {
     this.disposed = true;
-    if (this.compiler) {
-      this.compiler.free();
-    }
     this.compiler = null;
-    this.wasmExports = null;
     this.compileAsync = null;
-    const unregister =
-      this.internals.unregisterHostFetch ?? defaultUnregisterHostFetch;
-    unregister(this.hostId);
   }
 
   async addFont(data: Uint8Array): Promise<void> {
-    this.withCompiler((compiler) => void compiler.add_font(data), "add_font");
+    this.withCompiler((compiler) => void compiler.addFont(data), "add-font");
   }
 
   async addFile(path: string, data: Uint8Array): Promise<void> {
     this.withCompiler(
-      (compiler) => void compiler.add_file(path, data),
-      "add_file",
+      (compiler) => void compiler.addFile(path, data),
+      "add-file",
     );
   }
 
   async addSource(path: string, text: string): Promise<void> {
     this.withCompiler(
-      (compiler) => void compiler.add_source(path, text),
-      "add_source",
+      (compiler) => void compiler.addSource(path, text),
+      "add-source",
     );
   }
 
   async removeFile(path: string): Promise<void> {
     this.withCompiler(
-      (compiler) => void compiler.remove_file(path),
-      "remove_file",
+      (compiler) => void compiler.removeFile(path),
+      "remove-file",
     );
   }
 
   async clearFiles(): Promise<void> {
-    this.withCompiler((compiler) => void compiler.clear_files(), "clear_files");
+    this.withCompiler((compiler) => void compiler.clearFiles(), "clear-files");
   }
 
   async listFiles(): Promise<string[]> {
-    return this.withCompiler((compiler) => compiler.list_files(), "list_files");
+    return this.withCompiler((compiler) => compiler.listFiles(), "list-files");
   }
 
   async hasFile(path: string): Promise<boolean> {
-    return this.withCompiler((compiler) => compiler.has_file(path), "has_file");
+    return this.withCompiler((compiler) => compiler.hasFile(path), "has-file");
   }
 
   async setMain(path: string): Promise<void> {
-    this.withCompiler((compiler) => void compiler.set_main(path), "set_main");
+    this.withCompiler((compiler) => void compiler.setMain(path), "set-main");
   }
 
-  async compile(options: WasmCompileOptions): Promise<WasmCompileOutput> {
+  async compile(options: EngineCompileOptions): Promise<EngineCompileSuccess> {
     this.assertNotDisposed();
-    const compiler = this.compiler;
-    const wasmExports = this.wasmExports;
     const compile = this.compileAsync;
-
-    if (!compiler || !wasmExports || !compile) {
+    if (!compile)
       throw new CompilerNotInitializedError("Compiler not initialized");
-    }
 
     try {
       return await compile(options);
@@ -150,85 +112,34 @@ export class DirectService {
     }
   }
 
-  private async initDirect(
-    wasmSource?: WasmBytes | WasmModuleSource,
-  ): Promise<void> {
-    if (!supportsJspiBackend()) {
-      throw new WorkerError("JSPI is unavailable in this runtime");
-    }
+  private async initDirect(): Promise<void> {
+    const host: EngineHost = {
+      fetch: async (request) => {
+        try {
+          return await this.fileLoaderManager.loadFile(request);
+        } catch (error) {
+          return toFetchError(error);
+        }
+      },
+      today: () => undefined,
+    };
 
-    const loadWasmModule = this.internals.loadWasmModule;
-    if (!loadWasmModule) {
-      throw new WorkerError("DirectService requires a WASM loader");
-    }
-    if (!wasmSource) {
-      throw new WorkerError("DirectService requires assets.wasm");
-    }
-    const register =
-      this.internals.registerHostFetch ?? defaultRegisterHostFetch;
-
-    const wasmModule = await loadWasmModule(wasmSource);
-    const { Suspending } = getJspiWebAssembly<WasmCompileOptions>();
-    if (!Suspending) {
-      throw new WorkerError("JSPI is unavailable in this runtime");
-    }
-    register(this.hostId, this.hostFetch);
-
-    const wasmExports = wasmModule;
-
-    this.wasmExports = wasmExports;
-    this.compileAsync = async (options: WasmCompileOptions) =>
-      this.withCompiler((compiler) => {
-        this.assertCompilerPointer(compiler);
-        return compiler.compile(options) as WasmCompileOutput;
-      }, "compile");
-    this.compiler = new wasmModule.TypstCompiler(this.hostId);
+    const root = await this.engine.instantiate(this.getCoreModule, {
+      "typst:engine/host": host,
+    });
+    this.compiler = new root.api.Compiler();
+    this.compileAsync = async (options) =>
+      await this.compiler!.compile(options);
   }
 
-  private readonly hostFetch = async (
-    pathPtr: number,
-    pathLen: number,
-    resultLenPtr: number,
-  ): Promise<number> => {
-    const wasmExports = this.wasmExports;
-    if (!wasmExports) {
-      throw new Error("WASM exports not initialized");
-    }
-
-    const path = textDecoder.decode(
-      new Uint8Array(wasmExports.memory.buffer, pathPtr, pathLen),
-    );
-
-    try {
-      const bytes = await retry(
-        () => this.fileLoaderManager.load(path),
-        MAX_FETCH_ATTEMPTS,
-      );
-      const resultPtr = wasmExports.__wbindgen_malloc(bytes.length, 1);
-      new Uint8Array(wasmExports.memory.buffer, resultPtr, bytes.length).set(
-        bytes,
-      );
-      new DataView(wasmExports.memory.buffer).setUint32(
-        resultLenPtr,
-        bytes.length,
-        true,
-      );
-      return resultPtr;
-    } catch {
-      new DataView(wasmExports.memory.buffer).setUint32(resultLenPtr, 0, true);
-      return 0;
-    }
-  };
-
   private withCompiler<T>(
-    run: (compiler: TypstCompilerInstance) => T,
+    run: (compiler: EngineCompiler) => T,
     name: string,
   ): T {
     this.assertNotDisposed();
     if (!this.compiler) {
       throw new CompilerNotInitializedError("Compiler not initialized");
     }
-
     try {
       return run(this.compiler);
     } catch (cause) {
@@ -239,14 +150,6 @@ export class DirectService {
   private assertNotDisposed(): void {
     if (this.disposed) {
       throw new CompilerDisposedError("Compiler has been disposed");
-    }
-  }
-
-  private assertCompilerPointer(compiler: TypstCompilerInstance): void {
-    const ptr = (compiler as TypstCompilerInstance & WasmBindgenPointer)
-      .__wbg_ptr;
-    if (!ptr) {
-      throw new Error("Compiler pointer is zero");
     }
   }
 }

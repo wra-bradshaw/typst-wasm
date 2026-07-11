@@ -1,15 +1,17 @@
 import {
   createTypstCompiler,
+  createNodeWorkerHost,
   type CompileResult,
   type TypstCompiler,
-  type TypstWasmAsset,
+  type EngineModule,
+  type WorkerHost,
 } from "typst-wasm";
 
 export type RuntimeName = "bun" | "node" | "deno";
 
 export type IntegrationScenarioOptions = {
   runtime: RuntimeName;
-  wasm: TypstWasmAsset;
+  engine?: EngineModule;
   fontData?: Uint8Array[];
   backend?: "auto" | "worker" | "jspi";
 };
@@ -91,13 +93,35 @@ const addDefaultFonts = async (
   }
 };
 
+const createDenoWorkerHost = (workerUrl: string | URL): WorkerHost => {
+  const worker = new Worker(workerUrl, { type: "module" });
+  return {
+    listen: (onMessage, onError) => {
+      worker.onmessage = (event) => onMessage(event.data);
+      worker.onerror = (event) => onError(event.error ?? event.message);
+    },
+    postMessage: (data) => worker.postMessage(data),
+    terminate: () => worker.terminate(),
+  };
+};
+
 export const makeCompiler = async (
   options: IntegrationScenarioOptions,
 ): Promise<TypstCompiler> => {
   const compiler = await createTypstCompiler({
-    assets: {
-      wasm: options.wasm,
-    },
+    engine: options.engine,
+    ...(options.runtime !== "deno" && {
+      worker: () =>
+        createNodeWorkerHost(
+          new URL("../../dist/worker/node.js", import.meta.url),
+        ),
+    }),
+    ...(options.runtime === "deno" && {
+      worker: () =>
+        createDenoWorkerHost(
+          new URL("../../dist/worker/browser.js", import.meta.url),
+        ),
+    }),
     backend: options.backend,
   });
 

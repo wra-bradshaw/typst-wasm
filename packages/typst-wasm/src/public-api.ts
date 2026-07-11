@@ -1,4 +1,8 @@
-export type { WasmDiagnostic, WasmModuleSource } from "./wasm/index";
+export type {
+  EngineCompileOptions,
+  EngineCoreModuleLoader,
+  EngineModule,
+} from "./engine/types";
 export type { WorkerHost } from "./worker/host";
 export type { PackageCache } from "./files";
 export type {
@@ -19,8 +23,8 @@ export type {
   TypstFileRequest,
   TypstLoadedFile,
   RuntimeAsset,
-  TypstRuntimeAssets,
-  TypstWasmAsset,
   TypstWorkerAsset,
+  TypstDiagnostic,
 } from "./compiler/types";
 export * from "./errors";
+export { loadFonts } from "./fonts";

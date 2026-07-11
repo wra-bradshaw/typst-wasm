@@ -4,7 +4,6 @@ import {
   supportsWorkerBackend as supportsWorkerBackendPrimitive,
 } from "../backends/capabilities";
 import type { WorkerHost } from "../worker/host";
-import { loadWasmModule } from "./instantiate";
 
 export const createBrowserWorkerHost = (
   workerUrl: string | URL,
@@ -28,17 +27,12 @@ const supportsBrowserWorkerBackend = (): boolean =>
 
 export const browserRuntime: TypstRuntime = {
   createWorker: (options) => {
-    if (!options.assets.worker) {
-      throw new Error("Worker backend requires assets.worker");
+    if (!options.worker) {
+      throw new Error("Worker backend requires worker");
     }
-    return options.assets.worker();
+    return options.worker();
   },
-  loadWasmModule,
-  loadWasmSource: (options) =>
-    typeof options.assets.wasm === "function"
-      ? options.assets.wasm()
-      : options.assets.wasm,
   supportsWorkerBackend: (options) =>
-    Boolean(options.assets.worker) && supportsBrowserWorkerBackend(),
+    Boolean(options.worker) && supportsBrowserWorkerBackend(),
   supportsJspiBackend,
 };

@@ -1,4 +1,4 @@
-import type { WasmDiagnostic } from "./wasm/index";
+import type { TypstDiagnostic } from "./compiler/types";
 
 export class TypstError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
@@ -8,11 +8,11 @@ export class TypstError extends Error {
 }
 
 export class CompileError extends TypstError {
-  readonly diagnostics: WasmDiagnostic[];
+  readonly diagnostics: TypstDiagnostic[];
 
   constructor(
     message: string,
-    options: { diagnostics?: WasmDiagnostic[]; cause?: unknown } = {},
+    options: { diagnostics?: TypstDiagnostic[]; cause?: unknown } = {},
   ) {
     super(message, { cause: options.cause });
     this.diagnostics = options.diagnostics ?? [];
@@ -50,11 +50,19 @@ export class PackageParseError extends TypstError {
   }
 }
 
+const causeMessage = (cause: unknown): string => {
+  if (cause instanceof Error) return cause.message;
+  if (typeof cause === "string") return cause;
+  return String(cause);
+};
+
 export class PackageFetchError extends TypstError {
   readonly url: string;
 
   constructor(url: string, cause: unknown) {
-    super(`Failed to fetch package: ${url}`, { cause });
+    super(`Failed to fetch package: ${url} (${causeMessage(cause)})`, {
+      cause,
+    });
     this.url = url;
   }
 }

@@ -1,220 +1,41 @@
-import type { DirectServiceInternals } from "../../src/backends/direct";
-import type { TypstWorkerFactory } from "../../src/backends/worker";
 import type { WorkerHost } from "../../src/worker/host";
-import type {
-  WasmBytes,
-  WasmCompileOutput,
-  WasmModule,
-} from "../../src/wasm/index";
 
-type WorkerMessage =
-  | {
-      kind: "init";
-      requestId: number;
-      payload: {
-        wasmBytes: WasmBytes;
-      };
-    }
-  | {
-      kind: Exclude<string, "init">;
-      requestId: number;
-      payload?: unknown;
-    };
-
-export interface FakeWorkerState {
-  initMessages: WorkerMessage[];
+export type FakeWorkerState = {
+  initMessages: unknown[];
   terminateCount: number;
-}
+};
 
 export const makeFakeWorkerFactory = (
   state: FakeWorkerState,
-): TypstWorkerFactory => {
-  class FakeWorker implements WorkerHost {
-    private onMessage: ((data: unknown) => void) | null = null;
-
-    listen(
-      onMessage: (data: unknown) => void,
-      _onError: (cause: unknown) => void,
-    ) {
-      this.onMessage = onMessage;
-    }
-
-    postMessage(message: unknown) {
-      const msg = message as WorkerMessage;
-
-      if (msg.kind === "init") {
-        const payload = msg.payload as { wasmBytes: WasmBytes };
-        state.initMessages.push(msg);
-        queueMicrotask(() => {
-          if (new Uint8Array(payload.wasmBytes as Uint8Array)[0] === 0) {
-            this.onMessage?.({
-              requestId: msg.requestId,
-              error: { message: "init failed" },
-            });
-            return;
-          }
-
-          this.onMessage?.({ requestId: msg.requestId, result: undefined });
-        });
-        return;
-      }
-
-      queueMicrotask(() => {
-        this.onMessage?.({ requestId: msg.requestId, result: undefined });
-      });
-    }
-
-    terminate() {
-      state.terminateCount += 1;
-    }
-  }
-
-  return () => new FakeWorker();
-};
-
-const textEncoder = new TextEncoder();
-
-type HostFetch = (...args: number[]) => unknown;
-
-export interface FakeDirectServiceHost {
-  internals: DirectServiceInternals;
-  hostFetchCount(): number;
-  reset(): void;
-}
-
-export const makeFakeDirectServiceHost = (): FakeDirectServiceHost => {
-  const hostFetchers = new Map<number, HostFetch>();
-  const wasmState = {
-    offset: 16,
-    memory: new WebAssembly.Memory({ initial: 1 }),
-    externrefs: new Map<number, unknown>(),
-    nextExternref: 1,
-  };
-
-  class TypstCompiler {
-    readonly __wbg_ptr: number;
-
-    constructor(hostId: number) {
-      this.__wbg_ptr = hostId;
-    }
-
-    free() {}
-
-    add_font() {}
-    add_file() {}
-    add_source() {}
-    remove_file() {}
-    clear_files() {}
-    list_files() {
-      return [];
-    }
-    has_file() {
-      return false;
-    }
-    set_main() {}
-  }
-
-  const malloc = (size: number): number => {
-    const ptr = wasmState.offset;
-    wasmState.offset += Math.max(size, 1);
-    return ptr;
-  };
-
-  const typstcompiler_compile = async (hostId: number) => {
-    const path = textEncoder.encode("shared.typ");
-    const pathPtr = malloc(path.length);
-    new Uint8Array(wasmState.memory.buffer, pathPtr, path.length).set(path);
-
-    const resultLenPtr = malloc(4);
-    const hostFetch = hostFetchers.get(hostId);
-    if (!hostFetch) {
-      throw new Error(`No host fetch registered for ${hostId}`);
-    }
-    const resultPtr = await hostFetch(pathPtr, path.length, resultLenPtr);
-    const resultLen = new DataView(wasmState.memory.buffer).getUint32(
-      resultLenPtr,
-      true,
-    );
-    const outputBytes = new Uint8Array(
-      wasmState.memory.buffer,
-      Number(resultPtr),
-      resultLen,
-    ).slice();
-
-    const externref = wasmState.nextExternref++;
-    wasmState.externrefs.set(externref, {
-      success: true,
-      format: "pdf",
-      output_text: null,
-      output_bytes: outputBytes,
-      pages: [],
-      files: [],
-      diagnostics: [],
-      metadata: null,
-      internal_error: null,
-    } satisfies WasmCompileOutput);
-
-    return [externref, 0, 0] as [number, number, number];
-  };
-
-  const wasmModule = {
-    TypstCompiler,
-    memory: wasmState.memory,
-    __wbindgen_malloc: malloc,
-    typstcompiler_compile,
-    __wbindgen_externrefs: {
-      get: (idx: number) => wasmState.externrefs.get(idx),
-    },
-    __externref_table_dealloc: (idx: number) => {
-      wasmState.externrefs.delete(idx);
-    },
-  } as unknown as WasmModule;
-
-  return {
-    internals: {
-      registerHostFetch: (hostId, hostFetch) => {
-        hostFetchers.set(hostId, hostFetch as HostFetch);
-      },
-      unregisterHostFetch: (hostId) => {
-        hostFetchers.delete(hostId);
-      },
-      loadWasmModule: async (wasmBytes) => {
-        if (new Uint8Array(wasmBytes as Uint8Array)[0] === 0) {
-          throw new Error("failed to load wasm");
-        }
-        return wasmModule;
-      },
-    },
-    hostFetchCount: () => hostFetchers.size,
-    reset: () => {
-      hostFetchers.clear();
-      wasmState.offset = 16;
-      wasmState.externrefs.clear();
-      wasmState.nextExternref = 1;
-    },
-  };
-};
-
-export const installJspiWebAssemblyMock = (): (() => void) => {
-  const originalWebAssembly = globalThis.WebAssembly;
-
-  Object.defineProperty(globalThis, "WebAssembly", {
-    configurable: true,
-    value: {
-      ...originalWebAssembly,
-      Suspending: function Suspending(fn: unknown) {
-        return fn;
-      },
-      promising: (fn: (...args: unknown[]) => unknown) => {
-        return async (...args: unknown[]) => await fn(...args);
-      },
-    },
-  });
-
+): (() => WorkerHost) => {
   return () => {
-    Object.defineProperty(globalThis, "WebAssembly", {
-      configurable: true,
-      value: originalWebAssembly,
-    });
+    let onMessage: ((data: unknown) => void) | undefined;
+    let onError: ((cause: unknown) => void) | undefined;
+
+    return {
+      listen: (messageHandler, errorHandler) => {
+        onMessage = messageHandler;
+        onError = errorHandler;
+      },
+      postMessage: (message: unknown) => {
+        state.initMessages.push(message);
+        if (
+          typeof message === "object" &&
+          message !== null &&
+          "requestId" in message
+        ) {
+          queueMicrotask(() =>
+            onMessage?.({
+              requestId: (message as { requestId: number }).requestId,
+              result: undefined,
+            }),
+          );
+        }
+      },
+      terminate: () => {
+        state.terminateCount += 1;
+        onError = undefined;
+      },
+    };
   };
 };

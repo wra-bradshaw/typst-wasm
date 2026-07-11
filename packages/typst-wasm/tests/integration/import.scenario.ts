@@ -8,7 +8,7 @@ import {
 const importSource = `#import "@preview/wordometer:0.1.5": word-count-of
 #set page(width: auto, height: auto, margin: 10pt)
 = Word Count Demo
-#word-count-of(total: true)[Hello world, this is a test.]
+#word-count-of[Hello world, this is a test.]
 `;
 
 export const runImportScenario = async (

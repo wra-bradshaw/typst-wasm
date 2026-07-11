@@ -1,74 +1,72 @@
 export interface PackageCache {
-  get(key: string): Promise<Uint8Array | null>;
-  set(key: string, value: Uint8Array): Promise<void>;
+  match(request: RequestInfo | URL): Promise<Response | null>;
+  put(request: RequestInfo | URL, response: Response): Promise<void>;
 }
 
 export const makeBrowserCacheStorage = (): PackageCache => {
   let cachePromise: Promise<Cache | null> | null = null;
 
   const openCache = async (): Promise<Cache | null> => {
-    cachePromise ??= caches.open("typst-packages").catch(() => null);
+    cachePromise ??= (async () => {
+      try {
+        return await caches.open("typst-packages-v1");
+      } catch (error) {
+        globalThis.console.error("Failed to open Typst package cache", error);
+        return null;
+      }
+    })();
     return cachePromise;
   };
 
   return {
-    async get(key: string): Promise<Uint8Array | null> {
+    async match(request) {
       const cache = await openCache();
       if (!cache) return null;
-
       try {
-        const response = await cache.match(key);
-        if (!response) return null;
-        return new Uint8Array(await response.arrayBuffer());
-      } catch {
+        return await cache.match(request);
+      } catch (error) {
+        globalThis.console.error("Failed to read Typst package cache", error);
         return null;
       }
     },
 
-    async set(key: string, value: Uint8Array): Promise<void> {
+    async put(request, response) {
       const cache = await openCache();
       if (!cache) return;
-
       try {
-        const response = new Response(value.slice(), {
-          headers: { "Content-Type": "application/octet-stream" },
-        });
-        await cache.put(key, response);
-      } catch {
-        // Cache failures should not make compilation fail.
+        await cache.put(request, response);
+      } catch (error) {
+        globalThis.console.error("Failed to write Typst package cache", error);
       }
     },
   };
 };
 
-export const makeMemoryCacheStorage = (capacity: number): PackageCache => {
-  const storage = new Map<string, Uint8Array>();
+export const makeMemoryCacheStorage = (capacity = 400): PackageCache => {
+  const storage = new Map<string, Response>();
+  const key = (request: RequestInfo | URL): string => String(request);
 
   return {
-    async get(key: string): Promise<Uint8Array | null> {
-      const value = storage.get(key);
+    async match(request) {
+      const value = storage.get(key(request));
       if (!value) return null;
-      storage.delete(key);
-      storage.set(key, value);
-      return value;
+      storage.delete(key(request));
+      storage.set(key(request), value);
+      return value.clone();
     },
 
-    async set(key: string, value: Uint8Array): Promise<void> {
-      if (storage.has(key)) {
-        storage.delete(key);
-      }
-
-      storage.set(key, value);
+    async put(request, response) {
+      const cacheKey = key(request);
+      storage.delete(cacheKey);
+      storage.set(cacheKey, response.clone());
       while (storage.size > capacity) {
-        const oldest = storage.keys().next().value as string | undefined;
-        if (!oldest) break;
+        const oldest = storage.keys().next().value;
+        if (oldest === undefined) break;
         storage.delete(oldest);
       }
     },
   };
 };
 
-export const makeDefaultPackageCache = (capacity = 400): PackageCache =>
-  typeof caches !== "undefined"
-    ? makeBrowserCacheStorage()
-    : makeMemoryCacheStorage(capacity);
+export const makeDefaultPackageCache = (): PackageCache | undefined =>
+  typeof caches === "undefined" ? undefined : makeBrowserCacheStorage();

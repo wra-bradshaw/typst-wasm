@@ -77,7 +77,15 @@ export const runCompileFormatScenario = async (
     `[${options.runtime}] expected HTML output`,
   );
 
-  const bundleResult = await compiler.compile({ format: "bundle" });
+  await compiler.addSource(
+    "bundle.typ",
+    `#document("index.html")[= Page One]
+#document("second.html")[= Page Two]`,
+  );
+  const bundleResult = await compiler.compile({
+    main: "bundle.typ",
+    format: "bundle",
+  });
   assert(
     bundleResult.format === "bundle" && bundleResult.files.length > 0,
     `[${options.runtime}] expected bundle files`,

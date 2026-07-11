@@ -1,9 +1,5 @@
 import type { PackageCache } from "../files";
-import type {
-  WasmBytes,
-  WasmDiagnostic,
-  WasmModuleSource,
-} from "../wasm/index";
+import type { EngineCoreModuleLoader, EngineModule } from "../engine/types";
 import type { WorkerHost } from "../worker/host";
 
 export type CompileFormat = "pdf" | "png" | "svg" | "html" | "bundle";
@@ -52,21 +48,20 @@ export interface TypstDocumentMetadata {
 
 export type RuntimeAsset<T> = T | (() => T | Promise<T>);
 
-export type TypstWasmAsset = RuntimeAsset<WasmBytes | WasmModuleSource>;
 export type TypstWorkerAsset = () => WorkerHost;
 
-export interface TypstRuntimeAssets {
-  wasm: TypstWasmAsset;
-  worker?: TypstWorkerAsset;
-}
-
 export interface TypstCompilerOptions {
-  assets: TypstRuntimeAssets;
   backend?: "auto" | "worker" | "jspi";
+  /** JCO-generated engine module used by the JSPI backend. */
+  engine?: EngineModule;
+  /** Overrides JCO's default core WebAssembly module lookup. */
+  getCoreModule?: EngineCoreModuleLoader;
+  /** Creates the host used by the worker backend when it is selected. */
+  worker?: TypstWorkerAsset;
   fileLoaders?: TypstFileLoader[];
   fetch?: typeof fetch;
   packageBaseUrl?: string;
-  packageCache?: PackageCache;
+  packageCache?: PackageCache | false;
   memoryPackageCacheCapacity?: number;
 }
 
@@ -91,9 +86,22 @@ export interface BundleFile {
 }
 
 export interface CompileResultBase {
-  diagnostics: WasmDiagnostic[];
+  diagnostics: TypstDiagnostic[];
   metadata?: TypstDocumentMetadata;
   dependencies?: TypstLoadedFile[];
+}
+
+export interface TypstDiagnostic {
+  message: string;
+  severity: "warning" | "error";
+  file?: string;
+  line?: number;
+  column?: number;
+  start?: number;
+  end?: number;
+  formatted: string;
+  hints: string[];
+  trace: string[];
 }
 
 export type CompileResult =

@@ -1,8 +1,7 @@
 import type {
-  WasmBytes,
-  WasmCompileOptions,
-  WasmCompileOutput,
-} from "../wasm/index";
+  EngineCompileOptions,
+  EngineCompileSuccess,
+} from "../engine/types";
 
 const MiB = 1024 * 1024;
 const INITIAL_SAB_SIZE = 1 * MiB;
@@ -16,6 +15,16 @@ export const SharedMemoryCommunicationStatus = {
   Success: 3,
 } as const;
 
+export const SharedMemoryCommunicationError = {
+  Other: 0,
+  NotFound: 1,
+  Denied: 2,
+  Timeout: 3,
+  Unavailable: 4,
+} as const;
+export type SharedMemoryCommunicationError =
+  (typeof SharedMemoryCommunicationError)[keyof typeof SharedMemoryCommunicationError];
+
 export type SharedMemoryCommunicationStatus =
   (typeof SharedMemoryCommunicationStatus)[keyof typeof SharedMemoryCommunicationStatus];
 
@@ -23,6 +32,7 @@ export class SharedMemoryCommunication {
   dataBuf: SharedArrayBuffer;
   statusBuf: SharedArrayBuffer;
   sizeBuf: SharedArrayBuffer;
+  errorBuf: SharedArrayBuffer;
 
   constructor() {
     this.dataBuf = new SharedArrayBuffer(INITIAL_SAB_SIZE, {
@@ -32,6 +42,7 @@ export class SharedMemoryCommunication {
     this.statusBuf = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
 
     this.sizeBuf = new SharedArrayBuffer(Uint32Array.BYTES_PER_ELEMENT);
+    this.errorBuf = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
   }
 
   private getStatusView(): Int32Array {
@@ -98,6 +109,14 @@ export class SharedMemoryCommunication {
     return new Uint8Array(this.dataBuf, 0, size);
   }
 
+  setError(error: SharedMemoryCommunicationError): void {
+    Atomics.store(new Int32Array(this.errorBuf), 0, error);
+  }
+
+  getError(): SharedMemoryCommunicationError {
+    return Atomics.load(new Int32Array(this.errorBuf), 0) as SharedMemoryCommunicationError;
+  }
+
   waitForStatusChange(
     expectedStatus: SharedMemoryCommunicationStatus,
     timeoutMs = DEFAULT_FETCH_TIMEOUT,
@@ -133,6 +152,7 @@ export class SharedMemoryCommunication {
     instance.dataBuf = obj.dataBuf;
     instance.statusBuf = obj.statusBuf;
     instance.sizeBuf = obj.sizeBuf;
+    instance.errorBuf = obj.errorBuf;
 
     return instance;
   }
@@ -142,7 +162,6 @@ export interface TypstWorkerProtocol {
   init: {
     request: {
       sharedMemoryCommunication: SharedMemoryCommunication;
-      wasmBytes: WasmBytes;
     };
     response: void;
   };
@@ -191,9 +210,9 @@ export interface TypstWorkerProtocol {
 
   compile: {
     request: {
-      options: WasmCompileOptions;
+      options: EngineCompileOptions;
     };
-    response: WasmCompileOutput;
+    response: EngineCompileSuccess;
   };
 
   list_files: {

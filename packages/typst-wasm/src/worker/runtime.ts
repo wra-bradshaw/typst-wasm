@@ -1,6 +1,6 @@
-import { registerHostFetch } from "@typst-wasm/engine-wasm/bridge";
 import {
   SharedMemoryCommunication,
+  SharedMemoryCommunicationError,
   SharedMemoryCommunicationStatus,
 } from "./protocol";
 import type { WorkerPort } from "./port";
@@ -10,11 +10,11 @@ import {
   type WorkerToMainMessage,
 } from "./messages";
 import type {
-  InitOutput,
-  TypstCompilerInstance,
-  WasmBytes,
-  WasmModule,
-} from "../wasm/index";
+  EngineCompileSuccess,
+  EngineCompiler,
+  EngineFetchRequest,
+  EngineModule,
+} from "../engine/types";
 
 export type { MainToWorkerMessage, WorkerToMainMessage } from "./messages";
 
@@ -30,6 +30,19 @@ type WorkerRpcError = {
 };
 
 type WorkerRpcResponse = Extract<WorkerToMainMessage, { requestId: number }>;
+
+const extractErrorPayload = (error: unknown): unknown => {
+  if (typeof error !== "object" || error === null) return undefined;
+  if ("payload" in error) return (error as { payload?: unknown }).payload;
+  if ("cause" in error)
+    return extractErrorPayload((error as { cause?: unknown }).cause);
+  return undefined;
+};
+
+const serializeErrorCause = (cause: unknown): unknown => {
+  const payload = extractErrorPayload(cause);
+  return payload === undefined ? cause : { payload };
+};
 
 class WorkerCommandError extends Error {
   constructor(
@@ -56,90 +69,66 @@ const toWorkerCommandError = (
         error,
       );
 
+const fetchErrorForCode = (code: SharedMemoryCommunicationError): never => {
+  switch (code) {
+    case SharedMemoryCommunicationError.NotFound:
+      throw { tag: "not-found" };
+    case SharedMemoryCommunicationError.Denied:
+      throw { tag: "denied" };
+    case SharedMemoryCommunicationError.Timeout:
+      throw { tag: "timeout" };
+    case SharedMemoryCommunicationError.Unavailable:
+      throw { tag: "unavailable" };
+    default:
+      throw { tag: "other", val: "Worker fetch failed" };
+  }
+};
+
 export const installTypstWorkerRuntime = (
   port: WorkerPort,
-  loadWorkerWasmModule: (wasmBytes: WasmBytes) => Promise<WasmModule>,
+  loadEngine: () => Promise<EngineModule>,
 ): void => {
-  let compiler: TypstCompilerInstance | null = null;
+  let compiler: EngineCompiler | null = null;
   let sharedMemoryCommunication: SharedMemoryCommunication | null = null;
-  let wasmExports: InitOutput | null = null;
 
-  const MAX_FETCH_ATTEMPTS = 3;
-  const textDecoder = new TextDecoder();
-  const WORKER_HOST_ID = 1;
-
-  const writeResultLength = (resultLenPtr: number, len: number): void => {
-    if (!wasmExports) {
-      throw new Error("WASM exports not initialized");
-    }
-
-    new DataView(wasmExports.memory.buffer).setUint32(resultLenPtr, len, true);
-  };
-
-  const pathFromWasm = (pathPtr: number, pathLen: number): string => {
-    if (!wasmExports) {
-      throw new Error("WASM exports not initialized");
-    }
-
-    return textDecoder.decode(
-      new Uint8Array(wasmExports.memory.buffer, pathPtr, pathLen),
-    );
-  };
-
-  const copyIntoWasm = (bytes: Uint8Array, resultLenPtr: number): number => {
-    if (!wasmExports) {
-      throw new Error("WASM exports not initialized");
-    }
-
-    const resultPtr = wasmExports.__wbindgen_malloc(bytes.length, 1);
-    new Uint8Array(wasmExports.memory.buffer, resultPtr, bytes.length).set(
-      bytes,
-    );
-    writeResultLength(resultLenPtr, bytes.length);
-    return resultPtr;
-  };
-
-  const hostFetch = (
-    pathPtr: number,
-    pathLen: number,
-    resultLenPtr: number,
-  ): number => {
+  const hostFetch = (request: EngineFetchRequest) => {
     if (!sharedMemoryCommunication) {
       throw new Error("Communication buffer not initialized");
     }
 
-    const path = pathFromWasm(pathPtr, pathLen);
-
-    for (let attempt = 0; attempt < MAX_FETCH_ATTEMPTS; attempt += 1) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
       sharedMemoryCommunication.setStatus(
         SharedMemoryCommunicationStatus.Pending,
       );
       port.postMessage({
         kind: "web_fetch",
-        payload: { path },
+        payload: { request },
       } satisfies WorkerToMainMessage);
 
       const changed = sharedMemoryCommunication.waitForStatusChange(
         SharedMemoryCommunicationStatus.Pending,
-        30000,
+        30_000,
       );
-      if (!changed) {
-        continue;
-      }
+      if (!changed) continue;
 
       if (
         sharedMemoryCommunication.getStatus() ===
         SharedMemoryCommunicationStatus.Success
       ) {
-        return copyIntoWasm(
-          sharedMemoryCommunication.getBuffer(),
-          resultLenPtr,
-        );
+        return {
+          data: new Uint8Array(sharedMemoryCommunication.getBuffer()),
+        };
+      }
+
+      if (
+        sharedMemoryCommunication.getStatus() ===
+        SharedMemoryCommunicationStatus.Error
+      ) {
+        fetchErrorForCode(sharedMemoryCommunication.getError());
       }
     }
 
-    writeResultLength(resultLenPtr, 0);
-    return 0;
+    throw { tag: "timeout" };
   };
 
   const successResponse = (
@@ -160,7 +149,7 @@ export const installTypstWorkerRuntime = (
     error: { code, message, cause } satisfies WorkerRpcError,
   });
 
-  const ensureCompiler = (requestId: number): TypstCompilerInstance => {
+  const ensureCompiler = (requestId: number): EngineCompiler => {
     if (compiler) return compiler;
     throw new WorkerCommandError(
       requestId,
@@ -172,7 +161,7 @@ export const installTypstWorkerRuntime = (
   const runCompilerCommand = <T>(
     requestId: number,
     commandName: string,
-    run: (readyCompiler: TypstCompilerInstance) => T,
+    run: (readyCompiler: EngineCompiler) => T,
   ): T => {
     const readyCompiler = ensureCompiler(requestId);
     try {
@@ -195,22 +184,15 @@ export const installTypstWorkerRuntime = (
         sharedMemoryCommunication = SharedMemoryCommunication.hydrateObj(
           request.payload.sharedMemoryCommunication,
         );
-        let wasmModule: Awaited<ReturnType<typeof loadWorkerWasmModule>>;
         try {
-          wasmModule = await loadWorkerWasmModule(request.payload.wasmBytes);
-        } catch (cause) {
-          throw new WorkerCommandError(
-            request.requestId,
-            "INIT_FAILED",
-            "Failed to load WASM module",
-            cause,
-          );
-        }
-
-        try {
-          registerHostFetch(WORKER_HOST_ID, hostFetch);
-          wasmExports = wasmModule;
-          compiler = new wasmModule.TypstCompiler(WORKER_HOST_ID);
+          const engine = await loadEngine();
+          const root = await engine.instantiate(undefined, {
+            "typst:engine/host": {
+              fetch: hostFetch,
+              today: () => undefined,
+            },
+          });
+          compiler = new root.api.Compiler();
         } catch (cause) {
           throw new WorkerCommandError(
             request.requestId,
@@ -219,75 +201,74 @@ export const installTypstWorkerRuntime = (
             cause,
           );
         }
-
         return successResponse(request.requestId, undefined);
       }
       case "add_file":
-        runCompilerCommand(request.requestId, "add_file", (readyCompiler) => {
-          readyCompiler.add_file(request.payload.path, request.payload.data);
+        runCompilerCommand(request.requestId, "add-file", (readyCompiler) => {
+          readyCompiler.addFile(request.payload.path, request.payload.data);
         });
         return successResponse(request.requestId, undefined);
       case "add_source":
-        runCompilerCommand(request.requestId, "add_source", (readyCompiler) => {
-          readyCompiler.add_source(request.payload.path, request.payload.text);
+        runCompilerCommand(request.requestId, "add-source", (readyCompiler) => {
+          readyCompiler.addSource(request.payload.path, request.payload.text);
         });
         return successResponse(request.requestId, undefined);
       case "add_font":
-        runCompilerCommand(request.requestId, "add_font", (readyCompiler) => {
-          readyCompiler.add_font(request.payload.data);
+        runCompilerCommand(request.requestId, "add-font", (readyCompiler) => {
+          readyCompiler.addFont(request.payload.data);
         });
         return successResponse(request.requestId, undefined);
       case "remove_file":
         runCompilerCommand(
           request.requestId,
-          "remove_file",
+          "remove-file",
           (readyCompiler) => {
-            readyCompiler.remove_file(request.payload.path);
+            readyCompiler.removeFile(request.payload.path);
           },
         );
         return successResponse(request.requestId, undefined);
       case "clear_files":
         runCompilerCommand(
           request.requestId,
-          "clear_files",
+          "clear-files",
           (readyCompiler) => {
-            readyCompiler.clear_files();
+            readyCompiler.clearFiles();
           },
         );
         return successResponse(request.requestId, undefined);
       case "set_main":
-        runCompilerCommand(request.requestId, "set_main", (readyCompiler) => {
-          readyCompiler.set_main(request.payload.path);
+        runCompilerCommand(request.requestId, "set-main", (readyCompiler) => {
+          readyCompiler.setMain(request.payload.path);
         });
         return successResponse(request.requestId, undefined);
       case "compile":
         return successResponse(
           request.requestId,
-          runCompilerCommand(request.requestId, "compile", (readyCompiler) =>
-            readyCompiler.compile(request.payload.options),
+          await runCompilerCommand(
+            request.requestId,
+            "compile",
+            (readyCompiler) => readyCompiler.compile(request.payload.options),
           ),
         );
       case "list_files":
         return successResponse(
           request.requestId,
-          runCompilerCommand(request.requestId, "list_files", (readyCompiler) =>
-            readyCompiler.list_files(),
+          runCompilerCommand(request.requestId, "list-files", (readyCompiler) =>
+            readyCompiler.listFiles(),
           ),
         );
       case "has_file":
         return successResponse(
           request.requestId,
-          runCompilerCommand(request.requestId, "has_file", (readyCompiler) =>
-            readyCompiler.has_file(request.payload.path),
+          runCompilerCommand(request.requestId, "has-file", (readyCompiler) =>
+            readyCompiler.hasFile(request.payload.path),
           ),
         );
     }
   };
 
   port.onMessage((data) => {
-    if (!isMainToWorkerMessage(data)) {
-      return;
-    }
+    if (!isMainToWorkerMessage(data)) return;
 
     void handleRequest(data)
       .catch((error) => {
@@ -296,11 +277,9 @@ export const installTypstWorkerRuntime = (
           commandError.requestId,
           commandError.code,
           commandError.message,
-          commandError.cause,
+          serializeErrorCause(commandError.cause),
         );
       })
-      .then((result) => {
-        port.postMessage(result);
-      });
+      .then((result) => port.postMessage(result));
   });
 };

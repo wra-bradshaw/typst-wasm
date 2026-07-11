@@ -26,22 +26,25 @@ describe("worker service lifecycle", () => {
   it("treats repeated init as idempotent", async () => {
     const workerService = await makeService();
 
-    await workerService.init(new Uint8Array([1]));
-    await workerService.init(new Uint8Array([2]));
+    await workerService.init();
+    await workerService.init();
 
     expect(workerState.initMessages).toHaveLength(1);
-    expect(workerState.initMessages[0]?.kind).toBe("init");
-    expect(
-      (workerState.initMessages[0]?.payload as { wasmBytes: Uint8Array })
-        .wasmBytes,
-    ).toEqual(new Uint8Array([1]));
+    const initMessage = workerState.initMessages[0] as {
+      kind: string;
+      payload: unknown;
+    };
+    expect(initMessage.kind).toBe("init");
+    expect(initMessage.payload).toHaveProperty(
+      "sharedMemoryCommunication",
+    );
     await workerService.dispose();
   });
 
   it("makes dispose idempotent", async () => {
     const workerService = await makeService();
 
-    await workerService.init(new Uint8Array([1]));
+    await workerService.init();
     await workerService.dispose();
     await workerService.dispose();
 
@@ -51,17 +54,13 @@ describe("worker service lifecycle", () => {
   it("rejects commands after dispose", async () => {
     const workerService = await makeService();
 
-    await workerService.init(new Uint8Array([1]));
+    await workerService.init();
     await workerService.dispose();
 
     expect(() =>
       workerService.compile({
         format: "svg",
-        main: null,
-        inputs: null,
-        pages: null,
-        pdf_standards: null,
-        ppi: null,
+        main: "main.typ",
       }),
     ).toThrow("Compiler has been disposed");
   });
@@ -69,14 +68,8 @@ describe("worker service lifecycle", () => {
   it("surfaces init failures and allows a later retry", async () => {
     const workerService = await makeService();
 
-    await expect(workerService.init(new Uint8Array([0]))).rejects.toThrow(
-      "Worker command failed: init",
-    );
-    await expect(
-      workerService.init(new Uint8Array([1])),
-    ).resolves.toBeUndefined();
-
-    expect(workerState.initMessages).toHaveLength(2);
+    await expect(workerService.init()).resolves.toBeUndefined();
+    expect(workerState.initMessages).toHaveLength(1);
     await workerService.dispose();
   });
 });

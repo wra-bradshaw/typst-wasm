@@ -43,11 +43,11 @@ export class FileLoaderManager {
     return [...this.loadedFiles.values()];
   }
 
-  async load(path: string): Promise<Uint8Array> {
-    const request: TypstFileRequest = {
-      path,
-      kind: classifyTypstFilePath(path),
-    };
+  async loadFile(pathOrRequest: string | TypstFileRequest): Promise<TypstFileLoad> {
+    const request: TypstFileRequest =
+      typeof pathOrRequest === "string"
+        ? { path: pathOrRequest, kind: classifyTypstFilePath(pathOrRequest) }
+        : pathOrRequest;
 
     for (const loader of this.loaders) {
       const result = await loader.load(request);
@@ -55,10 +55,14 @@ export class FileLoaderManager {
 
       const normalized = normalizeLoad(result);
       this.record(request, normalized);
-      return normalized.data;
+      return normalized;
     }
 
-    throw new FileNotFoundError(path);
+    throw new FileNotFoundError(request.path);
+  }
+
+  async load(pathOrRequest: string | TypstFileRequest): Promise<Uint8Array> {
+    return (await this.loadFile(pathOrRequest)).data;
   }
 
   private record(request: TypstFileRequest, load: TypstFileLoad): void {

@@ -17,9 +17,8 @@
       ];
 
       typst-wasm = pkgs.callPackage ./package.nix {
-        engineWasm = config.packages.wasm;
+        engineWasm = config.packages.engine-wasm;
         fonts = config.packages.fonts;
-        nativeBuildInputs = typstWasmNativeBuildInputs;
       };
 
     in

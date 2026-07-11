@@ -6,6 +6,12 @@ import {
 } from "../files/loaders";
 import { makeFetchBridge } from "./fetch-bridge";
 import { SharedMemoryCommunicationStatus } from "./protocol";
+import type { EngineFetchRequest } from "../engine/types";
+
+const projectRequest: EngineFetchRequest = {
+  path: "main.typ",
+  kind: "project",
+};
 
 describe("fetch bridge", () => {
   it("writes package bytes into shared memory on success", async () => {
@@ -14,7 +20,7 @@ describe("fetch bridge", () => {
       () => false,
     );
 
-    await bridge.handleFetchRequest("@preview/test:0.1.0/file.typ");
+    await bridge.handleFetchRequest(projectRequest);
 
     expect(bridge.sharedMemoryCommunication.getStatus()).toBe(
       SharedMemoryCommunicationStatus.Success,
@@ -36,7 +42,7 @@ describe("fetch bridge", () => {
       () => false,
     );
 
-    await bridge.handleFetchRequest("@preview/test:0.1.0/file.typ");
+    await bridge.handleFetchRequest(projectRequest);
 
     expect(bridge.sharedMemoryCommunication.getStatus()).toBe(
       SharedMemoryCommunicationStatus.Error,
@@ -51,7 +57,7 @@ describe("fetch bridge", () => {
     );
 
     disposed = true;
-    await bridge.handleFetchRequest("@preview/test:0.1.0/file.typ");
+    await bridge.handleFetchRequest(projectRequest);
 
     expect(bridge.sharedMemoryCommunication.getStatus()).toBe(
       SharedMemoryCommunicationStatus.None,
@@ -67,7 +73,7 @@ describe("fetch bridge", () => {
       () => false,
     );
 
-    await bridge.handleFetchRequest("/image.png");
+    await bridge.handleFetchRequest({ path: "/image.png", kind: "url" });
 
     expect(fetchImpl).toHaveBeenCalledWith("/image.png");
     expect([...bridge.sharedMemoryCommunication.getBuffer()]).toEqual([4, 5]);

@@ -1,11 +1,24 @@
-import { Worker } from "node:worker_threads";
 import type { TypstRuntime } from "../backends/index";
 import { supportsJspiBackend } from "../backends/capabilities";
 import type { WorkerHost } from "../worker/host";
-import { loadWasmModule } from "./instantiate";
 
 export const createNodeWorkerHost = (workerUrl: string | URL): WorkerHost => {
-  const worker = new Worker(workerUrl, { execArgv: [], type: "module" });
+  if ("Bun" in globalThis) {
+    const worker = new globalThis.Worker(workerUrl, { type: "module" });
+    return {
+      listen: (onMessage, onError) => {
+        worker.addEventListener("message", (event) => onMessage(event.data));
+        worker.addEventListener("error", onError);
+      },
+      postMessage: (data) => worker.postMessage(data),
+      terminate: () => worker.terminate(),
+    };
+  }
+
+  const { Worker } = process.getBuiltinModule(
+    "node:worker_threads",
+  ) as typeof import("node:worker_threads");
+  const worker = new Worker(workerUrl, { execArgv: [] });
   return {
     listen: (onMessage, onError) => {
       worker.on("message", onMessage);
@@ -20,16 +33,11 @@ export const createWorkerHost = createNodeWorkerHost;
 
 export const nodeRuntime: TypstRuntime = {
   createWorker: (options) => {
-    if (!options.assets.worker) {
-      throw new Error("Worker backend requires assets.worker");
+    if (!options.worker) {
+      throw new Error("Worker backend requires worker");
     }
-    return options.assets.worker();
+    return options.worker();
   },
-  loadWasmModule,
-  loadWasmSource: (options) =>
-    typeof options.assets.wasm === "function"
-      ? options.assets.wasm()
-      : options.assets.wasm,
-  supportsWorkerBackend: (options) => Boolean(options.assets.worker),
+  supportsWorkerBackend: (options) => Boolean(options.worker),
   supportsJspiBackend,
 };

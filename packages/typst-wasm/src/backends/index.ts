@@ -1,12 +1,9 @@
 import type { TypstCompilerOptions } from "../compiler/types";
 import type { FileLoaderManager } from "../files/loaders";
 import type {
-  WasmBytes,
-  WasmCompileOptions,
-  WasmCompileOutput,
-  WasmModule,
-  WasmModuleSource,
-} from "../wasm/index";
+  EngineCompileOptions,
+  EngineCompileSuccess,
+} from "../engine/types";
 import { supportsJspiBackend, supportsWorkerBackend } from "./capabilities";
 import { DirectService } from "./direct";
 import { WorkerService } from "./worker";
@@ -18,7 +15,7 @@ export type BackendKind = "auto" | "worker" | "jspi";
 export type BackendSelection = Exclude<BackendKind, "auto"> | "none";
 
 export type BackendService = {
-  init(wasmSource?: WasmBytes | WasmModuleSource): Promise<void>;
+  init(): Promise<void>;
   dispose(): Promise<void>;
   addFont(data: Uint8Array): Promise<void>;
   addFile(path: string, data: Uint8Array): Promise<void>;
@@ -28,7 +25,7 @@ export type BackendService = {
   listFiles(): Promise<string[]>;
   hasFile(path: string): Promise<boolean>;
   setMain(path: string): Promise<void>;
-  compile(options: WasmCompileOptions): Promise<WasmCompileOutput>;
+  compile(options: EngineCompileOptions): Promise<EngineCompileSuccess>;
 };
 
 export interface BackendOptions {
@@ -46,10 +43,6 @@ interface RuntimeWorkerHost {
 
 export interface TypstRuntime {
   createWorker(options: TypstCompilerOptions): RuntimeWorkerHost;
-  loadWasmModule(wasmSource: WasmBytes | WasmModuleSource): Promise<WasmModule>;
-  loadWasmSource(
-    options: TypstCompilerOptions,
-  ): Promise<WasmBytes | WasmModuleSource | undefined>;
   supportsWorkerBackend(options: TypstCompilerOptions): boolean;
   supportsJspiBackend(): boolean;
   unavailableWorkerMessage?: string;
@@ -79,17 +72,21 @@ export const createRuntimeBackend = (
     case "worker":
       if (!runtime.supportsWorkerBackend(compilerOptions)) {
         throw new Error(
-          runtime.unavailableWorkerMessage ??
-            "Worker backend requires assets.worker",
+          runtime.unavailableWorkerMessage ?? "Worker backend requires worker",
         );
       }
       return new WorkerService(options.fileLoaderManager, {
         createWorker: () => runtime.createWorker(compilerOptions),
       });
     case "jspi":
-      return new DirectService(options.fileLoaderManager, {
-        loadWasmModule: runtime.loadWasmModule,
-      });
+      if (!compilerOptions.engine) {
+        throw new Error("JSPI backend requires engine");
+      }
+      return new DirectService(
+        options.fileLoaderManager,
+        compilerOptions.engine,
+        compilerOptions.getCoreModule,
+      );
     case "none":
       throw new Error(
         "No compatible typst-wasm backend available. Requires Worker+SharedArrayBuffer+Atomics.wait or JSPI.",
