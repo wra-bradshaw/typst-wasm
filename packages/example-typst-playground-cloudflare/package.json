@@ -7,8 +7,8 @@
     "build": "nix run ../..#build-artifact -- example-typst-playground-cloudflare dist",
     "cf-typegen": "wrangler types",
     "deploy": "pnpm run build && wrangler deploy",
-    "dev": "pnpm run build && node --experimental-wasm-stack-switching node_modules/vite/bin/vite.js dev",
-    "preview": "pnpm run build && node --experimental-wasm-stack-switching node_modules/vite/bin/vite.js preview",
+    "dev": "pnpm run build && vite dev",
+    "preview": "vite build && vite preview",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
