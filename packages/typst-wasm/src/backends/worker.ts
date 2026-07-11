@@ -2,10 +2,7 @@ import type { FileLoaderManager } from "../files/loaders";
 import { CompilerDisposedError } from "../errors";
 import type { ResolvedLogger } from "../logging";
 import { makeFetchBridge } from "../worker/fetch-bridge";
-import {
-  isRpcResponseMessage,
-  type WorkerToMainMessage,
-} from "../worker/messages";
+import type { WorkerEventMessage } from "../worker/messages";
 import type { WorkerHost } from "../worker/host";
 import type { TypstWorkerProtocol } from "../worker/protocol";
 import { makeRpcClient, type RpcClient } from "../worker/rpc";
@@ -53,7 +50,10 @@ export class WorkerService {
     this.transport = makeWorkerTransport(
       this.worker,
       (msg) => {
-        void this.handleMessage(msg, fetchBridge.handleFetchRequest).catch(
+        this.rpcClient.receive(msg);
+      },
+      (msg) => {
+        void this.handleEvent(msg, fetchBridge.handleFetchRequest).catch(
           (cause) => {
             logger?.error("Typst worker event handling failed", cause);
           },
@@ -141,15 +141,10 @@ export class WorkerService {
     return this.rpcClient.call("compile", { options });
   }
 
-  private async handleMessage(
-    msg: WorkerToMainMessage,
+  private async handleEvent(
+    msg: WorkerEventMessage,
     handleFetchRequest: (request: EngineFetchRequest) => Promise<void>,
   ): Promise<void> {
-    if (isRpcResponseMessage(msg)) {
-      this.rpcClient.receive(msg);
-      return;
-    }
-
     switch (msg.kind) {
       case "web_fetch":
         await handleFetchRequest(msg.payload.request);

@@ -10,7 +10,6 @@ import {
   type WorkerToMainMessage,
 } from "./messages";
 import type {
-  EngineCompileSuccess,
   EngineCompiler,
   EngineFetchRequest,
   EngineModule,

@@ -1,19 +1,10 @@
 import { WorkerError } from "../errors";
-import { isRpcResponseMessage } from "./messages";
+import type { RpcResponseMessage } from "./protocol";
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
-
-const extractRpcErrorMessage = (error: unknown): string => {
-  if (typeof error === "string") return error;
-  if (isRecord(error) && typeof error.message === "string")
-    return error.message;
-
-  try {
-    return JSON.stringify(error);
-  } catch {
-    return String(error);
-  }
+type RpcOutgoingMessage<Protocol> = {
+  kind: keyof Protocol;
+  requestId: number;
+  payload?: unknown;
 };
 
 export interface RpcClient<Protocol> {
@@ -26,12 +17,12 @@ export interface RpcClient<Protocol> {
       : []
   ): Promise<Protocol[K] extends { response: infer R } ? R : void>;
   notify(message: unknown): void;
-  receive(response: unknown): void;
+  receive(response: RpcResponseMessage): void;
   rejectAll(cause: unknown): void;
 }
 
 export const makeRpcClient = <Protocol>(
-  sender: (message: unknown) => void,
+  sender: (message: RpcOutgoingMessage<Protocol>) => void,
 ): RpcClient<Protocol> => {
   let requestIdCounter = 0;
   const pending = new Map<
@@ -79,9 +70,7 @@ export const makeRpcClient = <Protocol>(
     });
   };
 
-  const receive = (response: unknown): void => {
-    if (!isRpcResponseMessage(response)) return;
-
+  const receive = (response: RpcResponseMessage): void => {
     const req = pending.get(response.requestId);
     if (!req) return;
 
@@ -91,7 +80,7 @@ export const makeRpcClient = <Protocol>(
     } else {
       req.reject(
         new WorkerError(`Worker command failed: ${req.kind}`, {
-          cause: response.error ?? extractRpcErrorMessage(response.error),
+          cause: response.error,
         }),
       );
     }

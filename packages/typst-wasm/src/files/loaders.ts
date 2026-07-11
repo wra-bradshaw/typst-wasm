@@ -43,7 +43,9 @@ export class FileLoaderManager {
     return [...this.loadedFiles.values()];
   }
 
-  async loadFile(pathOrRequest: string | TypstFileRequest): Promise<TypstFileLoad> {
+  async loadFile(
+    pathOrRequest: string | TypstFileRequest,
+  ): Promise<TypstFileLoad> {
     const request: TypstFileRequest =
       typeof pathOrRequest === "string"
         ? { path: pathOrRequest, kind: classifyTypstFilePath(pathOrRequest) }

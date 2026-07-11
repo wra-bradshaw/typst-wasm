@@ -33,11 +33,12 @@ describe("worker transport", () => {
       worker,
       () => undefined,
       () => undefined,
+      () => undefined,
     );
 
-    transport.post({ kind: "compile", requestId: 1 });
+    transport.post({ kind: "clear_files", requestId: 1 });
 
-    expect(worker.messages).toEqual([{ kind: "compile", requestId: 1 }]);
+    expect(worker.messages).toEqual([{ kind: "clear_files", requestId: 1 }]);
   });
 
   it("reports invalid inbound messages", () => {
@@ -45,6 +46,7 @@ describe("worker transport", () => {
     const error = vi.fn();
     makeWorkerTransport(
       worker,
+      () => undefined,
       () => undefined,
       () => undefined,
       {
@@ -68,6 +70,7 @@ describe("worker transport", () => {
     const messages: unknown[] = [];
     makeWorkerTransport(
       worker,
+      () => undefined,
       (message) => messages.push(message),
       () => undefined,
     );
@@ -90,6 +93,7 @@ describe("worker transport", () => {
     const worker = new FakeWorker();
     const transport = makeWorkerTransport(
       worker,
+      () => undefined,
       () => undefined,
       () => undefined,
     );

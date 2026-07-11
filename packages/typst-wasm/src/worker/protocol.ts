@@ -114,7 +114,10 @@ export class SharedMemoryCommunication {
   }
 
   getError(): SharedMemoryCommunicationError {
-    return Atomics.load(new Int32Array(this.errorBuf), 0) as SharedMemoryCommunicationError;
+    return Atomics.load(
+      new Int32Array(this.errorBuf),
+      0,
+    ) as SharedMemoryCommunicationError;
   }
 
   waitForStatusChange(

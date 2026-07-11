@@ -1,9 +1,5 @@
 import type { TypstCompiler } from "typst-wasm";
-import {
-  assert,
-  assertSvgPage,
-  type IntegrationScenarioOptions,
-} from "./harness.ts";
+import { assertSvgPage, type IntegrationScenarioOptions } from "./harness.ts";
 
 const importSource = `#import "@preview/wordometer:0.1.5": word-count-of
 #set page(width: auto, height: auto, margin: 10pt)

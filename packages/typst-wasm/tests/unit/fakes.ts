@@ -10,12 +10,9 @@ export const makeFakeWorkerFactory = (
 ): (() => WorkerHost) => {
   return () => {
     let onMessage: ((data: unknown) => void) | undefined;
-    let onError: ((cause: unknown) => void) | undefined;
-
     return {
-      listen: (messageHandler, errorHandler) => {
+      listen: (messageHandler, _errorHandler) => {
         onMessage = messageHandler;
-        onError = errorHandler;
       },
       postMessage: (message: unknown) => {
         state.initMessages.push(message);
@@ -34,7 +31,6 @@ export const makeFakeWorkerFactory = (
       },
       terminate: () => {
         state.terminateCount += 1;
-        onError = undefined;
       },
     };
   };

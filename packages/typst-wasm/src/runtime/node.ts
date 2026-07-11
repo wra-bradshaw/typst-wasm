@@ -1,7 +1,9 @@
+import type { Worker as NodeWorker } from "node:worker_threads";
 import type { TypstRuntime } from "../backends/index";
 import { supportsJspiBackend } from "../backends/capabilities";
 import type { WorkerHost } from "../worker/host";
 
+/** Creates a worker host backed by a Node.js or Bun worker. */
 export const createNodeWorkerHost = (workerUrl: string | URL): WorkerHost => {
   if ("Bun" in globalThis) {
     const worker = new globalThis.Worker(workerUrl, { type: "module" });
@@ -15,9 +17,9 @@ export const createNodeWorkerHost = (workerUrl: string | URL): WorkerHost => {
     };
   }
 
-  const { Worker } = process.getBuiltinModule(
-    "node:worker_threads",
-  ) as typeof import("node:worker_threads");
+  const { Worker } = process.getBuiltinModule("node:worker_threads") as {
+    Worker: typeof NodeWorker;
+  };
   const worker = new Worker(workerUrl, { execArgv: [] });
   return {
     listen: (onMessage, onError) => {
@@ -29,6 +31,7 @@ export const createNodeWorkerHost = (workerUrl: string | URL): WorkerHost => {
   };
 };
 
+/** Creates the runtime-default worker host for Node.js. */
 export const createWorkerHost = createNodeWorkerHost;
 
 export const nodeRuntime: TypstRuntime = {

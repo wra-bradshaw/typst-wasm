@@ -35,9 +35,7 @@ describe("worker service lifecycle", () => {
       payload: unknown;
     };
     expect(initMessage.kind).toBe("init");
-    expect(initMessage.payload).toHaveProperty(
-      "sharedMemoryCommunication",
-    );
+    expect(initMessage.payload).toHaveProperty("sharedMemoryCommunication");
     await workerService.dispose();
   });
 

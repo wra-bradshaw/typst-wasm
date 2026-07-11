@@ -1,5 +1,6 @@
 import type { TypstDiagnostic } from "./compiler/types";
 
+/** Base class for errors raised by the Typst compiler API. */
 export class TypstError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
     super(message, options);
@@ -7,6 +8,7 @@ export class TypstError extends Error {
   }
 }
 
+/** Indicates that compilation failed or produced error diagnostics. */
 export class CompileError extends TypstError {
   readonly diagnostics: TypstDiagnostic[];
 
@@ -19,10 +21,13 @@ export class CompileError extends TypstError {
   }
 }
 
+/** Indicates that an operation was attempted before compiler initialization. */
 export class CompilerNotInitializedError extends TypstError {}
 
+/** Indicates that an operation was attempted after compiler disposal. */
 export class CompilerDisposedError extends TypstError {}
 
+/** Indicates that a font asset could not be loaded or registered. */
 export class FontLoadError extends TypstError {
   readonly fontName: string;
 
@@ -32,6 +37,7 @@ export class FontLoadError extends TypstError {
   }
 }
 
+/** Indicates that a requested file could not be fetched. */
 export class FetchError extends TypstError {
   readonly path: string;
 
@@ -41,6 +47,7 @@ export class FetchError extends TypstError {
   }
 }
 
+/** Indicates that a Typst package specification is invalid. */
 export class PackageParseError extends TypstError {
   readonly spec: string;
 
@@ -56,6 +63,7 @@ const causeMessage = (cause: unknown): string => {
   return String(cause);
 };
 
+/** Indicates that a Typst package could not be fetched. */
 export class PackageFetchError extends TypstError {
   readonly url: string;
 
@@ -67,6 +75,7 @@ export class PackageFetchError extends TypstError {
   }
 }
 
+/** Indicates that a requested file does not exist. */
 export class FileNotFoundError extends TypstError {
   readonly filePath: string;
 
@@ -76,4 +85,5 @@ export class FileNotFoundError extends TypstError {
   }
 }
 
+/** Indicates a failure communicating with a compiler worker. */
 export class WorkerError extends TypstError {}

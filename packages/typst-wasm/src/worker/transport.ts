@@ -1,45 +1,50 @@
 import type { WorkerHost } from "./host";
-import { isWorkerToMainMessage, type WorkerToMainMessage } from "./messages";
+import {
+  isRpcResponseMessage,
+  isWorkerToMainMessage,
+  type WorkerEventMessage,
+} from "./messages";
+import type { RpcResponseMessage } from "./protocol";
 import type { ResolvedLogger } from "../logging";
 
 export type WorkerTransport = {
-  readonly post: (message: unknown) => void;
+  readonly post: (message: {
+    kind: string;
+    requestId: number;
+    payload?: unknown;
+  }) => void;
   readonly close: () => void;
 };
 
 export const makeWorkerTransport = (
   worker: WorkerHost,
-  onMessage: (message: WorkerToMainMessage) => void,
+  onResponse: (message: RpcResponseMessage) => void,
+  onEvent: (message: WorkerEventMessage) => void,
   onError: (cause: unknown) => void,
   logger?: ResolvedLogger,
 ): WorkerTransport => {
-  worker.listen(
-    (data) => {
-      if (isWorkerToMainMessage(data)) {
-        logger?.debug("Received message from Typst worker", {
-          kind:
-            "kind" in (data as object)
-              ? (data as { kind?: unknown }).kind
-              : undefined,
-        });
-        onMessage(data);
-      } else {
-        logger?.error("Received invalid message from Typst worker", data);
-      }
-    },
-    (cause) => {
-      onError(cause);
-    },
-  );
+  worker.listen((data) => {
+    if (!isWorkerToMainMessage(data)) {
+      logger?.error("Received invalid message from Typst worker", data);
+      return;
+    }
+
+    if (isRpcResponseMessage(data)) {
+      logger?.debug("Received message from Typst worker", {
+        kind: undefined,
+      });
+      onResponse(data);
+    } else {
+      logger?.debug("Received message from Typst worker", {
+        kind: data.kind,
+      });
+      onEvent(data);
+    }
+  }, onError);
 
   return {
-    post: (message: unknown) => {
-      logger?.debug("Sending message to Typst worker", {
-        kind:
-          typeof message === "object" && message !== null && "kind" in message
-            ? (message as { kind?: unknown }).kind
-            : undefined,
-      });
+    post: (message) => {
+      logger?.debug("Sending message to Typst worker", { kind: message.kind });
       worker.postMessage(message);
     },
     close: () => {

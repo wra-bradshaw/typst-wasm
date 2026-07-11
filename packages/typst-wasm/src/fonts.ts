@@ -1,6 +1,11 @@
 import { FontLoadError } from "./errors";
 import type { RuntimeAsset, TypstCompiler } from "./compiler/types";
 
+/**
+ * Loads font data into a compiler, resolving lazy assets in order.
+ *
+ * @throws {@link FontLoadError} when an asset cannot be loaded or registered.
+ */
 export const loadFonts = async (
   compiler: Pick<TypstCompiler, "addFont">,
   fonts: RuntimeAsset<Uint8Array>[],

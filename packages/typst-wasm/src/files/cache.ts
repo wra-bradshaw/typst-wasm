@@ -1,10 +1,12 @@
 import type { ResolvedLogger } from "../logging";
 
+/** Minimal asynchronous cache used for downloaded Typst packages. */
 export interface PackageCache {
   match(request: RequestInfo | URL): Promise<Response | null>;
   put(request: RequestInfo | URL, response: Response): Promise<void>;
 }
 
+/** Creates a package cache backed by the browser Cache Storage API. */
 export const makeBrowserCacheStorage = (
   logger?: ResolvedLogger,
 ): PackageCache => {
@@ -27,7 +29,7 @@ export const makeBrowserCacheStorage = (
       const cache = await openCache();
       if (!cache) return null;
       try {
-        return await cache.match(request);
+        return (await cache.match(request)) ?? null;
       } catch (error) {
         logger?.error("Failed to read Typst package cache", error);
         return null;
@@ -46,6 +48,7 @@ export const makeBrowserCacheStorage = (
   };
 };
 
+/** Creates an in-memory least-recently-used package cache. */
 export const makeMemoryCacheStorage = (capacity = 400): PackageCache => {
   const storage = new Map<string, Response>();
   const key = (request: RequestInfo | URL): string => String(request);
@@ -72,6 +75,7 @@ export const makeMemoryCacheStorage = (capacity = 400): PackageCache => {
   };
 };
 
+/** Creates the browser cache when Cache Storage is available. */
 export const makeDefaultPackageCache = (
   logger?: ResolvedLogger,
 ): PackageCache | undefined =>

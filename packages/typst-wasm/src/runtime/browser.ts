@@ -5,6 +5,7 @@ import {
 } from "../backends/capabilities";
 import type { WorkerHost } from "../worker/host";
 
+/** Creates a worker host backed by a browser `Worker`. */
 export const createBrowserWorkerHost = (
   workerUrl: string | URL,
 ): WorkerHost => {
@@ -20,6 +21,7 @@ export const createBrowserWorkerHost = (
   };
 };
 
+/** Creates the runtime-default worker host for browsers. */
 export const createWorkerHost = createBrowserWorkerHost;
 
 const supportsBrowserWorkerBackend = (): boolean =>

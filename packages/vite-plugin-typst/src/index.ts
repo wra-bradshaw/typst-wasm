@@ -14,18 +14,29 @@ import {
 import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
 
+/** Options for the Vite Typst transformation plugin. */
 export interface TypstPluginOptions {
+  /** Backend passed to the compiler. */
   backend?: TypstCompilerOptions["backend"];
+  /** JCO-generated engine module for JSPI. */
   engine?: TypstCompilerOptions["engine"];
+  /** Optional loader for precompiled core WASM modules. */
   getCoreModule?: TypstCompilerOptions["getCoreModule"];
+  /** Worker factory passed to the compiler. */
   worker?: TypstCompilerOptions["worker"];
+  /** Base URL used for Typst package downloads. */
   packageBaseUrl?: string;
+  /** Cache used for downloaded packages. */
   packageCache?: PackageCache;
+  /** Capacity of the in-memory package cache. */
   memoryPackageCacheCapacity?: number;
+  /** Additional file loaders. */
   fileLoaders?: TypstFileLoader[];
+  /** Configures the compiler after it has been created. */
   configureCompiler?: (compiler: TypstCompiler) => Promise<void> | void;
 }
 
+/** Values exported by a compiled `.typ` module. */
 export interface TypstCompiledModule {
   html: string;
   metadata: TypstDocumentMetadata | undefined;
@@ -122,6 +133,12 @@ const compileTypst = async (
   };
 };
 
+/**
+ * Adds `.typ` source transformation to a Vite project.
+ *
+ * The transformed module exports the rendered HTML, metadata, diagnostics,
+ * and dependencies, and uses the document as its default export.
+ */
 export const typst = (options: TypstPluginOptions): Plugin => {
   let config: ResolvedConfig | undefined;
   let compilerPromise: Promise<TypstCompiler> | undefined;

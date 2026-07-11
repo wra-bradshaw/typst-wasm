@@ -91,6 +91,7 @@ export class PackageManager {
   private readonly fetchImpl: typeof fetch;
   private readonly packageBaseUrl: string;
   private readonly cache: PackageCache | undefined;
+  private readonly logger: ResolvedLogger | undefined;
   private readonly loadedPackages = new Map<
     string,
     Promise<ReadonlyMap<string, Uint8Array>>
@@ -98,6 +99,7 @@ export class PackageManager {
 
   constructor(options: PackageManagerOptions = {}) {
     this.fetchImpl = options.fetch ?? fetch;
+    this.logger = options.logger;
     this.packageBaseUrl =
       options.packageBaseUrl ?? "https://packages.typst.org";
     this.cache =
@@ -147,7 +149,7 @@ export class PackageManager {
           try {
             tarData = new Uint8Array(await cached.arrayBuffer());
           } catch (cause) {
-            options.logger?.error("Failed to read cached Typst package", {
+            this.logger?.error("Failed to read cached Typst package", {
               url,
               cause,
             });
@@ -192,9 +194,11 @@ export class PackageManager {
       }
 
       if (this.cache && tarData) {
+        const cacheData = new Uint8Array(tarData.byteLength);
+        cacheData.set(tarData);
         await this.cache.put(
           url,
-          new Response(tarData, {
+          new Response(cacheData, {
             headers: {
               "Cache-Control": "public, max-age=31536000, immutable",
               "Content-Type": "application/gzip",
