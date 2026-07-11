@@ -1,5 +1,6 @@
 import type { FileLoaderManager } from "../files/loaders";
 import { CompilerDisposedError } from "../errors";
+import type { ResolvedLogger } from "../logging";
 import { makeFetchBridge } from "../worker/fetch-bridge";
 import {
   isRpcResponseMessage,
@@ -19,6 +20,7 @@ export type TypstWorkerFactory = () => WorkerHost;
 
 export interface WorkerServiceInternals {
   createWorker?: TypstWorkerFactory;
+  logger?: ResolvedLogger;
 }
 
 export class WorkerService {
@@ -37,7 +39,12 @@ export class WorkerService {
     }
 
     this.worker = internals.createWorker();
-    const fetchBridge = makeFetchBridge(fileLoaderManager, () => this.disposed);
+    const logger = internals.logger;
+    const fetchBridge = makeFetchBridge(
+      fileLoaderManager,
+      () => this.disposed,
+      logger,
+    );
 
     this.rpcClient = makeRpcClient<TypstWorkerProtocol>((msg) => {
       this.transport.post(msg);
@@ -46,11 +53,17 @@ export class WorkerService {
     this.transport = makeWorkerTransport(
       this.worker,
       (msg) => {
-        void this.handleMessage(msg, fetchBridge.handleFetchRequest);
+        void this.handleMessage(msg, fetchBridge.handleFetchRequest).catch(
+          (cause) => {
+            logger?.error("Typst worker event handling failed", cause);
+          },
+        );
       },
       (cause) => {
+        logger?.error("Typst worker failed", cause);
         this.rpcClient.rejectAll(cause);
       },
+      logger,
     );
 
     this.initWorker = async () => {

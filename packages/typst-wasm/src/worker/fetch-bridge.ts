@@ -1,6 +1,7 @@
 import type { FileLoaderManager } from "../files/loaders";
 import { FileNotFoundError, FetchError, PackageFetchError } from "../errors";
 import type { EngineFetchRequest } from "../engine/types";
+import type { ResolvedLogger } from "../logging";
 import {
   SharedMemoryCommunication,
   SharedMemoryCommunicationError,
@@ -15,10 +16,13 @@ export type FetchBridge = {
 export const makeFetchBridge = (
   fileLoaderManager: FileLoaderManager,
   isDisposed: () => boolean,
+  logger?: ResolvedLogger,
 ): FetchBridge => {
   const sharedMemoryCommunication = new SharedMemoryCommunication();
 
-  const handleFetchRequest = async (request: EngineFetchRequest): Promise<void> => {
+  const handleFetchRequest = async (
+    request: EngineFetchRequest,
+  ): Promise<void> => {
     if (isDisposed()) return;
 
     try {
@@ -34,7 +38,10 @@ export const makeFetchBridge = (
       // The engine only receives a shared-memory error code. Keep the original
       // loader error visible in the host console instead of reducing it to the
       // generic "failed to load file" diagnostic.
-      console.error("Typst file load failed", request.path, error);
+      logger?.error("Typst file load failed", {
+        path: request.path,
+        cause: error,
+      });
       if (!isDisposed()) {
         const code =
           error instanceof FileNotFoundError

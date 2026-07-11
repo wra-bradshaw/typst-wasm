@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { WorkerHost } from "./host";
 import { makeWorkerTransport } from "./transport";
 
@@ -38,6 +38,29 @@ describe("worker transport", () => {
     transport.post({ kind: "compile", requestId: 1 });
 
     expect(worker.messages).toEqual([{ kind: "compile", requestId: 1 }]);
+  });
+
+  it("reports invalid inbound messages", () => {
+    const worker = new FakeWorker();
+    const error = vi.fn();
+    makeWorkerTransport(
+      worker,
+      () => undefined,
+      () => undefined,
+      {
+        error,
+        debug: vi.fn(),
+      },
+    );
+
+    worker.emit({ kind: "unknown_event" });
+
+    expect(error).toHaveBeenCalledWith(
+      "Received invalid message from Typst worker",
+      {
+        kind: "unknown_event",
+      },
+    );
   });
 
   it("forwards only valid inbound worker messages", () => {

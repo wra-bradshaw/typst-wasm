@@ -6,6 +6,7 @@ import {
 import { CompileError } from "../errors";
 import { FetchFileLoader, FileLoaderManager } from "../files/loaders";
 import { PackageFileLoader, PackageManager } from "../files/packages";
+import { resolveLogger } from "../logging";
 import type {
   EngineCompileOptions,
   EngineCompileSuccess,
@@ -163,7 +164,9 @@ class PromiseTypstCompiler implements TypstCompiler {
     this.fileLoaderManager.resetTrace();
 
     try {
-      const result = await this.backend.compile(toEngineCompileOptions(options));
+      const result = await this.backend.compile(
+        toEngineCompileOptions(options),
+      );
       if (hasErrorDiagnostics(result.diagnostics)) {
         throw new CompileError("Compilation failed", {
           diagnostics: result.diagnostics,
@@ -200,8 +203,10 @@ export const createTypstCompilerWithRuntime = async (
   options: TypstCompilerOptions,
   runtime: TypstRuntime,
 ): Promise<TypstCompiler> => {
+  const logger = resolveLogger(options.logger, options.logLevel);
   const packageManager = new PackageManager({
     fetch: options.fetch,
+    logger,
     packageBaseUrl: options.packageBaseUrl,
     cache: options.packageCache,
     memoryPackageCacheCapacity: options.memoryPackageCacheCapacity,
@@ -213,7 +218,7 @@ export const createTypstCompilerWithRuntime = async (
   ]);
   const backend = createRuntimeBackend(
     options.backend ?? "auto",
-    { fileLoaderManager },
+    { fileLoaderManager, logger },
     runtime,
     options,
   );

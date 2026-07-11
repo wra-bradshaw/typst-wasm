@@ -2,6 +2,12 @@ import type { PackageCache } from "../files";
 import type { EngineCoreModuleLoader, EngineModule } from "../engine/types";
 import type { WorkerHost } from "../worker/host";
 
+export type TypstLogLevel = "error" | "debug";
+
+export interface TypstLogger {
+  log(level: TypstLogLevel, message: string, context?: unknown): void;
+}
+
 export type CompileFormat = "pdf" | "png" | "svg" | "html" | "bundle";
 export type TypstFileKind = "project" | "package" | "url";
 
@@ -51,6 +57,10 @@ export type RuntimeAsset<T> = T | (() => T | Promise<T>);
 export type TypstWorkerAsset = () => WorkerHost;
 
 export interface TypstCompilerOptions {
+  /** Controls library messages. Errors are reported by default; debug includes protocol activity. */
+  logLevel?: TypstLogLevel;
+  /** Receives library messages. Context may contain paths and underlying errors. */
+  logger?: TypstLogger;
   backend?: "auto" | "worker" | "jspi";
   /** JCO-generated engine module used by the JSPI backend. */
   engine?: EngineModule;

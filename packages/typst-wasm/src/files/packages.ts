@@ -5,6 +5,7 @@ import {
   PackageParseError,
 } from "../errors";
 import { makeDefaultPackageCache, type PackageCache } from "./cache";
+import type { ResolvedLogger } from "../logging";
 import type {
   TypstFileLoad,
   TypstFileLoader,
@@ -23,6 +24,7 @@ export interface PackageManagerOptions {
   packageBaseUrl?: string;
   cache?: PackageCache | false;
   memoryPackageCacheCapacity?: number;
+  logger?: ResolvedLogger;
 }
 
 const parseSpec = (spec: string): PackageSpec => {
@@ -101,7 +103,7 @@ export class PackageManager {
     this.cache =
       options.cache === false
         ? undefined
-        : (options.cache ?? makeDefaultPackageCache());
+        : (options.cache ?? makeDefaultPackageCache(options.logger));
   }
 
   async getFile(spec: string): Promise<Uint8Array> {
@@ -145,7 +147,7 @@ export class PackageManager {
           try {
             tarData = new Uint8Array(await cached.arrayBuffer());
           } catch (cause) {
-            globalThis.console.error("Failed to read cached Typst package", {
+            options.logger?.error("Failed to read cached Typst package", {
               url,
               cause,
             });

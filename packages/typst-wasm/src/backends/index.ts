@@ -5,6 +5,7 @@ import type {
   EngineCompileSuccess,
 } from "../engine/types";
 import { supportsJspiBackend, supportsWorkerBackend } from "./capabilities";
+import type { ResolvedLogger } from "../logging";
 import { DirectService } from "./direct";
 import { WorkerService } from "./worker";
 
@@ -30,6 +31,7 @@ export type BackendService = {
 
 export interface BackendOptions {
   fileLoaderManager: FileLoaderManager;
+  logger?: ResolvedLogger;
 }
 
 interface RuntimeWorkerHost {
@@ -77,6 +79,7 @@ export const createRuntimeBackend = (
       }
       return new WorkerService(options.fileLoaderManager, {
         createWorker: () => runtime.createWorker(compilerOptions),
+        logger: options.logger,
       });
     case "jspi":
       if (!compilerOptions.engine) {

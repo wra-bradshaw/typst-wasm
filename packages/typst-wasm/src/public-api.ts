@@ -22,6 +22,8 @@ export type {
   TypstFileLoaderResult,
   TypstFileRequest,
   TypstLoadedFile,
+  TypstLogLevel,
+  TypstLogger,
   RuntimeAsset,
   TypstWorkerAsset,
   TypstDiagnostic,

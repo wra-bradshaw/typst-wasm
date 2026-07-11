@@ -1,9 +1,13 @@
+import type { ResolvedLogger } from "../logging";
+
 export interface PackageCache {
   match(request: RequestInfo | URL): Promise<Response | null>;
   put(request: RequestInfo | URL, response: Response): Promise<void>;
 }
 
-export const makeBrowserCacheStorage = (): PackageCache => {
+export const makeBrowserCacheStorage = (
+  logger?: ResolvedLogger,
+): PackageCache => {
   let cachePromise: Promise<Cache | null> | null = null;
 
   const openCache = async (): Promise<Cache | null> => {
@@ -11,7 +15,7 @@ export const makeBrowserCacheStorage = (): PackageCache => {
       try {
         return await caches.open("typst-packages-v1");
       } catch (error) {
-        globalThis.console.error("Failed to open Typst package cache", error);
+        logger?.error("Failed to open Typst package cache", error);
         return null;
       }
     })();
@@ -25,7 +29,7 @@ export const makeBrowserCacheStorage = (): PackageCache => {
       try {
         return await cache.match(request);
       } catch (error) {
-        globalThis.console.error("Failed to read Typst package cache", error);
+        logger?.error("Failed to read Typst package cache", error);
         return null;
       }
     },
@@ -36,7 +40,7 @@ export const makeBrowserCacheStorage = (): PackageCache => {
       try {
         await cache.put(request, response);
       } catch (error) {
-        globalThis.console.error("Failed to write Typst package cache", error);
+        logger?.error("Failed to write Typst package cache", error);
       }
     },
   };
@@ -68,5 +72,7 @@ export const makeMemoryCacheStorage = (capacity = 400): PackageCache => {
   };
 };
 
-export const makeDefaultPackageCache = (): PackageCache | undefined =>
-  typeof caches === "undefined" ? undefined : makeBrowserCacheStorage();
+export const makeDefaultPackageCache = (
+  logger?: ResolvedLogger,
+): PackageCache | undefined =>
+  typeof caches === "undefined" ? undefined : makeBrowserCacheStorage(logger);
