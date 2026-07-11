@@ -21,6 +21,7 @@
     },
     "./jspi/core-modules.json": "./dist/jspi/core-modules.json",
     "./jspi/*.wasm": "./dist/jspi/*.wasm",
+    "./worker/*.wasm": "./dist/worker/*.wasm",
     "./component.wasm": "./dist/component.wasm"
   },
   "scripts": {
