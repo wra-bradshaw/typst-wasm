@@ -29,9 +29,11 @@ const typstWasm = vi.hoisted(() => {
 vi.mock("typst-wasm", () => typstWasm);
 
 const projectRoot = path.resolve("/project");
-const assets = {
-  wasm: async () => new Uint8Array([1]),
-};
+const worker = (() => ({
+  listen: () => {},
+  postMessage: () => {},
+  terminate: () => {},
+})) as TypstCompilerOptions["worker"];
 
 const makeConfig = (): ResolvedConfig =>
   ({
@@ -125,7 +127,7 @@ describe("typst vite plugin compiler lifecycle", () => {
   test("reuses one compiler for multiple Typst entry modules", async () => {
     const compiler = makeCompiler();
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ assets }));
+    const plugin = resolvePlugin(typst({ worker }));
     const { context } = makeTransformContext();
 
     await transformTypst(
@@ -145,7 +147,7 @@ describe("typst vite plugin compiler lifecycle", () => {
     expect(typstWasm.createTypstCompiler).toHaveBeenCalledWith(
       expect.objectContaining({
         backend: undefined,
-        assets,
+        worker,
         fileLoaders: expect.any(Array) as TypstCompilerOptions["fileLoaders"],
       }),
     );
@@ -171,7 +173,7 @@ describe("typst vite plugin compiler lifecycle", () => {
       },
     ]);
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ assets }));
+    const plugin = resolvePlugin(typst({ worker }));
     const { context, watchedFiles } = makeTransformContext();
 
     await transformTypst(
@@ -191,7 +193,7 @@ describe("typst vite plugin compiler lifecycle", () => {
   test("disposes the shared compiler when the plugin closes", async () => {
     const compiler = makeCompiler();
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ assets }));
+    const plugin = resolvePlugin(typst({ worker }));
     const { context } = makeTransformContext();
 
     await transformTypst(
@@ -211,7 +213,7 @@ describe("typst vite plugin compiler lifecycle", () => {
       await configured.addFont(new Uint8Array([1, 2, 3]));
     });
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ assets, configureCompiler }));
+    const plugin = resolvePlugin(typst({ worker, configureCompiler }));
     const { context } = makeTransformContext();
 
     await transformTypst(

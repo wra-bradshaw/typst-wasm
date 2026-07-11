@@ -9,14 +9,16 @@ import {
   type TypstDocumentMetadata,
   type TypstFileLoader,
   type TypstLoadedFile,
-  type WasmDiagnostic,
+  type TypstDiagnostic,
 } from "typst-wasm";
 import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
 
 export interface TypstPluginOptions {
-  assets: TypstCompilerOptions["assets"];
   backend?: TypstCompilerOptions["backend"];
+  engine?: TypstCompilerOptions["engine"];
+  getCoreModule?: TypstCompilerOptions["getCoreModule"];
+  worker?: TypstCompilerOptions["worker"];
   packageBaseUrl?: string;
   packageCache?: PackageCache;
   memoryPackageCacheCapacity?: number;
@@ -27,7 +29,7 @@ export interface TypstPluginOptions {
 export interface TypstCompiledModule {
   html: string;
   metadata: TypstDocumentMetadata | undefined;
-  diagnostics: WasmDiagnostic[];
+  diagnostics: TypstDiagnostic[];
   dependencies: TypstLoadedFile[];
 }
 
@@ -139,8 +141,10 @@ export const typst = (options: TypstPluginOptions): Plugin => {
 
     compilerPromise ??= (async () => {
       const compiler = await createTypstCompiler({
-        assets: options.assets,
         backend: options.backend,
+        engine: options.engine,
+        getCoreModule: options.getCoreModule,
+        worker: options.worker,
         fileLoaders: [
           ...(options.fileLoaders ?? []),
           makeProjectFileLoader(config.root),
@@ -241,5 +245,5 @@ export type {
   TypstDocumentMetadata,
   TypstFileLoader,
   TypstLoadedFile,
-  WasmDiagnostic,
+  TypstDiagnostic,
 };

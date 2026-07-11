@@ -3,12 +3,7 @@
   perSystem =
     { pkgs, ... }:
     let
-      vite-plugin-typst = pkgs.callPackage ./package.nix {
-        nativeBuildInputs = with pkgs; [
-          nodejs
-          pnpm
-        ];
-      };
+      vite-plugin-typst = pkgs.callPackage ./package.nix { };
     in
     {
       packages.vite-plugin-typst = vite-plugin-typst;
