@@ -4,7 +4,7 @@ import {
   type TypstCompiler,
 } from "typst-wasm";
 import * as engine from "@typst-wasm/engine-wasm/jspi";
-import browserWorkerUrl from "typst-wasm/worker/browser?url";
+import browserWorkerUrl from "typst-wasm/worker/browser?worker&url";
 import { createCompileModule } from "./lib/compile-core";
 
 export { formatCompileError, type CompileView } from "./lib/compile-core";
