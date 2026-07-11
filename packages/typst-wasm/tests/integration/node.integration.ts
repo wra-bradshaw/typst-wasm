@@ -1,7 +1,7 @@
 /// <reference types="node" />
 
 import { readFile } from "node:fs/promises";
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
 import {
   createNodeWorkerHost,
   supportsJspiBackend,
@@ -9,7 +9,10 @@ import {
 } from "../../src";
 import * as jspiEngine from "@typst-wasm/engine-wasm/jspi";
 import { fontFilenames } from "./harness";
-import { runCompilerIntegrationScenario } from "./scenario";
+import {
+  assertIntegrationScenarioResult,
+  runCompilerIntegrationScenario,
+} from "./scenario";
 
 const fontData = async (): Promise<Uint8Array[]> =>
   await Promise.all(
@@ -20,21 +23,6 @@ const fontData = async (): Promise<Uint8Array[]> =>
     ),
   );
 
-const expectScenarioResult = (
-  result: Awaited<ReturnType<typeof runCompilerIntegrationScenario>>,
-) => {
-  expect(result.runtime).toBe("node");
-  expect(result.svgOutputLength).toBeGreaterThan(0);
-  expect(result.pdfFormatSeen).toBe(true);
-  expect(result.pngOutputLength).toBeGreaterThan(0);
-  expect(result.htmlOutputLength).toBeGreaterThan(0);
-  expect(result.bundleFileCount).toBeGreaterThan(0);
-  expect(result.filesBeforeClear).toContain("main.typ");
-  expect(result.filesBeforeClear).toContain("partial.typ");
-  expect(result.filesBeforeClear).toContain("data.txt");
-  expect(result.filesAfterClear).toEqual([]);
-};
-
 describe("node integration", () => {
   const worker = () =>
     createNodeWorkerHost(new URL("../../dist/worker/node.js", import.meta.url));
@@ -44,7 +32,7 @@ describe("node integration", () => {
       worker,
     }),
   )("covers compiler behavior with the worker backend", async () => {
-    expectScenarioResult(
+    assertIntegrationScenarioResult(
       await runCompilerIntegrationScenario({
         runtime: "node",
         fontData: await fontData(),
@@ -56,7 +44,7 @@ describe("node integration", () => {
   const runIfJspi = supportsJspiBackend() ? it : it.skip;
 
   runIfJspi("covers compiler behavior with the JSPI backend", async () => {
-    expectScenarioResult(
+    assertIntegrationScenarioResult(
       await runCompilerIntegrationScenario({
         runtime: "node",
         engine: jspiEngine,

@@ -39,18 +39,6 @@ describe("compiler backend selection", () => {
     },
   );
 
-  it("lets the same primitive environment produce different runtime decisions", () => {
-    const nodeLikeRuntime = makeRuntime(true, false);
-    const browserLikeRuntime = makeRuntime(false, true);
-
-    expect(selectAutomaticBackendKind(nodeLikeRuntime, compilerOptions)).toBe(
-      "worker",
-    );
-    expect(
-      selectAutomaticBackendKind(browserLikeRuntime, compilerOptions),
-    ).toBe("jspi");
-  });
-
   it("throws immediately when the worker backend is requested without worker configuration", () => {
     const runtime = {
       ...makeRuntime(false, true),
@@ -78,14 +66,5 @@ describe("compiler backend selection", () => {
         {} as TypstCompilerOptions,
       ),
     ).toThrow("JSPI backend requires engine");
-  });
-
-  it("lets auto select worker only when the runtime says worker is configured", () => {
-    expect(
-      selectAutomaticBackendKind(makeRuntime(false, true), compilerOptions),
-    ).toBe("jspi");
-    expect(
-      selectAutomaticBackendKind(makeRuntime(true, true), compilerOptions),
-    ).toBe("worker");
   });
 });

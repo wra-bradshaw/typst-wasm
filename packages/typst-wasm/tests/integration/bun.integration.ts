@@ -1,24 +1,12 @@
 /// <reference types="bun" />
 
-import { describe, expect, test } from "bun:test";
+import { describe, test } from "bun:test";
 import { supportsJspiBackend } from "../../src/index";
 import * as jspiEngine from "@typst-wasm/engine-wasm/jspi";
-import { runCompilerIntegrationScenario } from "./scenario";
-
-const expectScenarioResult = (
-  result: Awaited<ReturnType<typeof runCompilerIntegrationScenario>>,
-) => {
-  expect(result.runtime).toBe("bun");
-  expect(result.svgOutputLength).toBeGreaterThan(0);
-  expect(result.pdfFormatSeen).toBe(true);
-  expect(result.pngOutputLength).toBeGreaterThan(0);
-  expect(result.htmlOutputLength).toBeGreaterThan(0);
-  expect(result.bundleFileCount).toBeGreaterThan(0);
-  expect(result.filesBeforeClear).toContain("main.typ");
-  expect(result.filesBeforeClear).toContain("partial.typ");
-  expect(result.filesBeforeClear).toContain("data.txt");
-  expect(result.filesAfterClear).toEqual([]);
-};
+import {
+  assertIntegrationScenarioResult,
+  runCompilerIntegrationScenario,
+} from "./scenario";
 
 describe("bun integration", () => {
   test("covers compiler behavior with the worker backend", async () => {
@@ -27,7 +15,7 @@ describe("bun integration", () => {
       backend: "worker",
     });
 
-    expectScenarioResult(result);
+    assertIntegrationScenarioResult(result);
   }, 30000);
 
   const runIfJspi = supportsJspiBackend() ? test : test.skip;
@@ -35,7 +23,7 @@ describe("bun integration", () => {
   runIfJspi(
     "covers compiler behavior with the JSPI backend",
     async () => {
-      expectScenarioResult(
+      assertIntegrationScenarioResult(
         await runCompilerIntegrationScenario({
           runtime: "bun",
           engine: jspiEngine,

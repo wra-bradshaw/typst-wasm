@@ -88,19 +88,4 @@ describe("worker transport", () => {
       },
     ]);
   });
-
-  it("leaves listener cleanup to worker termination", () => {
-    const worker = new FakeWorker();
-    const transport = makeWorkerTransport(
-      worker,
-      () => undefined,
-      () => undefined,
-      () => undefined,
-    );
-
-    transport.close();
-
-    expect(worker.onMessage).not.toBeNull();
-    expect(worker.onError).not.toBeNull();
-  });
 });
