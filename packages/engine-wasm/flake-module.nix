@@ -30,21 +30,21 @@
           rustToolchain
           binaryen
           nodejs
-          wasm-bindgen-cli_0_2_121
+          wasm-tools
         ]
         ++ (lib.optionals stdenv.isDarwin [
           apple-sdk
           libiconv
         ]);
 
-      wasm = pkgs.callPackage ./package.nix {
+      engine-wasm = pkgs.callPackage ./package.nix {
         inherit craneLib;
         inherit rustSrc;
         inherit rustToolchain;
       };
     in
     {
-      packages.wasm = wasm;
+      packages.engine-wasm = engine-wasm;
 
       devShells.engine-wasm = pkgs.mkShell {
         packages = engineWasmDevInputs;

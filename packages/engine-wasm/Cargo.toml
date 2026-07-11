@@ -1,39 +1,27 @@
 [package]
-name = "typst-wasm"
+name = "typst-engine"
 version = "0.0.0"
 edition = "2024"
 
-[package.metadata.wasm-pack.profile.release]
-wasm-opt = [
-  "-Oz",
-  "--enable-threads",
-  "--enable-bulk-memory",
-  "--enable-mutable-globals",
-  "--enable-nontrapping-float-to-int",
-]
-
-[profile.release]
-opt-level = "z"
-lto = "fat"
-codegen-units = 1
-panic = "abort"
-strip = true
-
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 
 [dependencies]
-image = "0.25.10"
-js-sys = "0.3"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-serde-wasm-bindgen = "0.6"
-tsify = "0.5.6"
+wit-bindgen = "0.55"
+
 typst = "0.15.0"
-typst-html = "0.15.0"
-typst-layout = "0.15.0"
 typst-pdf = "0.15.0"
 typst-render = "0.15.0"
 typst-svg = "0.15.0"
-wasm-bindgen = "=0.2.121"
-web-sys = "0.3"
+typst-html = "0.15.0"
+typst-layout = "0.15.0"
+typst-bundle = "0.15.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

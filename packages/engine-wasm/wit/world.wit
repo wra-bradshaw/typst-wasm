@@ -1,0 +1,209 @@
+package typst:engine;
+
+interface types {
+  // ---------------------------------------------------------------------------
+  // Diagnostics (plan 4.5)
+  // ---------------------------------------------------------------------------
+  enum diagnostic-severity {
+    warning,
+    error,
+  }
+
+  record diagnostic {
+    message: string,
+    severity: diagnostic-severity,
+    file: option<string>,
+    line: option<u32>,
+    column: option<u32>,
+    start: option<u32>,
+    end: option<u32>,
+    formatted: string,
+    hints: list<string>,
+    trace: list<string>,
+  }
+
+  // ---------------------------------------------------------------------------
+  // Metadata (plan 4.6)
+  // ---------------------------------------------------------------------------
+  record custom-metadata {
+    label: option<string>,
+    value-json: string,
+  }
+
+  record document-metadata {
+    title: option<string>,
+    description: option<string>,
+    author: list<string>,
+    keywords: list<string>,
+    custom: list<custom-metadata>,
+  }
+
+  // ---------------------------------------------------------------------------
+  // Resource fetching (plan 4.7)
+  // ---------------------------------------------------------------------------
+  enum file-kind {
+    project,
+    %package,
+    url,
+  }
+
+  record fetch-request {
+    path: string,
+    kind: file-kind,
+  }
+
+  record fetched-file {
+    data: list<u8>,
+    resolved-path: option<string>,
+    media-type: option<string>,
+  }
+
+  variant fetch-error {
+    not-found,
+    denied,
+    timeout,
+    unavailable,
+    other(string),
+  }
+
+  record date {
+    year: u32,
+    month: u8,
+    day: u8,
+  }
+
+  enum compile-format {
+    pdf,
+    png,
+    svg,
+    html,
+    bundle,
+  }
+
+  enum pdf-standard {
+    v17,
+    a2b,
+    a3b,
+  }
+
+  record input-entry {
+    key: string,
+    value: string,
+  }
+
+  record compile-options {
+    format: option<compile-format>,
+    main: option<string>,
+    inputs: option<list<input-entry>>,
+    pages: option<string>,
+    pdf-standards: option<list<pdf-standard>>,
+    ppi: option<f32>,
+  }
+
+  record byte-page {
+    page: u32,
+    data: list<u8>,
+  }
+
+  record text-page {
+    page: u32,
+    data: string,
+  }
+
+  record bundle-file {
+    path: string,
+    data: list<u8>,
+    media-type: option<string>,
+  }
+
+  variant compile-payload {
+    pdf(list<u8>),
+    png(list<byte-page>),
+    svg(list<text-page>),
+    html(string),
+    bundle(list<bundle-file>),
+  }
+
+  record compile-success {
+    output: compile-payload,
+    diagnostics: list<diagnostic>,
+    metadata: option<document-metadata>,
+    dependencies: list<loaded-file>,
+  }
+
+  // ---------------------------------------------------------------------------
+  // Dependency tracking (plan 4.8)
+  // ---------------------------------------------------------------------------
+  record loaded-file {
+    kind: file-kind,
+    path: string,
+    resolved-path: option<string>,
+    media-type: option<string>,
+  }
+
+  variant operation-error {
+    invalid-path(string),
+    font-parse-failed,
+    other(string),
+  }
+
+  record compile-failure {
+    diagnostics: list<diagnostic>,
+    dependencies: list<loaded-file>,
+    message: option<string>,
+  }
+}
+
+interface host {
+  use types.{fetch-request, fetched-file, fetch-error, date};
+
+  fetch: func(request: fetch-request)
+    -> result<fetched-file, fetch-error>;
+
+  today: func(offset-seconds: option<s64>) -> option<date>;
+}
+
+interface api {
+  use types.{
+    compile-options,
+    compile-success,
+    compile-failure,
+    operation-error,
+  };
+
+  resource compiler {
+    constructor();
+
+    add-font: func(data: list<u8>) -> result<string, operation-error>;
+
+    add-file: func(
+      path: string,
+      data: list<u8>
+    ) -> result<_, operation-error>;
+
+    add-source: func(
+      path: string,
+      text: string
+    ) -> result<_, operation-error>;
+
+    set-main: func(path: string) -> result<_, operation-error>;
+
+    remove-file: func(path: string) -> result<bool, operation-error>;
+
+    clear-files: func() -> result<_, operation-error>;
+
+    list-files: func() -> result<list<string>, operation-error>;
+
+    has-file: func(path: string) -> result<bool, operation-error>;
+
+    compile: func(
+      options: compile-options
+    ) -> result<compile-success, compile-failure>;
+  }
+}
+
+world engine {
+  import host;
+
+  export api;
+}

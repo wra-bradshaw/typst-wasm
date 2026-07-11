@@ -2,8 +2,6 @@
   "name": "@typst-wasm/engine-wasm",
   "version": "0.3.0",
   "type": "module",
-  "main": "./dist/typst_wasm.js",
-  "types": "./dist/typst_wasm.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wra-bradshaw/typst-wasm.git"
@@ -13,28 +11,31 @@
   },
   "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
   "exports": {
-    ".": {
-      "types": "./dist/typst_wasm.d.ts",
-      "default": "./dist/typst_wasm.js"
+    "./worker": {
+      "types": "./dist/worker/engine.d.ts",
+      "default": "./dist/worker/engine.js"
     },
-    "./bridge": {
-      "types": "./dist/bridge.d.ts",
-      "default": "./dist/bridge.js"
+    "./jspi": {
+      "types": "./dist/jspi/engine.d.ts",
+      "default": "./dist/jspi/engine.js"
     },
-    "./typst_wasm.js": "./dist/typst_wasm.js",
-    "./typst_wasm_bg.js": "./dist/typst_wasm_bg.js",
-    "./typst_wasm_bg.wasm": "./dist/typst_wasm_bg.wasm"
+    "./jspi/core-modules.json": "./dist/jspi/core-modules.json",
+    "./jspi/*.wasm": "./dist/jspi/*.wasm",
+    "./component.wasm": "./dist/component.wasm"
   },
   "scripts": {
-    "build": "nix run ../..#build-artifact -- wasm",
-    "fix": "cargo fmt --all && cargo clippy --fix --allow-dirty --allow-staged --target wasm32-unknown-unknown -Z build-std=std,panic_abort",
-    "lint": "cargo clippy --target wasm32-unknown-unknown -Z build-std=std,panic_abort -- -D warnings",
+    "build": "nix run ../..#build-artifact -- engine-wasm",
+    "transpile:jspi": "node --experimental-strip-types scripts/transpile.mts jspi",
+    "transpile:worker": "node --experimental-strip-types scripts/transpile.mts worker",
+    "transpile": "pnpm transpile:worker && pnpm transpile:jspi",
+    "fix": "cargo fmt --all && cargo clippy --fix --allow-dirty --allow-staged --target wasm32-unknown-unknown",
+    "lint": "cargo clippy --target wasm32-unknown-unknown -- -D warnings",
     "format": "cargo fmt --all -- --check",
     "format:fix": "cargo fmt --all"
   },
   "devDependencies": {
-    "tsdown": "^0.20.3",
-    "typescript": "^5.9.3"
+    "@bytecodealliance/jco": "^1.24.6",
+    "@types/node": "^25.5.2"
   },
   "files": [
     "dist"

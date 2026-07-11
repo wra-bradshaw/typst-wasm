@@ -8,12 +8,18 @@
 let
   lib = pkgs.lib;
   stdenv = pkgs.stdenv;
+
   workspaceRoot = ../..;
   packageVersion = (builtins.fromJSON (builtins.readFile ./package.json)).version;
+
+  wasmTarget = "wasm32-unknown-unknown";
+  wasmFileName = "typst_engine.wasm";
+
   src = lib.cleanSourceWith {
     src = lib.cleanSource ./.;
-    filter = path: type: craneLib.filterCargoSources path type;
+    filter = path: type: craneLib.filterCargoSources path type || lib.hasSuffix ".wit" (toString path);
   };
+
   cargoVendorDir = craneLib.vendorMultipleCargoDeps {
     inherit (craneLib.findCargoFiles src) cargoConfigs;
 
@@ -26,48 +32,26 @@ let
   commonArgs = {
     pname = "typst-wasm-engine-wasm";
     version = "cache";
+
     inherit cargoVendorDir src;
+
     strictDeps = true;
     doCheck = false;
-    cargoBuildCommand = "cargo build --profile release";
-    cargoExtraArgs = "--target wasm32-unknown-unknown -Z build-std=std,panic_abort";
-    CARGO_BUILD_TARGET = "wasm32-unknown-unknown";
-    CARGO_TARGET_DIR = "$TMPDIR/typst-wasm-target";
-    RUSTFLAGS = lib.concatStringsSep " " [
-      "-C"
-      "target-feature=+atomics,+bulk-memory,+mutable-globals"
-      "-C"
-      "link-arg=--shared-memory"
-      "-C"
-      "link-arg=--import-memory"
-      "-C"
-      "link-arg=--export=__wasm_init_tls"
-      "-C"
-      "link-arg=--export=__tls_size"
-      "-C"
-      "link-arg=--export=__tls_align"
-      "-C"
-      "link-arg=--export=__tls_base"
-      "-C"
-      "link-arg=--export=__heap_base"
-      "-C"
-      "link-arg=-zstack-size=2097152"
-      "-C"
-      "link-arg=--max-memory=268435456"
-    ];
 
-    nativeBuildInputs =
-      with pkgs;
-      [
-        rustToolchain
-        binaryen
-        nodejs
-        wasm-bindgen-cli_0_2_121
-      ]
-      ++ (lib.optionals stdenv.isDarwin [
-        apple-sdk
-        libiconv
-      ]);
+    cargoBuildCommand = "cargo build --profile release";
+    cargoExtraArgs = "--target ${wasmTarget}";
+
+    CARGO_BUILD_TARGET = wasmTarget;
+    CARGO_TARGET_DIR = "$TMPDIR/typst-wasm-target";
+
+    nativeBuildInputs = [
+      rustToolchain
+      pkgs.wasm-tools
+    ]
+    ++ lib.optionals stdenv.isDarwin [
+      pkgs.apple-sdk
+      pkgs.libiconv
+    ];
   };
 
   cargoArtifacts = craneLib.buildDepsOnly commonArgs;
@@ -75,71 +59,66 @@ let
   wasmArtifacts = craneLib.buildPackage (
     commonArgs
     // {
+      pname = "typst-wasm-engine-wasm-component";
+      version = packageVersion;
+
       inherit cargoArtifacts;
 
       installPhaseCommand = ''
-        mkdir -p "$out/dist"
+        runHook preInstall
 
-        wasm-bindgen \
-          --target bundler \
-          --out-dir "$out/dist" \
-          "$CARGO_TARGET_DIR/$CARGO_BUILD_TARGET/release/typst_wasm.wasm"
+        mkdir -p "$out"
+        wasm-tools component new \
+          "$CARGO_TARGET_DIR/$CARGO_BUILD_TARGET/release/${wasmFileName}" \
+          -o "$out/component.wasm"
 
-        wasm-opt \
-          -Oz \
-          --enable-threads \
-          --enable-bulk-memory \
-          --enable-mutable-globals \
-          --enable-nontrapping-float-to-int \
-          "$out/dist/typst_wasm_bg.wasm" \
-          -o "$out/dist/typst_wasm_bg.wasm"
+        runHook postInstall
       '';
     }
   );
 
-  pnpmDeps = import ../../nix/pnpm-deps.nix { inherit pkgs workspaceRoot; };
-
-  bridgeArtifacts = pkgs.stdenvNoCC.mkDerivation {
-    pname = "typst-wasm-engine-wasm-bridge";
-    version = packageVersion;
-    src = workspaceRoot;
-    inherit pnpmDeps;
-    nativeBuildInputs = [
-      pkgs.nodejs
-      pkgs.pnpmConfigHook
-      pkgs.pnpm
-    ];
-
-    buildPhase = ''
-      runHook preBuild
-
-      pnpm --dir packages/engine-wasm exec tsdown
-
-      runHook postBuild
-    '';
-
-    installPhase = ''
-      runHook preInstall
-
-      mkdir -p "$out"
-      cp -R packages/engine-wasm/dist "$out/dist"
-
-      runHook postInstall
-    '';
+  packageDir = "packages/engine-wasm";
+  pnpmDeps = import ../../nix/pnpm-deps.nix {
+    inherit pkgs workspaceRoot;
+  };
+  pnpmSrc = import ../../nix/workspace-source.nix {
+    inherit (pkgs) lib;
+    inherit workspaceRoot packageDir;
   };
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "typst-wasm-engine-wasm-artifacts";
   version = packageVersion;
 
-  dontUnpack = true;
+  src = pnpmSrc;
+
+  inherit pnpmDeps;
+
+  nativeBuildInputs = [
+    pkgs.nodejs
+    pkgs.pnpmConfigHook
+    pkgs.pnpm
+  ];
+
+  buildPhase = ''
+    runHook preBuild
+
+    export COMPONENT_PATH="${wasmArtifacts}/component.wasm"
+    export OUT_DIR="$PWD/packages/engine-wasm/dist"
+
+    pnpm --dir packages/engine-wasm transpile worker
+    pnpm --dir packages/engine-wasm transpile jspi
+
+    runHook postBuild
+  '';
 
   installPhase = ''
     runHook preInstall
 
     mkdir -p "$out/dist"
-    cp -R ${wasmArtifacts}/dist/. "$out/dist"
-    cp -R ${bridgeArtifacts}/dist/. "$out/dist"
+
+    cp "${wasmArtifacts}/component.wasm" "$out/dist/component.wasm"
+    cp -R packages/engine-wasm/dist/. "$out/dist/"
 
     runHook postInstall
   '';
