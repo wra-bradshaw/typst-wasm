@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-declare module "*.wasm?module" {
+declare module "*.wasm" {
   const module: WebAssembly.Module;
   export default module;
 }

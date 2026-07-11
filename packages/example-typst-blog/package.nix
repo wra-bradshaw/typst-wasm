@@ -4,7 +4,6 @@
   fonts,
   typstWasm,
   vitePluginTypst,
-  nativeBuildInputs ? [ ],
 }:
 
 let
@@ -13,9 +12,13 @@ let
   packageDir = "packages/example-typst-blog";
   version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
   pnpmDeps = import ../../nix/pnpm-deps.nix { inherit pkgs workspaceRoot; };
+  src = import ../../nix/workspace-source.nix {
+    inherit (pkgs) lib;
+    inherit workspaceRoot packageDir;
+  };
   prepareWorkspaceArtifacts = import ../../nix/workspace-artifacts.nix { lib = pkgs.lib; };
 
-  pnpmNativeBuildInputs = nativeBuildInputs ++ [
+  pnpmNativeBuildInputs = [
     pkgs.nodejs
     pkgs.pnpmConfigHook
     pkgs.pnpm
@@ -46,8 +49,7 @@ let
 in
 pkgs.stdenvNoCC.mkDerivation {
   inherit pname version;
-  src = workspaceRoot;
-  inherit pnpmDeps;
+  inherit src pnpmDeps;
 
   nativeBuildInputs = pnpmNativeBuildInputs;
 

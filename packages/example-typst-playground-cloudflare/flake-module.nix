@@ -8,13 +8,9 @@
     }:
     let
       example-typst-playground-cloudflare = pkgs.callPackage ./package.nix {
-        engineWasm = config.packages.wasm;
+        engineWasm = config.packages.engine-wasm;
         fonts = config.packages.fonts;
         typstWasm = config.packages.typst-wasm;
-        nativeBuildInputs = with pkgs; [
-          nodejs
-          pnpm
-        ];
       };
     in
     {

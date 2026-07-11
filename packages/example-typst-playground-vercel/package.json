@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "nix run ../..#build-artifact -- example-typst-playground-vercel .vercel/output",
-    "build:local": "vite build",
-    "dev": "vite dev",
-    "preview": "vite preview",
+    "build:local": "pnpm run build && vite build",
+    "dev": "pnpm run build && vite dev",
+    "preview": "pnpm run build && vite preview",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

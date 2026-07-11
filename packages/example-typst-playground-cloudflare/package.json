@@ -5,11 +5,10 @@
   "type": "module",
   "scripts": {
     "build": "nix run ../..#build-artifact -- example-typst-playground-cloudflare dist",
-    "build:local": "vite build",
     "cf-typegen": "wrangler types",
     "deploy": "pnpm run build && wrangler deploy",
-    "dev": "vite dev",
-    "preview": "vite preview",
+    "dev": "pnpm run build && node --experimental-wasm-stack-switching node_modules/vite/bin/vite.js dev",
+    "preview": "pnpm run build && node --experimental-wasm-stack-switching node_modules/vite/bin/vite.js preview",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

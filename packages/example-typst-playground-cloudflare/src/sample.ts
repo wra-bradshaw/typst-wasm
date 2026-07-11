@@ -1,4 +1,5 @@
-export const sampleSource = `#set document(title: "Typst WASM Playground", author: "typst-wasm")
+export const sampleSource = `#import "@preview/wordometer:0.1.5": word-count-of 
+#set document(title: "Typst WASM Playground", author: "typst-wasm")
 #set page(width: auto, height: auto, margin: 1.5cm)
 #set text(font: "Libertinus Serif", size: 11pt)
 

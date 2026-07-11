@@ -15,16 +15,10 @@ export default defineConfig({
   plugins: [
     typst({
       backend: "worker",
-      assets: {
-        worker: () =>
-          createWorkerHost(
-            new URL(import.meta.resolve("typst-wasm/worker/node")),
-          ),
-        wasm: () =>
-          readFile(
-            new URL("../engine-wasm/dist/typst_wasm_bg.wasm", import.meta.url),
-          ),
-      },
+      worker: () =>
+        createWorkerHost(
+          new URL(import.meta.resolve("typst-wasm/worker/node")),
+        ),
       configureCompiler: async (compiler) => {
         for (const fontUrl of fontUrls) {
           await compiler.addFont(new Uint8Array(await readFile(fontUrl)));

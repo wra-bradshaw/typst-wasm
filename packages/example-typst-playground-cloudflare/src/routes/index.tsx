@@ -9,10 +9,15 @@ import {
 import { sampleSource } from "../sample";
 import useAbortableCallback from "../lib/useAbortableCallback";
 
-const getInitialPreview = createServerFn({ method: "GET" }).handler(async () => {
-  const { compileTypstHtml } = await import("../lib/compile.server");
-  return compileTypstHtml(sampleSource);
-});
+const getInitialPreview = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const { compileTypstHtml } = await import("../lib/compile.server");
+    return compileTypstHtml(sampleSource).catch((error: unknown) => {
+      console.error("Initial Typst compilation failed", error);
+      throw error;
+    });
+  },
+);
 
 export const Route = createFileRoute("/")({
   loader: () => getInitialPreview(),

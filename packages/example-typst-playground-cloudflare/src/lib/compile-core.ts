@@ -1,12 +1,12 @@
 import {
   CompileError,
   type TypstCompiler,
-  type WasmDiagnostic,
+  type TypstDiagnostic,
 } from "typst-wasm";
 
 export interface CompileView {
   html: string;
-  diagnostics: WasmDiagnostic[];
+  diagnostics: TypstDiagnostic[];
 }
 
 export const formatCompileError = (error: unknown): string => {
