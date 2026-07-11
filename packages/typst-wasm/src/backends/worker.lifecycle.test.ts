@@ -83,10 +83,16 @@ describe("worker service lifecycle", () => {
     const workerService = await makeService();
     await workerService.init();
     workerState.autoRespond = false;
-    const command = workerService.listFiles();
+    const commands = [
+      workerService.listFiles(),
+      workerService.compile({ format: "svg", main: "main.typ" }),
+    ];
 
     workerState.emitError?.(new Error("worker crashed"));
-    await expect(command).rejects.toThrow("Worker command failed: list_files");
+    await expect(commands[0]).rejects.toThrow(
+      "Worker command failed: list_files",
+    );
+    await expect(commands[1]).rejects.toThrow("Worker command failed: compile");
     await workerService.dispose();
   });
 
@@ -113,7 +119,7 @@ describe("worker service lifecycle", () => {
     workerState.autoRespond = true;
     await second.init();
     workerState.autoRespond = false;
-    const command = second.listFiles();
+    const command = second.compile({ format: "svg", main: "main.typ" });
     await second.dispose();
     await expect(command).rejects.toMatchObject({
       cause: expect.objectContaining({ message: "Compiler has been disposed" }),

@@ -12,7 +12,11 @@ import {
   type CompileFormatResult,
 } from "./formats.scenario.ts";
 import { runOptionsAndErrorsScenario } from "./errors.scenario.ts";
-import { runImportScenario } from "./import.scenario.ts";
+import {
+  runImportScenario,
+  runDeterministicPackageScenario,
+} from "./import.scenario.ts";
+import { runConcurrencyScenario } from "./concurrency.scenario.ts";
 
 export type IntegrationScenarioResult = {
   runtime: IntegrationScenarioOptions["runtime"];
@@ -53,6 +57,7 @@ export const runCompilerIntegrationScenario = async (
     const formats = await runCompileFormatScenario(compiler, options);
     await runOptionsAndErrorsScenario(compiler, options);
     await runImportScenario(compiler, options);
+    await runDeterministicPackageScenario(compiler, options);
 
     result = {
       runtime: options.runtime,
@@ -62,6 +67,8 @@ export const runCompilerIntegrationScenario = async (
   } finally {
     await compiler.dispose();
   }
+
+  await runConcurrencyScenario(options);
 
   await assertRejects(
     compiler.compile({ format: "svg" }),

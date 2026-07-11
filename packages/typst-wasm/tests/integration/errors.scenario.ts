@@ -20,6 +20,16 @@ export const runOptionsAndErrorsScenario = async (
     inputs: { mode: "integration" },
   });
   assertSvgPage(inputResult, options.runtime, "inputs compile");
+  const inputHtml = await compiler.compile({
+    format: "html",
+    inputs: { mode: "integration" },
+  });
+  if (
+    inputHtml.format !== "html" ||
+    !inputHtml.output.includes("integration")
+  ) {
+    throw new Error(`[${options.runtime}] expected input value in HTML output`);
+  }
 
   await compiler.addSource("bad.typ", "#let x =");
   await assertRejects(
@@ -27,7 +37,14 @@ export const runOptionsAndErrorsScenario = async (
     (error) =>
       error instanceof CompileError &&
       error.diagnostics !== undefined &&
-      error.diagnostics.length > 0,
+      error.diagnostics.length > 0 &&
+      error.diagnostics.some(
+        (diagnostic) =>
+          diagnostic.file === "bad.typ" &&
+          diagnostic.message.length > 0 &&
+          (diagnostic.line !== undefined ||
+            diagnostic.formatted.includes("bad.typ")),
+      ),
     `[${options.runtime}] expected bad source to reject with CompileError diagnostics`,
   );
 };

@@ -32,8 +32,11 @@ export const runCompileFormatScenario = async (
     format: "pdf",
   });
   assert(
-    pdfResult.format === "pdf",
-    `[${options.runtime}] expected PDF result format`,
+    pdfResult.format === "pdf" &&
+      pdfResult.output.length > 16 &&
+      new TextDecoder().decode(pdfResult.output.subarray(0, 5)) === "%PDF-" &&
+      new TextDecoder().decode(pdfResult.output.slice(-5)).includes("%%EOF"),
+    `[${options.runtime}] expected a non-empty PDF with header and EOF marker`,
   );
   assert(
     pdfResult.metadata?.title === "Compiler Metadata" &&
@@ -61,6 +64,10 @@ export const runCompileFormatScenario = async (
     pngResult.format === "png" && pngResult.pages.length === 1,
     `[${options.runtime}] expected one PNG page for pages: "2"`,
   );
+  assert(
+    pngResult.pages[0]?.page === 2,
+    `[${options.runtime}] expected selected PNG page number to be 2`,
+  );
   const pngBytes = pngResult.pages[0]?.output ?? new Uint8Array();
   assert(
     pngBytes.length > 8 &&
@@ -73,8 +80,12 @@ export const runCompileFormatScenario = async (
 
   const htmlResult = await compiler.compile({ format: "html" });
   assert(
-    htmlResult.format === "html" && htmlResult.output.length > 0,
-    `[${options.runtime}] expected HTML output`,
+    htmlResult.format === "html" &&
+      htmlResult.output.includes("<") &&
+      htmlResult.output.includes("Page One") &&
+      htmlResult.output.includes("Page Two") &&
+      /<(html|body|main|section)\b/i.test(htmlResult.output),
+    `[${options.runtime}] expected structured HTML containing both pages`,
   );
 
   await compiler.addSource(
@@ -87,8 +98,18 @@ export const runCompileFormatScenario = async (
     format: "bundle",
   });
   assert(
-    bundleResult.format === "bundle" && bundleResult.files.length > 0,
-    `[${options.runtime}] expected bundle files`,
+    bundleResult.format === "bundle" &&
+      bundleResult.files.some(
+        (file) =>
+          file.path === "index.html" && file.mediaType.startsWith("text/html"),
+      ) &&
+      bundleResult.files.some(
+        (file) =>
+          file.path === "second.html" &&
+          file.mediaType.startsWith("text/html") &&
+          new TextDecoder().decode(file.data).includes("Page Two"),
+      ),
+    `[${options.runtime}] expected named HTML bundle files with content`,
   );
 
   return {

@@ -1,7 +1,7 @@
 /// <reference types="bun" />
 
 import { describe, test } from "bun:test";
-import { supportsJspiBackend } from "../../src/index";
+import { supportsJspiBackend, supportsWorkerBackend } from "typst-wasm";
 import * as jspiEngine from "@typst-wasm/engine-wasm/jspi";
 import {
   assertIntegrationScenarioResult,
@@ -10,6 +10,17 @@ import {
 
 describe("bun integration", () => {
   test("covers compiler behavior with the worker backend", async () => {
+    if (
+      !supportsWorkerBackend({
+        worker: () => ({
+          listen: () => {},
+          postMessage: () => {},
+          terminate: () => {},
+        }),
+      })
+    ) {
+      throw new Error("Bun integration requires the worker backend");
+    }
     const result = await runCompilerIntegrationScenario({
       runtime: "bun",
       backend: "worker",
@@ -18,19 +29,18 @@ describe("bun integration", () => {
     assertIntegrationScenarioResult(result);
   }, 30000);
 
-  const runIfJspi = supportsJspiBackend() ? test : test.skip;
-
-  runIfJspi(
-    "covers compiler behavior with the JSPI backend",
-    async () => {
-      assertIntegrationScenarioResult(
-        await runCompilerIntegrationScenario({
-          runtime: "bun",
-          engine: jspiEngine,
-          backend: "jspi",
-        }),
+  test("covers compiler behavior with the JSPI backend", async () => {
+    if (!supportsJspiBackend()) {
+      throw new Error(
+        "Bun integration requires JSPI support in the configured Bun runtime",
       );
-    },
-    30000,
-  );
+    }
+    assertIntegrationScenarioResult(
+      await runCompilerIntegrationScenario({
+        runtime: "bun",
+        engine: jspiEngine,
+        backend: "jspi",
+      }),
+    );
+  }, 30000);
 });

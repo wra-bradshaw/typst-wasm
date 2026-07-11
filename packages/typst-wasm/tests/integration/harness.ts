@@ -14,6 +14,10 @@ export type IntegrationScenarioOptions = {
   engine?: EngineModule;
   fontData?: Uint8Array[];
   backend?: "auto" | "worker" | "jspi";
+  fetch?: typeof fetch;
+  packageBaseUrl?: string;
+  packageRequests?: () => number;
+  packageCache?: Parameters<typeof createTypstCompiler>[0]["packageCache"];
 };
 
 export const assert: (
@@ -64,13 +68,25 @@ export const assertSvgPage = (
   result: CompileResult,
   runtime: RuntimeName,
   label: string,
+  expectedText?: string,
 ): number => {
   assert(
     result.format === "svg" && result.pages.length > 0,
     `[${runtime}] expected ${label} to return SVG pages`,
   );
-  const output = result.pages[0]?.output ?? "";
+  const page = result.pages[0];
+  const output = page?.output ?? "";
   assert(output.length > 0, `[${runtime}] expected ${label} SVG output`);
+  assert(
+    output.includes("<svg") && output.includes("xmlns"),
+    `[${runtime}] expected ${label} to contain an SVG root`,
+  );
+  if (expectedText) {
+    assert(
+      output.includes(expectedText),
+      `[${runtime}] expected ${label} SVG to contain ${JSON.stringify(expectedText)}`,
+    );
+  }
   return output.length;
 };
 
@@ -87,7 +103,7 @@ const addDefaultFonts = async (
 
   for (const filename of fontFilenames) {
     const response = await fetch(
-      new URL(`../../../fonts/dist/files/${filename}`, import.meta.url),
+      new URL(import.meta.resolve(`@typst-wasm/fonts/${filename}`)),
     );
     await compiler.addFont(new Uint8Array(await response.arrayBuffer()));
   }
@@ -110,8 +126,7 @@ export const makeCompiler = async (
 ): Promise<TypstCompiler> => {
   const getCoreModule = async (name: string): Promise<WebAssembly.Module> => {
     const url = new URL(
-      `../../../engine-wasm/dist/worker/${name}`,
-      import.meta.url,
+      import.meta.resolve(`@typst-wasm/engine-wasm/worker/${name}`),
     );
     if (options.runtime !== "deno") {
       const { readFile } = await import("node:fs/promises");
@@ -129,16 +144,19 @@ export const makeCompiler = async (
     ...(options.runtime !== "deno" && {
       worker: () =>
         createNodeWorkerHost(
-          new URL("../../dist/worker/node.js", import.meta.url),
+          new URL(import.meta.resolve("typst-wasm/worker/node")),
         ),
     }),
     ...(options.runtime === "deno" && {
       worker: () =>
         createDenoWorkerHost(
-          new URL("../../dist/worker/browser.js", import.meta.url),
+          new URL(import.meta.resolve("typst-wasm/worker/browser")),
         ),
     }),
     backend: options.backend,
+    fetch: options.fetch,
+    packageBaseUrl: options.packageBaseUrl,
+    packageCache: options.packageCache,
   });
 
   await addDefaultFonts(compiler, options.fontData);

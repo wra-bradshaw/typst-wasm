@@ -58,6 +58,13 @@ export const runFileLifecycleScenario = async (
     options.runtime,
     "file lifecycle compile",
   );
+  const firstHtml = await compiler.compile({ format: "html" });
+  assert(
+    firstHtml.format === "html" &&
+      firstHtml.output.includes("Imported text") &&
+      firstHtml.output.includes("Binary file text"),
+    `[${options.runtime}] expected imported and binary file contents in HTML`,
+  );
 
   await compiler.removeFile("partial.typ");
   assert(
