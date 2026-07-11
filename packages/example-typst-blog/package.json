@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "4.3.1",
+    "@typst-wasm/engine-wasm": "workspace:*",
     "@typst-wasm/fonts": "workspace:*",
     "@typst-wasm/vite-plugin-typst": "workspace:*",
     "@vitejs/plugin-react": "^6.0.3",
