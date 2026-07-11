@@ -5,4 +5,7 @@
   keywords: ("vite", "typst"),
 )
 
+#import "dep.typ": fixture-dependency
+
 = Hello from Typst
+#fixture-dependency

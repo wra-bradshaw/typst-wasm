@@ -6,3 +6,6 @@ globalThis.__typstFixture = {
   metadata,
   dependencies,
 };
+
+export { document, html, metadata, dependencies };
+export default document;

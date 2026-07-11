@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { build, type Plugin, type Rollup } from "vite";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -15,24 +15,27 @@ export type ViteChunk = Extract<ViteOutput, { type: "chunk" }>;
 
 export interface FixtureBuild {
   output: Rollup.OutputBundle[string][];
+  outDir: string;
   cleanup(): Promise<void>;
 }
 
 export const buildFixture = async (
   fixture: string,
   plugins: Plugin | Plugin[],
+  options: { root?: string } = {},
 ): Promise<FixtureBuild> => {
   const outDir = await mkdtemp(path.join(tmpdir(), "vite-plugin-typst-"));
+  const root = options.root ?? fixturePath(fixture);
   const result = await build({
-    root: fixturePath(fixture),
+    root,
     logLevel: "silent",
     plugins: Array.isArray(plugins) ? plugins : [plugins],
     build: {
       outDir,
       emptyOutDir: true,
-      write: false,
+      write: true,
       rollupOptions: {
-        input: path.resolve(fixturePath(fixture), "main.js"),
+        input: path.resolve(root, "main.js"),
       },
     },
   });
@@ -48,9 +51,18 @@ export const buildFixture = async (
 
   return {
     output: [...output],
+    outDir,
     cleanup: () => rm(outDir, { recursive: true, force: true }),
   };
 };
+
+export const importChunk = async <T = Record<string, unknown>>(
+  build: FixtureBuild,
+  chunk: ViteChunk,
+): Promise<T> =>
+  (await import(
+    `${pathToFileURL(path.join(build.outDir, chunk.fileName))}?t=${Date.now()}`
+  )) as T;
 
 export const getChunk = (
   build: FixtureBuild,
