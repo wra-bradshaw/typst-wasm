@@ -35,6 +35,10 @@
     "format": {
       "dependsOn": []
     },
+    "fix": {
+      "dependsOn": [],
+      "cache": false
+    },
     "test:integration": {
       "dependsOn": ["^build", "build"]
     },

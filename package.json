@@ -4,15 +4,15 @@
   "packageManager": "pnpm@11.5.2",
   "scripts": {
     "build": "turbo run build",
-    "test": "pnpm run test:unit && pnpm run test:integration",
-    "test:unit": "pnpm -r --if-present test:unit",
-    "test:integration": "pnpm -r --if-present test:integration",
-    "fix": "pnpm -r --if-present fix",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:integration": "turbo run test:integration",
+    "fix": "turbo run fix",
     "format": "turbo run format",
     "changeset": "changeset",
     "lint": "turbo run lint",
     "version-packages": "changeset version && pnpm install --lockfile-only",
-    "release": "pnpm turbo run build && changeset publish"
+    "release": "turbo run build && changeset publish"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.1",
