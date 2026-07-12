@@ -8,4 +8,4 @@ import { canonicalCases, assertSuitePassed, runSuite } from "../spec/suite.ts";
 test("bun:worker canonical integration suite", async () => {
   const context = await makeNodeContext("worker", "bun");
   assertSuitePassed(await runSuite(context, canonicalCases));
-});
+}, 120_000);

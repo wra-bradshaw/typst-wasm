@@ -41,7 +41,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    testTimeout: 120000,
+    testTimeout: 120_000,
     maxWorkers: 1,
     browser: {
       enabled: true,
