@@ -65,7 +65,7 @@ export const backendCases: readonly CanonicalCase[] = [
       expect(context.selectBackend({ backend: context.backend })).toBe(
         context.backend,
       );
-      if (context.runtime === "bun" || context.runtime === "workerd") {
+      if (context.runtime === "workerd") {
         await context.expectUnsupportedBackend();
       }
     },
