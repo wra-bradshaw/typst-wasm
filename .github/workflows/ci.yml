@@ -23,7 +23,4 @@ jobs:
         with:
           use-flakehub: false
       - run: nix develop .#ci -c pnpm install --frozen-lockfile
-      - name: Install browser engines
-        run: |
-          nix develop .#ci -c pnpm --filter typst-wasm exec playwright install --with-deps chromium firefox webkit
       - run: nix develop .#ci -c pnpm turbo run build lint test:unit test:integration

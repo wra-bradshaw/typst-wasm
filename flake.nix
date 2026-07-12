@@ -156,7 +156,10 @@
               config.formatter
               pkgs.nodejs
               pkgs.pnpm
+              pkgs.playwright
             ];
+            PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright.passthru.browsers}";
+            PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
           };
         };
     };

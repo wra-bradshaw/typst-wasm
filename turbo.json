@@ -27,7 +27,11 @@
       "dependsOn": ["build"]
     },
     "test": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "passThroughEnv": [
+        "PLAYWRIGHT_BROWSERS_PATH",
+        "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS"
+      ]
     },
     "test:unit": {
       "dependsOn": ["build"]
@@ -40,7 +44,11 @@
       "cache": false
     },
     "test:integration": {
-      "dependsOn": ["^build", "build"]
+      "dependsOn": ["^build", "build"],
+      "passThroughEnv": [
+        "PLAYWRIGHT_BROWSERS_PATH",
+        "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS"
+      ]
     },
     "test:browser": {
       "dependsOn": ["^build", "build"],
