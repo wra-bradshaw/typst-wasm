@@ -24,7 +24,7 @@
       "outputs": ["dist/**", ".next/**", ".output/**"]
     },
     "lint": {
-      "dependsOn": []
+      "dependsOn": ["build"]
     },
     "test": {
       "dependsOn": ["build"]
