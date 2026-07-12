@@ -1,39 +1,51 @@
 import { playwright } from "@vitest/browser-playwright";
 import { defineConfig } from "vitest/config";
 
-type Browser = "chromium" | "firefox" | "webkit";
+import type { BrowserInstanceOption } from "vitest/node";
 
-export const browserConfig = (browser: Browser) =>
-  defineConfig({
-    server: {
-      headers: {
-        "Cross-Origin-Opener-Policy": "same-origin",
-        "Cross-Origin-Embedder-Policy": "require-corp",
+const browserInstances: BrowserInstanceOption[] = [
+  {
+    browser: "chromium",
+    include: ["tests/integration/adapters/browser.test.ts"],
+    provide: { browserRuntime: "chromium" },
+    provider: playwright({
+      launchOptions: { args: ["--enable-features=WebAssemblyJSPI"] },
+    }),
+  },
+  {
+    browser: "firefox",
+    include: ["tests/integration/adapters/browser.test.ts"],
+    provide: { browserRuntime: "firefox" },
+    provider: playwright({
+      launchOptions: {
+        firefoxUserPrefs: {
+          "javascript.options.wasm_js_promise_integration": true,
+        },
       },
-    },
-    test: {
-      globals: true,
-      include: [`tests/integration/adapters/browser.${browser}.test.ts`],
-      testTimeout: 120000,
-      maxWorkers: 1,
-      browser: {
-        enabled: true,
-        provider: playwright(
-          browser === "chromium"
-            ? { launchOptions: { args: ["--enable-features=WebAssemblyJSPI"] } }
-            : browser === "firefox"
-              ? {
-                  launchOptions: {
-                    firefoxUserPrefs: {
-                      "javascript.options.wasm_js_promise_integration": true,
-                    },
-                  },
-                }
-              : {},
-        ),
-        instances: [{ browser }],
-      },
-    },
-  });
+    }),
+  },
+  {
+    browser: "webkit",
+    include: ["tests/integration/adapters/browser.test.ts"],
+    provide: { browserRuntime: "webkit" },
+    provider: playwright(),
+  },
+];
 
-export default browserConfig("chromium");
+export default defineConfig({
+  server: {
+    headers: {
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
+  },
+  test: {
+    globals: true,
+    testTimeout: 120000,
+    maxWorkers: 1,
+    browser: {
+      enabled: true,
+      instances: browserInstances,
+    },
+  },
+});

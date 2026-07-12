@@ -38,7 +38,7 @@ jobs:
       - id: cells
         name: Derive cells from package scripts
         run: |
-          cells=$(jq -c '[.scripts | keys[] | select(test("^test:integration:(bun|node|workerd|deno|chromium|firefox|webkit)$")) | sub("^test:integration:"; "") | {name: ., artifact: gsub(":"; "-")}]' packages/typst-wasm/package.json)
+          cells=$(jq -c '[.scripts | keys[] | select(test("^test:integration:(bun|node|workerd|deno|browser)$")) | sub("^test:integration:"; "") | {name: ., artifact: gsub(":"; "-")}]' packages/typst-wasm/package.json)
           test "$cells" != "[]" || { echo "no integration scripts found"; exit 1; }
           echo "cells=$cells" >> "$GITHUB_OUTPUT"
 
@@ -58,10 +58,10 @@ jobs:
           use-flakehub: false
       - run: nix develop .#ci -c pnpm install --frozen-lockfile
       - run: nix develop .#ci -c pnpm turbo run build --filter=typst-wasm...
-      - name: Install selected browser engine
-        if: matrix.cell.name == 'chromium' || matrix.cell.name == 'firefox' || matrix.cell.name == 'webkit'
+      - name: Install browser engines
+        if: matrix.cell.name == 'browser'
         run: |
-          nix develop .#ci -c pnpm --filter typst-wasm exec playwright install --with-deps "${{ matrix.cell.name }}"
+          nix develop .#ci -c pnpm --filter typst-wasm exec playwright install --with-deps chromium firefox webkit
       - name: Run declared integration cell
         env:
           INTEGRATION_RESULTS_DIR: ${{ env.CI_ARTIFACT_DIR }}/${{ matrix.cell.name }}
