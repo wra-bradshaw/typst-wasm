@@ -11,13 +11,13 @@ const archive = async (contents = "#let answer = 42") =>
   await createTarGzip([{ name: "lib.typ", data: contents }]);
 
 const response = (data: Uint8Array, status = 200): Response =>
-  new Response(data, {
+  new Response(data.slice().buffer as ArrayBuffer, {
     status,
     headers: { "content-type": "application/gzip" },
   });
 
 const options = (
-  fetch: typeof globalThis.fetch,
+  fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>,
   cache?: PackageCache | false,
 ) => ({
   fetch,

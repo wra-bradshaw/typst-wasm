@@ -12,6 +12,11 @@ import type {
   TypstFileRequest,
 } from "../compiler/types";
 
+type PackageFetch = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Response>;
+
 interface PackageSpec {
   readonly namespace: string;
   readonly name: string;
@@ -20,7 +25,7 @@ interface PackageSpec {
 }
 
 export interface PackageManagerOptions {
-  fetch?: typeof fetch;
+  fetch?: PackageFetch;
   packageBaseUrl?: string;
   cache?: PackageCache | false;
   memoryPackageCacheCapacity?: number;
@@ -64,7 +69,7 @@ const getPackageKey = (spec: PackageSpec): string =>
 const packageFetchAttempts = 3;
 
 const fetchPackage = async (
-  fetchImpl: typeof fetch,
+  fetchImpl: PackageFetch,
   url: string,
 ): Promise<Response> => {
   let lastError: unknown;
@@ -88,7 +93,7 @@ const fetchPackage = async (
 };
 
 export class PackageManager {
-  private readonly fetchImpl: typeof fetch;
+  private readonly fetchImpl: PackageFetch;
   private readonly packageBaseUrl: string;
   private readonly cache: PackageCache | undefined;
   private readonly logger: ResolvedLogger | undefined;
