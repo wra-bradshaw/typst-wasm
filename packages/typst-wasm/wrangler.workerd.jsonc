@@ -1,0 +1,5 @@
+{
+  "name": "typst-wasm-integration",
+  "main": "tests/integration/adapters/workerd/guest.ts",
+  "rules": [{ "type": "Data", "globs": ["**/*.otf"] }],
+}

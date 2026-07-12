@@ -3,7 +3,8 @@
   "compilerOptions": {
     "rootDir": ".",
     "noEmit": true,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "types": ["tsdown-plugin-worker/types"]
   },
   "include": ["src/**/*", "scripts/**/*", "tests/**/*"]
 }
