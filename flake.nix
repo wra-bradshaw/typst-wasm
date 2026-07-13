@@ -159,6 +159,7 @@
               pkgs.playwright
             ];
             PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright.passthru.browsers}";
+            PLAYWRIGHT_HOST_PLATFORM_OVERRIDE = "ubuntu-24.04";
             PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
           };
         };
