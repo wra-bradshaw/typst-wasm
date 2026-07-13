@@ -23,4 +23,20 @@ jobs:
         with:
           use-flakehub: false
       - run: nix develop .#ci -c pnpm install --frozen-lockfile
+      # Temporary WebKit startup diagnostic. Keep the normal integration suite below
+      # authoritative; this captures Linux/WebKit process failures separately.
+      - name: Diagnose WebKit startup
+        continue-on-error: true
+        run: |
+          nix develop .#ci -c env -u PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS \
+            DEBUG=pw:browser* \
+            pnpm --filter typst-wasm exec node --input-type=module -e '
+              import { webkit } from "playwright";
+              const browser = await webkit.launch();
+              const page = await browser.newPage();
+              await page.goto("data:text/html,ok");
+              console.log(await page.textContent("body"));
+              await browser.close();
+            '
+
       - run: nix develop .#ci -c pnpm turbo run build lint test:unit test:integration
