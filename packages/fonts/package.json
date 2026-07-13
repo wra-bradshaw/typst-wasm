@@ -11,9 +11,23 @@
   },
   "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
   "exports": {
-    "./NewCMMath-Bold.otf": "./dist/files/NewCMMath-Bold.otf",
+    "./LibertinusSerif-Regular.otf": "./dist/files/LibertinusSerif-Regular.otf",
+    "./LibertinusSerif-Semibold.otf": "./dist/files/LibertinusSerif-Semibold.otf",
+    "./LibertinusSerif-Bold.otf": "./dist/files/LibertinusSerif-Bold.otf",
+    "./LibertinusSerif-Italic.otf": "./dist/files/LibertinusSerif-Italic.otf",
+    "./LibertinusSerif-SemiboldItalic.otf": "./dist/files/LibertinusSerif-SemiboldItalic.otf",
+    "./LibertinusSerif-BoldItalic.otf": "./dist/files/LibertinusSerif-BoldItalic.otf",
+    "./NewCM10-Regular.otf": "./dist/files/NewCM10-Regular.otf",
+    "./NewCM10-Bold.otf": "./dist/files/NewCM10-Bold.otf",
+    "./NewCM10-Italic.otf": "./dist/files/NewCM10-Italic.otf",
+    "./NewCM10-BoldItalic.otf": "./dist/files/NewCM10-BoldItalic.otf",
+    "./NewCMMath-Regular.otf": "./dist/files/NewCMMath-Regular.otf",
     "./NewCMMath-Book.otf": "./dist/files/NewCMMath-Book.otf",
-    "./NewCMMath-Regular.otf": "./dist/files/NewCMMath-Regular.otf"
+    "./NewCMMath-Bold.otf": "./dist/files/NewCMMath-Bold.otf",
+    "./DejaVuSansMono.ttf": "./dist/files/DejaVuSansMono.ttf",
+    "./DejaVuSansMono-Bold.ttf": "./dist/files/DejaVuSansMono-Bold.ttf",
+    "./DejaVuSansMono-Oblique.ttf": "./dist/files/DejaVuSansMono-Oblique.ttf",
+    "./DejaVuSansMono-BoldOblique.ttf": "./dist/files/DejaVuSansMono-BoldOblique.ttf"
   },
   "scripts": {
     "build": "nix run ../..#build-artifact -- fonts",

@@ -5,6 +5,10 @@
     nixpkgs.url = "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1";
     nixpkgs-node.url = "github:NixOS/nixpkgs/346dd96ad74dc4457a9db9de4f4f57dab2e5731d";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    typst-assets = {
+      url = "github:typst/typst-assets/v0.15.0";
+      flake = false;
+    };
     crane.url = "github:ipetkov/crane";
     fenix = {
       url = "github:nix-community/fenix/monthly";

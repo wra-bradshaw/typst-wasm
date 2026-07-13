@@ -106,7 +106,8 @@
         "fenix": "fenix",
         "flake-parts": "flake-parts",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-node": "nixpkgs-node"
+        "nixpkgs-node": "nixpkgs-node",
+        "typst-assets": "typst-assets"
       }
     },
     "rust-analyzer-src": {
@@ -123,6 +124,23 @@
         "owner": "rust-lang",
         "ref": "nightly",
         "repo": "rust-analyzer",
+        "type": "github"
+      }
+    },
+    "typst-assets": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781514763,
+        "narHash": "sha256-mIdIYjKocfQf+MUhMaqRK2VRQE+Bj5NZJs7tJLmiFUU=",
+        "owner": "typst",
+        "repo": "typst-assets",
+        "rev": "98ed175f2d168f7e42c8a39d20b738a50abe8385",
+        "type": "github"
+      },
+      "original": {
+        "owner": "typst",
+        "ref": "v0.15.0",
+        "repo": "typst-assets",
         "type": "github"
       }
     }

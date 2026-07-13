@@ -1,17 +1,28 @@
-{ pkgs }:
+{
+  pkgs,
+  typstAssets,
+}:
 
 let
   version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
-  fontVersion = "7.1.1";
-  fontSource = pkgs.fetchzip {
-    url = "https://download.gnu.org.ua/release/newcm/newcm-${fontVersion}.txz";
-    hash = "sha256-js0AaEUe4WRPoWZloH33ahNxbl+PUcV36M3oAFN2gtQ=";
-    stripRoot = true;
-  };
   fontFiles = [
+    "LibertinusSerif-Regular.otf"
+    "LibertinusSerif-Semibold.otf"
+    "LibertinusSerif-Bold.otf"
+    "LibertinusSerif-Italic.otf"
+    "LibertinusSerif-SemiboldItalic.otf"
+    "LibertinusSerif-BoldItalic.otf"
+    "NewCM10-Regular.otf"
+    "NewCM10-Bold.otf"
+    "NewCM10-Italic.otf"
+    "NewCM10-BoldItalic.otf"
     "NewCMMath-Regular.otf"
-    "NewCMMath-Bold.otf"
     "NewCMMath-Book.otf"
+    "NewCMMath-Bold.otf"
+    "DejaVuSansMono.ttf"
+    "DejaVuSansMono-Bold.ttf"
+    "DejaVuSansMono-Oblique.ttf"
+    "DejaVuSansMono-BoldOblique.ttf"
   ];
 in
 pkgs.stdenvNoCC.mkDerivation {
@@ -25,8 +36,9 @@ pkgs.stdenvNoCC.mkDerivation {
 
     mkdir -p "$out/dist/files"
     for font_file in ${builtins.concatStringsSep " " fontFiles}; do
-      cp ${fontSource}/otf/$font_file "$out/dist/files/$font_file"
+      cp ${typstAssets}/files/fonts/$font_file "$out/dist/files/$font_file"
     done
+    cp ${typstAssets}/NOTICE "$out/dist/NOTICE"
 
     runHook postInstall
   '';
