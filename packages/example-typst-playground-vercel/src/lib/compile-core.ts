@@ -45,10 +45,6 @@ export const createCompileModule = <Args extends any[]>(
       format: "html",
     });
 
-    if (result.format !== "html") {
-      throw new Error(`Expected html output, received ${result.format}`);
-    }
-
     return {
       html: result.output,
       diagnostics: result.diagnostics,

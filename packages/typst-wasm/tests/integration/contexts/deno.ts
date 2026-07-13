@@ -7,7 +7,7 @@ import {
   supportsWorkerBackend,
   type TypstCompilerOptions,
   type WorkerHost,
-} from "typst-wasm";
+} from "typst-wasm/browser";
 import * as jspiEngine from "@typst-wasm/engine-wasm/jspi";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
 import type { IntegrationBackend } from "../spec/types.ts";

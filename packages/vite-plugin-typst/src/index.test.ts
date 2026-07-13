@@ -8,7 +8,7 @@ import type {
   TypstCompiler,
   TypstCompilerOptions,
   TypstLoadedFile,
-} from "typst-wasm";
+} from "typst-wasm/node";
 
 const typstWasm = vi.hoisted(() => {
   class MockCompileError extends Error {
@@ -26,7 +26,7 @@ const typstWasm = vi.hoisted(() => {
   };
 });
 
-vi.mock("typst-wasm", () => typstWasm);
+vi.mock("typst-wasm/node", () => typstWasm);
 
 const projectRoot = path.resolve("/project");
 const worker = (() => ({

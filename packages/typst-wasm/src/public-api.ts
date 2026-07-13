@@ -11,6 +11,7 @@ export type {
   CompileOptions,
   CompileResult,
   CompileResultBase,
+  CompileResultForFormat,
   PageOutput,
   TypstCompiler,
   TypstCompilerOptions,

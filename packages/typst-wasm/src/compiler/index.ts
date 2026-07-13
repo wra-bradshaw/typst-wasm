@@ -13,8 +13,10 @@ import type {
   EngineDiagnostic,
 } from "../engine/types";
 import type {
+  CompileFormat,
   CompileOptions,
   CompileResult,
+  CompileResultForFormat,
   TypstCompiler,
   TypstCompilerOptions,
   TypstDocumentMetadata,
@@ -159,6 +161,10 @@ class PromiseTypstCompiler implements TypstCompiler {
     return this.backend.setMain(path);
   }
 
+  compile<F extends CompileFormat>(
+    options: CompileOptions & { format: F },
+  ): Promise<CompileResultForFormat<F>>;
+  compile(options?: CompileOptions): Promise<CompileResult>;
   async compile(options: CompileOptions = {}): Promise<CompileResult> {
     if (options.main) await this.setMain(options.main);
     this.fileLoaderManager.resetTrace();

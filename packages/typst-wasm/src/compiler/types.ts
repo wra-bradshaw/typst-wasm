@@ -168,6 +168,12 @@ export type CompileResult =
       files: BundleFile[];
     });
 
+/** Extracts the result shape associated with a requested output format. */
+export type CompileResultForFormat<F extends CompileFormat> = Extract<
+  CompileResult,
+  { format: F }
+>;
+
 /** Stateful promise-based Typst compiler. */
 export interface TypstCompiler {
   /** Registers a font for subsequent compilations. */
@@ -187,6 +193,9 @@ export interface TypstCompiler {
   /** Sets the default entry-point path. */
   setMain(path: string): Promise<void>;
   /** Compiles the current virtual project. */
+  compile<F extends CompileFormat>(
+    options: CompileOptions & { format: F },
+  ): Promise<CompileResultForFormat<F>>;
   compile(options?: CompileOptions): Promise<CompileResult>;
   /** Releases compiler and worker resources. */
   dispose(): Promise<void>;

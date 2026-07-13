@@ -1,4 +1,4 @@
-import { createTypstCompiler, type TypstCompiler } from "typst-wasm";
+import { createTypstCompiler, type TypstCompiler } from "typst-wasm/workerd";
 import * as engine from "@typst-wasm/engine-wasm/jspi";
 import core from "@typst-wasm/engine-wasm/jspi/engine.core.wasm";
 import core2 from "@typst-wasm/engine-wasm/jspi/engine.core2.wasm";

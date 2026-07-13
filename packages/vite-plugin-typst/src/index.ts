@@ -10,7 +10,7 @@ import {
   type TypstFileLoader,
   type TypstLoadedFile,
   type TypstDiagnostic,
-} from "typst-wasm";
+} from "typst-wasm/node";
 import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
 
@@ -121,10 +121,6 @@ const compileTypst = async (
 
       throw error;
     });
-  if (result.format !== "html") {
-    throw new Error(`Expected Typst HTML output, received ${result.format}`);
-  }
-
   return {
     html: result.output,
     metadata: result.metadata,

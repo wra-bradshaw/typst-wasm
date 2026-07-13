@@ -32,6 +32,7 @@ export default defineConfig([
   {
     ...common,
     entry: {
+      "public-api": "./src/public-api.ts",
       index: "./src/index.ts",
       "index.browser": "./src/index.browser.ts",
       "index.workerd": "./src/index.workerd.ts",

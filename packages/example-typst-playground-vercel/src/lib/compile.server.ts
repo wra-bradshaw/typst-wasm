@@ -7,7 +7,7 @@ import {
   createTypstCompiler,
   createWorkerHost,
   type TypstCompiler,
-} from "typst-wasm";
+} from "typst-wasm/node";
 import { createCompileModule } from "./compile-core";
 
 export { formatCompileError } from "./compile-core";
