@@ -1,7 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "typst-wasm-blog",
-  "compatibility_date": "2026-07-03",
+  "compatibility_date": "2026-07-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@tanstack/react-start/server-entry",
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"

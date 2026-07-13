@@ -1,3 +1,4 @@
+#metadata("intro") <slug>
 #set document(
   title: "Shipping Typst in React",
   description: "A short note compiled by vite-plugin-typst.",

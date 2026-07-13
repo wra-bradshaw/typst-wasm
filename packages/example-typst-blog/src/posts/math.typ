@@ -1,3 +1,4 @@
+#metadata("math") <slug>
 #set document(
   title: "Math Notes",
   description: "A compact Typst math post.",

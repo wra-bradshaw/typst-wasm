@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "4.3.1",
+    "@tanstack/react-router": "^1.170.16",
+    "@tanstack/react-start": "^1.168.26",
     "@typst-wasm/engine-wasm": "workspace:*",
     "@typst-wasm/fonts": "workspace:*",
     "@typst-wasm/vite-plugin-typst": "workspace:*",
@@ -19,10 +21,12 @@
     "react-dom": "^19.2.7",
     "tailwindcss": "4.3.1",
     "typst-wasm": "workspace:*",
-    "vite": "^8.0.3"
+    "vite": "^8.0.3",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/react": "^19.2.7",
+    "@cloudflare/vite-plugin": "1.42.3",
     "@types/react-dom": "^19.2.3",
     "typescript": "^5.9.3",
     "wrangler": "^4.105.0"
