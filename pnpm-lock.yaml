@@ -90,9 +90,6 @@ importers:
       '@typst-wasm/engine-wasm':
         specifier: workspace:*
         version: link:../engine-wasm
-      '@typst-wasm/fonts':
-        specifier: workspace:*
-        version: link:../fonts
       '@vitejs/plugin-react':
         specifier: ^6.0.3
         version: 6.0.3(vite@8.0.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -136,9 +133,6 @@ importers:
       '@typst-wasm/engine-wasm':
         specifier: workspace:*
         version: link:../engine-wasm
-      '@typst-wasm/fonts':
-        specifier: workspace:*
-        version: link:../fonts
       '@vitejs/plugin-react':
         specifier: ^6.0.3
         version: 6.0.3(vite@8.0.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
