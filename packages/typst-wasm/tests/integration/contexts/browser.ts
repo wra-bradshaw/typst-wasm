@@ -1,6 +1,6 @@
 import {
   createTypstCompiler,
-  createWorkerHost,
+  createWebWorker,
   selectAutomaticBackendKind,
   supportsJspiBackend,
   supportsWorkerBackend,
@@ -36,7 +36,7 @@ export const makeBrowserContext = async (
       await fetchBytes(assets?.cores[name] ?? asset(`wasm/${name}`)),
     );
   const worker = () =>
-    createWorkerHost(assets?.worker ?? asset("worker/browser.js"));
+    createWebWorker(assets?.worker ?? asset("worker/browser.js"));
   const createCompiler = (
     options: Parameters<typeof createTypstCompiler>[0] = {},
   ) =>

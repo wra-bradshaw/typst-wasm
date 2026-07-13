@@ -5,7 +5,7 @@
 ## Browser / Vite Usage
 
 ```ts
-import { createTypstCompiler, createWorkerHost } from "typst-wasm/browser";
+import { createTypstCompiler, createWebWorker } from "typst-wasm/browser";
 import newComputerModernMathBoldUrl from "@typst-wasm/fonts/NewCMMath-Bold.otf?url";
 import newComputerModernMathBookUrl from "@typst-wasm/fonts/NewCMMath-Book.otf?url";
 import newComputerModernMathRegularUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
@@ -15,7 +15,7 @@ import * as engine from "@typst-wasm/engine-wasm/jspi";
 const compiler = await createTypstCompiler({
   backend: "auto",
   engine,
-  worker: () => createWorkerHost(workerUrl),
+  worker: () => createWebWorker(workerUrl),
 });
 
 for (const fontUrl of [
@@ -52,14 +52,14 @@ const compiler = await createTypstCompiler({
 
 ```ts
 import { readFile } from "node:fs/promises";
-import { createTypstCompiler, createWorkerHost } from "typst-wasm/node";
+import { createTypstCompiler, createWorkerThread } from "typst-wasm/node";
 import * as engine from "@typst-wasm/engine-wasm/jspi";
 
 const compiler = await createTypstCompiler({
   backend: "auto",
   engine,
   worker: () =>
-    createWorkerHost(new URL(import.meta.resolve("typst-wasm/worker/node"))),
+    createWorkerThread(new URL(import.meta.resolve("typst-wasm/worker/node"))),
 });
 
 try {
@@ -87,7 +87,7 @@ try {
 
 Supported compile formats are `pdf`, `png`, `svg`, `html`, and `bundle`. The public API is promise-based; Effect is no longer part of the runtime or package API.
 
-Compile options include `main`, `format`, `inputs`, `pages`, `ppi`, and `pdfStandards`. Browser and server resource loading can be customized with `fetch`, `packageBaseUrl`, and `packageCache`. For JSPI, import JCO's generated `engine` module and let it use its runtime default core-WASM loader. Use optional `getCoreModule(name)` only when a runtime needs precompiled modules, such as Cloudflare Workers. Worker deployments provide `worker` as a `WorkerHost` factory created directly or with the runtime-specific `createWorkerHost(url)` helper.
+Compile options include `main`, `format`, `inputs`, `pages`, `ppi`, and `pdfStandards`. Browser and server resource loading can be customized with `fetch`, `packageBaseUrl`, and `packageCache`. For JSPI, import JCO's generated `engine` module and let it use its runtime default core-WASM loader. Use optional `getCoreModule(name)` only when a runtime needs precompiled modules, such as Cloudflare Workers. Worker deployments provide `worker` as a `WorkerHost` factory created directly or with the runtime-specific worker helper.
 
 For Vercel SSR, compile inside route loaders only when you have explicitly configured a Node-compatible backend. The package will not infer worker files from bundled output.
 

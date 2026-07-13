@@ -5,7 +5,7 @@ import { selectAutomaticBackendKind as selectAutomaticBackendKindForRuntime } fr
 
 type BackendSelection = "worker" | "jspi" | "none";
 
-export { createNodeWorkerHost, createWorkerHost } from "./runtime/node";
+export { createWorkerThread } from "./runtime/node";
 
 /** Creates a Typst compiler using the Node.js runtime. */
 export const createTypstCompiler = (

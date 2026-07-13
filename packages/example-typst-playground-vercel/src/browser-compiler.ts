@@ -1,6 +1,6 @@
 import {
   createTypstCompiler,
-  createWorkerHost,
+  createWebWorker,
   type TypstCompiler,
 } from "typst-wasm/browser";
 import * as engine from "@typst-wasm/engine-wasm/jspi";
@@ -13,7 +13,7 @@ const createInitializedCompiler = async (): Promise<TypstCompiler> => {
   return await createTypstCompiler({
     backend: "auto",
     engine,
-    worker: () => createWorkerHost(browserWorkerUrl),
+    worker: () => createWebWorker(browserWorkerUrl),
   });
 };
 

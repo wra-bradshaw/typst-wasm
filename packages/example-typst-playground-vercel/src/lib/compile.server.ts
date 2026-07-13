@@ -5,7 +5,7 @@ import core2Url from "@typst-wasm/engine-wasm/worker/engine.core2.wasm?url";
 import core3Url from "@typst-wasm/engine-wasm/worker/engine.core3.wasm?url";
 import {
   createTypstCompiler,
-  createWorkerHost,
+  createWorkerThread,
   type TypstCompiler,
 } from "typst-wasm/node";
 import { createCompileModule } from "./compile-core";
@@ -33,7 +33,7 @@ const createInitializedCompiler = async (
       const response = await fetch(new URL(url, assetOrigin));
       return await WebAssembly.compile(await response.arrayBuffer());
     },
-    worker: () => createWorkerHost(nodeWorkerUrl),
+    worker: () => createWorkerThread(nodeWorkerUrl),
   });
 };
 

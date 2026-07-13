@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import {
-  createNodeWorkerHost,
+  createWorkerThread,
   createTypstCompiler,
   selectAutomaticBackendKind,
   supportsJspiBackend,
@@ -27,7 +27,7 @@ export const makeNodeContext = async (
       await readAsset(`@typst-wasm/engine-wasm/worker/${name}`),
     );
   const defaultWorker = () =>
-    createNodeWorkerHost(
+    createWorkerThread(
       new URL(import.meta.resolve("typst-wasm/worker/node")),
     );
 

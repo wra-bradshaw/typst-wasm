@@ -5,7 +5,7 @@ import { browserRuntime } from "./runtime/browser";
 
 type BackendSelection = "worker" | "jspi" | "none";
 
-export { createBrowserWorkerHost, createWorkerHost } from "./runtime/browser";
+export { createWebWorker } from "./runtime/browser";
 
 /** Creates a Typst compiler using browser-compatible runtime facilities. */
 export const createTypstCompiler = (

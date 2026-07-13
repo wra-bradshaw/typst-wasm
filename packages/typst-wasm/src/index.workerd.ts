@@ -5,8 +5,6 @@ import { workerdRuntime } from "./runtime/workerd";
 
 type BackendSelection = "worker" | "jspi" | "none";
 
-export { createWorkerHost } from "./runtime/workerd";
-
 /** Creates a Typst compiler using the Cloudflare Workers runtime. */
 export const createTypstCompiler = (
   options: TypstCompilerOptions,

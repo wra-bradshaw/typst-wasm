@@ -6,7 +6,7 @@ import {
 import type { WorkerHost } from "../worker/host";
 
 /** Creates a worker host backed by a browser `Worker`. */
-export const createBrowserWorkerHost = (
+export const createWebWorker = (
   workerUrl: string | URL,
 ): WorkerHost => {
   const worker = new Worker(workerUrl, { type: "module" });
@@ -20,9 +20,6 @@ export const createBrowserWorkerHost = (
     terminate: () => worker.terminate(),
   };
 };
-
-/** Creates the runtime-default worker host for browsers. */
-export const createWorkerHost = createBrowserWorkerHost;
 
 const supportsBrowserWorkerBackend = (): boolean =>
   supportsWorkerBackendPrimitive() && typeof Worker !== "undefined";

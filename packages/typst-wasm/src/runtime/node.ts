@@ -4,7 +4,7 @@ import { supportsJspiBackend } from "../backends/capabilities";
 import type { WorkerHost } from "../worker/host";
 
 /** Creates a worker host backed by a Node.js or Bun worker. */
-export const createNodeWorkerHost = (workerUrl: string | URL): WorkerHost => {
+export const createWorkerThread = (workerUrl: string | URL): WorkerHost => {
   if ("Bun" in globalThis) {
     const worker = new globalThis.Worker(workerUrl, { type: "module" });
     return {
@@ -30,9 +30,6 @@ export const createNodeWorkerHost = (workerUrl: string | URL): WorkerHost => {
     terminate: () => worker.terminate(),
   };
 };
-
-/** Creates the runtime-default worker host for Node.js. */
-export const createWorkerHost = createNodeWorkerHost;
 
 export const nodeRuntime: TypstRuntime = {
   createWorker: (options) => {
