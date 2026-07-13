@@ -27,16 +27,6 @@ export class CompilerNotInitializedError extends TypstError {}
 /** Indicates that an operation was attempted after compiler disposal. */
 export class CompilerDisposedError extends TypstError {}
 
-/** Indicates that a font asset could not be loaded or registered. */
-export class FontLoadError extends TypstError {
-  readonly fontName: string;
-
-  constructor(fontName: string, cause: unknown) {
-    super(`Failed to load font "${fontName}"`, { cause });
-    this.fontName = fontName;
-  }
-}
-
 /** Indicates that a requested file could not be fetched. */
 export class FetchError extends TypstError {
   readonly path: string;

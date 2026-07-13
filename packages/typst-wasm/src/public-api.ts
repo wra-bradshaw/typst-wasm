@@ -25,9 +25,7 @@ export type {
   TypstLoadedFile,
   TypstLogLevel,
   TypstLogger,
-  RuntimeAsset,
   TypstWorkerAsset,
   TypstDiagnostic,
 } from "./compiler/types";
 export * from "./errors";
-export { loadFonts } from "./fonts";

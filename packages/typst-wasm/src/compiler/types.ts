@@ -64,8 +64,6 @@ export interface TypstDocumentMetadata {
   custom: TypstCustomMetadata[];
 }
 
-export type RuntimeAsset<T> = T | (() => T | Promise<T>);
-
 export type TypstWorkerAsset = () => WorkerHost;
 
 /** Options used to create a {@link TypstCompiler}. */
