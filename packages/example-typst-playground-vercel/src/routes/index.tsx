@@ -75,7 +75,7 @@ function Playground() {
         {error ? <pre className="error">{error}</pre> : null}
         <article
           className="preview"
-          dangerouslySetInnerHTML={{ __html: error ? "" : preview }}
+          dangerouslySetInnerHTML={{ __html: preview }}
         />
         <div className="diagnostics">
           {diagnostics.length === 0
