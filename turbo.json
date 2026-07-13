@@ -30,7 +30,8 @@
       "dependsOn": ["build"],
       "passThroughEnv": [
         "PLAYWRIGHT_BROWSERS_PATH",
-        "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS"
+        "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS",
+        "PLAYWRIGHT_HOST_PLATFORM_OVERRIDE"
       ]
     },
     "test:unit": {
@@ -47,7 +48,8 @@
       "dependsOn": ["^build", "build"],
       "passThroughEnv": [
         "PLAYWRIGHT_BROWSERS_PATH",
-        "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS"
+        "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS",
+        "PLAYWRIGHT_HOST_PLATFORM_OVERRIDE"
       ]
     },
     "test:browser": {
