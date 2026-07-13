@@ -150,18 +150,23 @@
             shellHook = "";
           };
 
-          devShells.ci = pkgs.mkShell {
-            inputsFrom = [ config.devShells.typst-wasm ];
-            packages = [
-              config.formatter
-              pkgs.nodejs
-              pkgs.pnpm
-              pkgs.playwright
-            ];
-            PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright.passthru.browsers}";
-            PLAYWRIGHT_HOST_PLATFORM_OVERRIDE = "ubuntu-24.04";
-            PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
-          };
+          devShells.ci = pkgs.mkShell (
+            {
+              inputsFrom = [ config.devShells.typst-wasm ];
+              packages = [
+                config.formatter
+                pkgs.nodejs
+                pkgs.pnpm
+                pkgs.playwright
+              ];
+              PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright.passthru.browsers}";
+              PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "1";
+            }
+            // pkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+              PLAYWRIGHT_HOST_PLATFORM_OVERRIDE =
+                if pkgs.stdenv.hostPlatform.isAarch64 then "ubuntu24.04-arm64" else "ubuntu24.04-x64";
+            }
+          );
         };
     };
 }
