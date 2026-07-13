@@ -24,7 +24,10 @@ function PostPage() {
         <h2 className="text-xl font-semibold text-stone-950">{title}</h2>
         {description ? <p className="mt-1 text-sm text-stone-600">{description}</p> : null}
       </header>
-      <div className="post-body p-5" dangerouslySetInnerHTML={{ __html: post.document.html }} />
+      <div
+        className="prose prose-stone max-w-none p-5 [&_svg]:max-w-full"
+        dangerouslySetInnerHTML={{ __html: post.document.html }}
+      />
     </article>
   );
 }

@@ -1,4 +1,10 @@
-import { HeadContent, Outlet, Scripts, createRootRoute, Link } from "@tanstack/react-router";
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRoute,
+  Link,
+} from "@tanstack/react-router";
 import { posts } from "../posts";
 import "../styles.css";
 
@@ -22,8 +28,10 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <html lang="en">
-      <head><HeadContent /></head>
-      <body>
+      <head>
+        <HeadContent />
+      </head>
+      <body className="m-0 bg-[#f7f7f4] font-sans text-[#1f2933]">
         <main className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[14rem_minmax(0,1fr)]">
             <nav className="rounded-md border border-stone-300 bg-white p-3">
@@ -33,7 +41,9 @@ function RootComponent() {
               <div className="grid gap-2">
                 {posts.map((post) => (
                   <Link
-                    activeProps={{ className: "border-stone-950 bg-stone-950 text-white" }}
+                    activeProps={{
+                      className: "border-stone-950 bg-stone-950 text-white",
+                    }}
                     className="rounded border border-stone-300 bg-white px-3 py-2 text-left text-sm text-stone-800"
                     key={post.slug}
                     params={{ slug: post.slug }}
