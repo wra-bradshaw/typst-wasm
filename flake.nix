@@ -132,7 +132,7 @@
         {
           _module.args.pkgs = pkgs;
 
-          formatter = pkgs.nixfmt-rfc-style;
+          formatter = pkgs.nixfmt;
 
           apps.build-artifact = {
             type = "app";

@@ -39,12 +39,17 @@ export default defineConfig({
       "Cross-Origin-Embedder-Policy": "require-corp",
     },
   },
+  optimizeDeps: {
+    entries: ["tests/integration/adapters/browser.test.ts"],
+    include: ["@std/expect", "nanotar"],
+  },
   test: {
     globals: true,
     testTimeout: 120_000,
     maxWorkers: 1,
     browser: {
       enabled: true,
+      connectTimeout: 120_000,
       instances: browserInstances,
     },
   },
