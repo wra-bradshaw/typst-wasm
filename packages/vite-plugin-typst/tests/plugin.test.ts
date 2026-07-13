@@ -19,7 +19,9 @@ const plugin = () =>
   typst({
     backend: "worker",
     worker: () =>
-      createWorkerThread(new URL(import.meta.resolve("typst-wasm/worker/node"))),
+      createWorkerThread(
+        new URL(import.meta.resolve("typst-wasm/worker/node")),
+      ),
     getCoreModule: async (name) =>
       WebAssembly.compile(
         await readFile(

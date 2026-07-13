@@ -6,9 +6,7 @@ import {
 import type { WorkerHost } from "../worker/host";
 
 /** Creates a worker host backed by a browser `Worker`. */
-export const createWebWorker = (
-  workerUrl: string | URL,
-): WorkerHost => {
+export const createWebWorker = (workerUrl: string | URL): WorkerHost => {
   const worker = new Worker(workerUrl, { type: "module" });
   return {
     listen: (onMessage, onError) => {
