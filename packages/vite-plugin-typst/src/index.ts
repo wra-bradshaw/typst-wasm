@@ -47,7 +47,41 @@ export interface TypstCompiledModule {
   dependencies: LoadedFile[];
 }
 
-const typstRequestRE = /\.typ(?:$|\?)/;
+type TypstRequestMode = "html";
+
+const classifyTypstRequest = (id: string): TypstRequestMode | undefined => {
+  if (!id.includes(".typ")) return undefined;
+
+  const queryStart = id.indexOf("?");
+  if (queryStart === -1) return undefined;
+  if (!id.slice(0, queryStart).endsWith(".typ")) return undefined;
+  const queryEnd = id.indexOf("#", queryStart);
+  const query = id.slice(
+    queryStart + 1,
+    queryEnd === -1 ? undefined : queryEnd,
+  );
+  const params = new URLSearchParams(query);
+  const modes = params.getAll("typst");
+
+  if (modes.length === 0) return undefined;
+  if (modes.length !== 1) {
+    throw new Error(
+      "vite-plugin-typst accepts exactly one `typst` query parameter",
+    );
+  }
+  if (params.has("raw") || params.has("url")) {
+    throw new Error(
+      "vite-plugin-typst cannot combine `typst` with `raw` or `url`",
+    );
+  }
+  if (modes[0] !== "html") {
+    throw new Error(
+      `vite-plugin-typst does not support \`typst=${modes[0]}\`; only \`typst=html\` is currently available`,
+    );
+  }
+
+  return "html";
+};
 
 const normalizePath = (value: string): string =>
   value.replaceAll(path.sep, "/");
@@ -217,7 +251,13 @@ export const typst = (options: TypstPluginOptions): Plugin => {
     },
 
     async transform(code, id) {
-      if (!typstRequestRE.test(id)) return undefined;
+      let mode: TypstRequestMode | undefined;
+      try {
+        mode = classifyTypstRequest(id);
+      } catch (error) {
+        this.error(error instanceof Error ? error : new Error(String(error)));
+      }
+      if (mode === undefined) return undefined;
       if (!config) {
         this.error(
           new Error("vite-plugin-typst used before config resolution"),
