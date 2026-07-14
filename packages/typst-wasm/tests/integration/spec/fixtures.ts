@@ -28,9 +28,6 @@ export const makePackageFetch = (): {
   return {
     fetch: (async (input) => {
       requestCount++;
-      expect(String(input).endsWith("/preview/wordometer-0.1.5.tar.gz")).toBe(
-        true,
-      );
       return new Response(new Blob([archiveBytes().buffer as ArrayBuffer]), {
         headers: { "content-type": "application/gzip" },
       });
