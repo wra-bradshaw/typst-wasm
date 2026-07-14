@@ -29,6 +29,9 @@ importers:
       '@astrojs/starlight':
         specifier: 0.41.3
         version: 0.41.3(astro@7.0.2(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.2)(@vercel/blob@2.3.0)(db0@0.3.4)(jiti@2.7.0)(rollup@4.62.2)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))(typescript@5.9.3)
+      '@typst-wasm/vite-plugin-typst':
+        specifier: workspace:*
+        version: link:../vite-plugin-typst
       astro:
         specifier: 7.0.2
         version: 7.0.2(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.2)(@vercel/blob@2.3.0)(db0@0.3.4)(jiti@2.7.0)(rollup@4.62.2)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0)
@@ -44,6 +47,9 @@ importers:
       typedoc-plugin-markdown:
         specifier: 4.12.0
         version: 4.12.0(typedoc@0.28.20(typescript@5.9.3))
+      typst-wasm:
+        specifier: workspace:*
+        version: link:../typst-wasm
 
   packages/engine-wasm:
     devDependencies:
@@ -126,6 +132,9 @@ importers:
       '@typst-wasm/engine-wasm':
         specifier: workspace:*
         version: link:../engine-wasm
+      '@typst-wasm/fonts':
+        specifier: workspace:*
+        version: link:../fonts
       '@vitejs/plugin-react':
         specifier: ^6.0.3
         version: 6.0.3(vite@8.0.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
@@ -169,6 +178,9 @@ importers:
       '@typst-wasm/engine-wasm':
         specifier: workspace:*
         version: link:../engine-wasm
+      '@typst-wasm/fonts':
+        specifier: workspace:*
+        version: link:../fonts
       '@vitejs/plugin-react':
         specifier: ^6.0.3
         version: 6.0.3(vite@8.0.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
