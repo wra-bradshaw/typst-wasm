@@ -99,7 +99,9 @@ const makeCompiler = (dependencies: LoadedFile[] = []) => {
       } satisfies HtmlCompileResult;
     }),
     dispose: vi.fn(async () => undefined),
-  } satisfies TypstCompiler;
+  } satisfies Omit<TypstCompiler, "compile"> & {
+    compile(options: CompileOptions<"html">): Promise<HtmlCompileResult>;
+  };
 
   return compiler;
 };
@@ -119,9 +121,84 @@ const transformTypst = async (
   return await plugin.transform.call(context, source, id);
 };
 
+describe("typst vite plugin request matching", () => {
+  beforeEach(() => {
+    typstWasm.createTypstCompiler.mockReset();
+  });
+
+  test("only transforms explicit html queries", async () => {
+    const compiler = makeCompiler();
+    typstWasm.createTypstCompiler.mockResolvedValue(compiler);
+    const plugin = resolvePlugin(typst({ worker }));
+    const { context } = makeTransformContext();
+
+    expect(
+      await transformTypst(plugin, context, "source", "doc.typ"),
+    ).toBeUndefined();
+    expect(
+      await transformTypst(plugin, context, "source", "doc.typ?raw"),
+    ).toBeUndefined();
+    expect(
+      await transformTypst(
+        plugin,
+        context,
+        "source",
+        "doc.typ?foo=bar&typst=html",
+      ),
+    ).toMatchObject({ code: expect.stringContaining("const html =") });
+  });
+
+  test("rejects unsupported and ambiguous output queries", async () => {
+    const plugin = resolvePlugin(typst({ worker }));
+    const { context } = makeTransformContext();
+
+    await expect(
+      transformTypst(plugin, context, "source", "doc.typ?typst=pdf"),
+    ).rejects.toThrow("only `typst=html` is currently available");
+    await expect(
+      transformTypst(plugin, context, "source", "doc.typ?typst=html&raw"),
+    ).rejects.toThrow("cannot combine");
+  });
+});
+
 describe("typst vite plugin compiler lifecycle", () => {
   beforeEach(() => {
     typstWasm.createTypstCompiler.mockReset();
+  });
+
+  test("forwards compiler options", async () => {
+    const compiler = makeCompiler();
+    const fetch = vi.fn() as unknown as TypstCompilerOptions["fetch"];
+    const logger = { log: vi.fn() } satisfies NonNullable<
+      TypstCompilerOptions["logger"]
+    >;
+    typstWasm.createTypstCompiler.mockResolvedValue(compiler);
+    const plugin = resolvePlugin(
+      typst({
+        worker,
+        fetch,
+        logger,
+        logLevel: "debug",
+        packageCache: false,
+      }),
+    );
+    const { context } = makeTransformContext();
+
+    await transformTypst(
+      plugin,
+      context,
+      "= Options",
+      `${path.join(projectRoot, "options.typ")}?typst=html`,
+    );
+
+    expect(typstWasm.createTypstCompiler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fetch,
+        logger,
+        logLevel: "debug",
+        packageCache: false,
+      }),
+    );
   });
 
   test("reuses one compiler for multiple Typst entry modules", async () => {
@@ -134,13 +211,13 @@ describe("typst vite plugin compiler lifecycle", () => {
       plugin,
       context,
       "= One",
-      path.join(projectRoot, "one.typ"),
+      `${path.join(projectRoot, "one.typ")}?typst=html`,
     );
     await transformTypst(
       plugin,
       context,
       "= Two",
-      path.join(projectRoot, "two.typ"),
+      `${path.join(projectRoot, "two.typ")}?typst=html`,
     );
 
     expect(typstWasm.createTypstCompiler).toHaveBeenCalledTimes(1);
@@ -180,7 +257,7 @@ describe("typst vite plugin compiler lifecycle", () => {
       plugin,
       context,
       '#import "shared.typ": message',
-      path.join(projectRoot, "main.typ"),
+      `${path.join(projectRoot, "main.typ")}?typst=html`,
     );
     await plugin.watchChange?.call(context, dependencyPath, {
       event: "update",
@@ -200,7 +277,7 @@ describe("typst vite plugin compiler lifecycle", () => {
       plugin,
       context,
       "= Disposable",
-      path.join(projectRoot, "main.typ"),
+      `${path.join(projectRoot, "main.typ")}?typst=html`,
     );
     await plugin.closeBundle?.();
 
@@ -220,7 +297,7 @@ describe("typst vite plugin compiler lifecycle", () => {
       plugin,
       context,
       "= Setup",
-      path.join(projectRoot, "main.typ"),
+      `${path.join(projectRoot, "main.typ")}?typst=html`,
     );
 
     expect(configureCompiler).toHaveBeenCalledOnce();

@@ -134,11 +134,20 @@ describe("HTML asset transform", () => {
       '<svg><use href="./sprite.svg#icon"></use><image href="./graphic.png"></image></svg>',
     );
 
-    // use href starts with # (fragment only after stripping ./sprite.svg)
-    // Actually, "./sprite.svg#icon" should be treated as asset URL since it doesn't start with #
     expect(result.imports).toEqual([
-      'import __typst_asset_0 from "./sprite.svg#icon?url";',
+      'import __typst_asset_0 from "./sprite.svg?url#icon";',
       'import __typst_asset_1 from "./graphic.png?url";',
+    ]);
+  });
+
+  it("preserves existing query parameters when adding the url query", () => {
+    const result = transformHtmlAssets(
+      '<img src="./image.png?v=1#preview"><img src="./other.png?format=webp">',
+    );
+
+    expect(result.imports).toEqual([
+      'import __typst_asset_0 from "./image.png?v=1&url#preview";',
+      'import __typst_asset_1 from "./other.png?format=webp&url";',
     ]);
   });
 

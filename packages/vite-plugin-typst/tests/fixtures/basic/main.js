@@ -1,4 +1,4 @@
-import document, { html, metadata, dependencies } from "./doc.typ";
+import document, { html, metadata, dependencies } from "./doc.typ?typst=html";
 
 globalThis.__typstFixture = {
   document,

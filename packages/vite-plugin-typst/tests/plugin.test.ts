@@ -87,7 +87,7 @@ describe("vite-plugin-typst fixtures", () => {
 
   test("reports Typst compile errors with source context", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "typst-vite-error-"));
-    await writeFile(path.join(root, "main.js"), 'import "./broken.typ";');
+    await writeFile(path.join(root, "main.js"), 'import "./broken.typ?typst=html";');
     await writeFile(path.join(root, "broken.typ"), "#let = invalid");
     try {
       await expect(buildFixture("basic", plugin(), { root })).rejects.toThrow(
