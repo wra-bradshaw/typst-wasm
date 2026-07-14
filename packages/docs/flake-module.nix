@@ -1,9 +1,13 @@
 { ... }:
 {
   perSystem =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
-      docs = pkgs.callPackage ./package.nix { };
+      docs = pkgs.callPackage ./package.nix {
+        typstWasm = config.packages.typst-wasm;
+        engineWasm = config.packages.engine-wasm;
+        vitePluginTypst = config.packages.vite-plugin-typst;
+      };
     in
     {
       packages.docs = docs;

@@ -1,5 +1,8 @@
 {
   pkgs,
+  typstWasm,
+  engineWasm,
+  vitePluginTypst,
 }:
 
 let
@@ -11,7 +14,22 @@ let
     inherit (pkgs) lib;
     inherit workspaceRoot;
   };
-  src = workspaceFiles.sourceForDocs;
+  src = workspaceFiles.sourceFor "packages/docs";
+  prepareWorkspaceArtifacts = import ../../nix/workspace-artifacts.nix { lib = pkgs.lib; };
+  prepareBuildArtifacts = prepareWorkspaceArtifacts [
+    {
+      packageDir = "packages/typst-wasm";
+      derivation = typstWasm;
+    }
+    {
+      packageDir = "packages/engine-wasm";
+      derivation = engineWasm;
+    }
+    {
+      packageDir = "packages/vite-plugin-typst";
+      derivation = vitePluginTypst;
+    }
+  ];
 in
 pkgs.stdenvNoCC.mkDerivation {
   inherit
@@ -29,6 +47,7 @@ pkgs.stdenvNoCC.mkDerivation {
 
   buildPhase = ''
     runHook preBuild
+    ${prepareBuildArtifacts}
     pnpm --dir packages/docs run build:local
     runHook postBuild
   '';

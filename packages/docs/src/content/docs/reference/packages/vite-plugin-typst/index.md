@@ -1,6 +1,17 @@
 ---
 title: '@typst-wasm/vite-plugin-typst'
-description: "TODO: Introduce the Vite plugin package."
+description: "Compile Typst documents to HTML modules with Vite."
 ---
 
-<!-- TODO: Describe installation, imports, and the generated API reference below. -->
+`@typst-wasm/vite-plugin-typst` transforms explicit `?typst=html` imports into
+modules containing compiled HTML and document metadata.
+
+```ts
+import post from "./post.typ?typst=html";
+
+post.html;
+post.metadata;
+```
+
+The plugin currently supports HTML output only. Use `typst-wasm` directly for
+other compilation formats.

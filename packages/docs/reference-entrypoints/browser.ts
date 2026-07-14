@@ -1,2 +1,6 @@
-/** Documentation entry point for the browser runtime. */
-export * from '../../typst-wasm/src/index.browser';
+/**
+ * Browser runtime APIs for `typst-wasm/browser`.
+ *
+ * @module Browser
+ */
+export * from "typst-wasm/browser";

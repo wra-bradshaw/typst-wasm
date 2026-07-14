@@ -1,2 +1,6 @@
-/** Documentation entry point for the Node.js runtime. */
-export * from '../../typst-wasm/src/index';
+/**
+ * Node.js runtime APIs for `typst-wasm/node`.
+ *
+ * @module Node.js
+ */
+export * from "typst-wasm/node";

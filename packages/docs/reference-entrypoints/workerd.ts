@@ -1,2 +1,6 @@
-/** Documentation entry point for the Cloudflare Workers runtime. */
-export * from '../../typst-wasm/src/index.workerd';
+/**
+ * Cloudflare Workers runtime APIs for `typst-wasm/workerd`.
+ *
+ * @module Cloudflare Workers
+ */
+export * from "typst-wasm/workerd";
