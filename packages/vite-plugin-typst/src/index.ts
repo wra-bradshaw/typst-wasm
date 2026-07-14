@@ -3,16 +3,12 @@ import path from "node:path";
 import {
   CompileError,
   createTypstCompiler,
-  type PackageCache,
   type TypstCompiler,
   type TypstCompilerOptions,
   type DocumentMetadata,
   type TypstFileLoader,
   type LoadedFile,
   type Diagnostic,
-  type TypstDiagnostic,
-  type TypstDocumentMetadata,
-  type TypstLoadedFile,
 } from "typst-wasm/node";
 import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
@@ -21,6 +17,12 @@ import { transformHtmlAssets } from "./html-assets";
 export interface TypstPluginOptions {
   /** Backend passed to the compiler. */
   backend?: TypstCompilerOptions["backend"];
+  /** Fetch implementation used for URL and package resources. */
+  fetch?: TypstCompilerOptions["fetch"];
+  /** Receives compiler library messages. */
+  logger?: TypstCompilerOptions["logger"];
+  /** Controls compiler library messages. */
+  logLevel?: TypstCompilerOptions["logLevel"];
   /** JCO-generated engine module for JSPI. */
   engine?: TypstCompilerOptions["engine"];
   /** Optional loader for precompiled core WASM modules. */
@@ -29,8 +31,8 @@ export interface TypstPluginOptions {
   worker?: TypstCompilerOptions["worker"];
   /** Base URL used for Typst package downloads. */
   packageBaseUrl?: string;
-  /** Cache used for downloaded packages. */
-  packageCache?: PackageCache;
+  /** Cache used for downloaded packages, or `false` to disable caching. */
+  packageCache?: TypstCompilerOptions["packageCache"];
   /** Capacity of the in-memory package cache. */
   memoryPackageCacheCapacity?: number;
   /** Additional file loaders. */
@@ -187,6 +189,9 @@ export const typst = (options: TypstPluginOptions): Plugin => {
     compilerPromise ??= (async () => {
       const compiler = await createTypstCompiler({
         backend: options.backend,
+        fetch: options.fetch,
+        logger: options.logger,
+        logLevel: options.logLevel,
         engine: options.engine,
         getCoreModule: options.getCoreModule,
         worker: options.worker,
@@ -292,12 +297,4 @@ export const typst = (options: TypstPluginOptions): Plugin => {
 
 export default typst;
 
-export type {
-  Diagnostic,
-  DocumentMetadata,
-  LoadedFile,
-  TypstDiagnostic,
-  TypstDocumentMetadata,
-  TypstFileLoader,
-  TypstLoadedFile,
-};
+export type { Diagnostic, DocumentMetadata, LoadedFile, TypstFileLoader };
