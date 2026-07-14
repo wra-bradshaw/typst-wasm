@@ -45,7 +45,7 @@ export const makeDenoContext = async (
         await fetch(asset(`@typst-wasm/engine-wasm/worker/${name}`))
       ).arrayBuffer(),
     );
-  const worker = () => denoWorker(asset("typst-wasm/worker/browser"));
+  const worker = () => denoWorker(asset("typst-wasm/worker/web-worker"));
   const createCompiler = (options: TypstCompilerOptions = {}) =>
     createTypstCompiler({
       ...options,

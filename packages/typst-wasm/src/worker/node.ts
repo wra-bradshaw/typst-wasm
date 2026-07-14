@@ -6,7 +6,7 @@ import { installTypstWorkerRuntime } from "./runtime";
 export type { MainToWorkerMessage, WorkerToMainMessage } from "./messages";
 
 if (!parentPort) {
-  throw new Error("worker/node.ts must run inside a worker_threads Worker");
+  throw new Error("worker-thread.ts must run inside a worker_threads Worker");
 }
 
 const port = parentPort;

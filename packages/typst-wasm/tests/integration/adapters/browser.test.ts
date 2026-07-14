@@ -4,7 +4,7 @@ import { expect, inject, test } from "vitest";
 import { canonicalCases, assertSuitePassed, runSuite } from "../spec/suite.ts";
 import { makeBrowserContext } from "../contexts/browser.ts";
 import type { IntegrationBackend } from "../spec/types.ts";
-import workerUrl from "typst-wasm/worker/browser?url";
+import workerUrl from "typst-wasm/worker/web-worker?url";
 import coreUrl from "@typst-wasm/engine-wasm/worker/engine.core.wasm?url";
 import core2Url from "@typst-wasm/engine-wasm/worker/engine.core2.wasm?url";
 import core3Url from "@typst-wasm/engine-wasm/worker/engine.core3.wasm?url";

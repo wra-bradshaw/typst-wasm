@@ -36,7 +36,6 @@ export default defineConfig([
       index: "./src/index.ts",
       "index.browser": "./src/index.browser.ts",
       "index.workerd": "./src/index.workerd.ts",
-      files: "./src/files.ts",
     },
     plugins: [
       workerPlugins({
@@ -53,7 +52,7 @@ export default defineConfig([
     external: ["node:worker_threads", "node:fs/promises"],
     noExternal: ["@typst-wasm/engine-wasm/worker"],
     entry: {
-      "worker/node": "./src/worker/node.ts",
+      "worker/worker-thread": "./src/worker/node.ts",
     },
     clean: false,
   },
@@ -61,7 +60,7 @@ export default defineConfig([
     ...common,
     external: ["@typst-wasm/engine-wasm/worker"],
     entry: {
-      "worker/browser": "./src/worker/browser.ts",
+      "worker/web-worker": "./src/worker/browser.ts",
     },
     clean: false,
   },

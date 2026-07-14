@@ -23,17 +23,13 @@
       "types": "./dist/index.workerd.d.ts",
       "default": "./dist/index.workerd.js"
     },
-    "./files": {
-      "types": "./dist/files.d.ts",
-      "default": "./dist/files.js"
+    "./worker/worker-thread": {
+      "types": "./dist/worker/worker-thread.d.ts",
+      "default": "./dist/worker/worker-thread.js"
     },
-    "./worker/node": {
-      "types": "./dist/worker/node.d.ts",
-      "default": "./dist/worker/node.js"
-    },
-    "./worker/browser": {
-      "types": "./dist/worker/browser.d.ts",
-      "default": "./dist/worker/browser.js"
+    "./worker/web-worker": {
+      "types": "./dist/worker/web-worker.d.ts",
+      "default": "./dist/worker/web-worker.js"
     }
   },
   "files": [

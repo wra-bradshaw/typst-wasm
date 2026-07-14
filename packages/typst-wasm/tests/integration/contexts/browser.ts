@@ -36,7 +36,7 @@ export const makeBrowserContext = async (
       await fetchBytes(assets?.cores[name] ?? asset(`wasm/${name}`)),
     );
   const worker = () =>
-    createWebWorker(assets?.worker ?? asset("worker/browser.js"));
+    createWebWorker(assets?.worker ?? asset("worker/web-worker.js"));
   const createCompiler = (
     options: Parameters<typeof createTypstCompiler>[0] = {},
   ) =>

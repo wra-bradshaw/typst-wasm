@@ -42,7 +42,7 @@ export default defineConfig({
       getCoreModule,
       worker: () =>
         createWorkerThread(
-          new URL(import.meta.resolve("typst-wasm/worker/node")),
+          new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
         ),
       configureCompiler: async (compiler) => {
         for (const fontUrl of fontUrls) {

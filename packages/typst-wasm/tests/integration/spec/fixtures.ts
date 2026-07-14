@@ -1,4 +1,5 @@
-import { makeMemoryCacheStorage, type PackageCache } from "typst-wasm/files";
+import { makeMemoryCacheStorage } from "../../../src/files/cache.ts";
+import type { PackageCache } from "typst-wasm";
 
 const packageArchive =
   "H4sIAAAAAAAAE+3TwYrCMBAGYM99ilIv68GStKk9efcdxEO1WSmmmZKOSt/eRAQ9CILQdcH/u0yYEDIh/Dx0PadMrZmMRniLhQpVloV4rFdSlBNZZJlSeS6VXwuZ5eHceCPdHXuunB/lL+76h9ZdtTtUe72JbNXqeBknZ3I1tZq1S6KTdn1DNrRFKtMiibRlN3TUWA5N02xTHrok+vQz4E23Hxz1jlf5F379mP8yV+p6btSpbr48/1OjOQ6Rn+/oaHlOvz9bqoeZT/d6pY2hsGnqzafnBAAAAAAAAAAAAAAAAAAAAIDnLnw2bcoAKAAA";

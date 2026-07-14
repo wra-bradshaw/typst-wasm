@@ -20,7 +20,7 @@ const plugin = () =>
     backend: "worker",
     worker: () =>
       createWorkerThread(
-        new URL(import.meta.resolve("typst-wasm/worker/node")),
+        new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
       ),
     getCoreModule: async (name) =>
       WebAssembly.compile(
