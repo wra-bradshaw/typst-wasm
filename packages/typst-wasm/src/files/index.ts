@@ -3,7 +3,6 @@ export type {
   TypstFileKind,
   TypstFileLoad,
   TypstFileLoader,
-  TypstFileLoaderResult,
   TypstFileRequest,
   TypstLoadedFile,
 } from "../compiler/types";

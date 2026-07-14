@@ -3,7 +3,6 @@ import type {
   TypstFileKind,
   TypstFileLoad,
   TypstFileLoader,
-  TypstFileLoaderResult,
   TypstFileRequest,
   TypstLoadedFile,
 } from "../compiler/types";
@@ -23,11 +22,15 @@ export const classifyTypstFilePath = (path: string): TypstFileKind => {
   return "project";
 };
 
-const isBytes = (value: TypstFileLoaderResult): value is Uint8Array =>
-  value instanceof Uint8Array;
+const isBytes = (
+  value: Awaited<ReturnType<TypstFileLoader["load"]>>,
+): value is Uint8Array => value instanceof Uint8Array;
 
 const normalizeLoad = (
-  value: Exclude<TypstFileLoaderResult, null | undefined>,
+  value: Exclude<
+    Awaited<ReturnType<TypstFileLoader["load"]>>,
+    null | undefined
+  >,
 ) => (isBytes(value) ? { data: value } : value);
 
 export class FileLoaderManager {

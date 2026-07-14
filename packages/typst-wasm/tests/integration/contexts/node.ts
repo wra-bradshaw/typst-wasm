@@ -27,7 +27,9 @@ export const makeNodeContext = async (
       await readAsset(`@typst-wasm/engine-wasm/worker/${name}`),
     );
   const defaultWorker = () =>
-    createWorkerThread(new URL(import.meta.resolve("typst-wasm/worker/worker-thread")));
+    createWorkerThread(
+      new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
+    );
 
   const createCompiler = (
     options: Parameters<typeof createTypstCompiler>[0] = {},

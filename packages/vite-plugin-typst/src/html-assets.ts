@@ -1,10 +1,5 @@
 import { parseFragment, type Token, type DefaultTreeAdapterMap } from "parse5";
 
-export interface HtmlAssetTransformResult {
-  imports: string[];
-  htmlExpression: string;
-}
-
 interface Replacement {
   start: number;
   end: number;
@@ -161,7 +156,9 @@ const walkNodes = (
   }
 };
 
-export const transformHtmlAssets = (html: string): HtmlAssetTransformResult => {
+export const transformHtmlAssets = (
+  html: string,
+): { imports: string[]; htmlExpression: string } => {
   const fragment = parseFragment(html, { sourceCodeLocationInfo: true });
 
   const imports: string[] = [];

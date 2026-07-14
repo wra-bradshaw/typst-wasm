@@ -31,16 +31,12 @@ export interface TypstFileLoad {
   mediaType?: string;
 }
 
-export type TypstFileLoaderResult =
-  | TypstFileLoad
-  | Uint8Array
-  | null
-  | undefined;
-
 /** Resolves project, package, or URL files requested by Typst. */
 export interface TypstFileLoader {
   /** Returns the file, or `null` when this loader does not handle it. */
-  load(request: TypstFileRequest): Promise<TypstFileLoaderResult>;
+  load(
+    request: TypstFileRequest,
+  ): Promise<TypstFileLoad | Uint8Array | null | undefined>;
 }
 
 /** A file loaded during compilation. */
@@ -51,20 +47,13 @@ export interface TypstLoadedFile {
   mediaType?: string;
 }
 
-export interface TypstCustomMetadata {
-  label?: string;
-  value: unknown;
-}
-
 export interface TypstDocumentMetadata {
   title?: string;
   description?: string;
   author: string[];
   keywords: string[];
-  custom: TypstCustomMetadata[];
+  custom: Array<{ label?: string; value: unknown }>;
 }
-
-export type TypstWorkerAsset = () => WorkerHost;
 
 /** Options used to create a {@link TypstCompiler}. */
 export interface TypstCompilerOptions {
@@ -79,7 +68,7 @@ export interface TypstCompilerOptions {
   /** Overrides JCO's default core WebAssembly module lookup. */
   getCoreModule?: EngineCoreModuleLoader;
   /** Creates the host used by the worker backend when it is selected. */
-  worker?: TypstWorkerAsset;
+  worker?: () => WorkerHost;
   /** Custom loaders tried before the built-in package and URL loaders. */
   fileLoaders?: TypstFileLoader[];
   /** Fetch implementation used for URL and package resources. */
@@ -108,28 +97,6 @@ export interface CompileOptions {
   ppi?: number;
 }
 
-/** Output associated with a page in a paginated format. */
-export interface PageOutput<T> {
-  /** One-based page number. */
-  page: number;
-  /** Rendered page data. */
-  output: T;
-}
-
-/** A file produced by a bundle compilation. */
-export interface BundleFile {
-  path: string;
-  data: Uint8Array;
-  mediaType?: string;
-}
-
-/** Fields shared by every compilation result. */
-export interface CompileResultBase {
-  diagnostics: TypstDiagnostic[];
-  metadata?: TypstDocumentMetadata;
-  dependencies?: TypstLoadedFile[];
-}
-
 /** A warning or error reported by Typst. */
 export interface TypstDiagnostic {
   message: string;
@@ -145,32 +112,41 @@ export interface TypstDiagnostic {
 }
 
 export type CompileResult =
-  | (CompileResultBase & {
+  | {
+      diagnostics: TypstDiagnostic[];
+      metadata?: TypstDocumentMetadata;
+      dependencies?: TypstLoadedFile[];
       format: "pdf";
       output: Uint8Array;
-    })
-  | (CompileResultBase & {
+    }
+  | {
+      diagnostics: TypstDiagnostic[];
+      metadata?: TypstDocumentMetadata;
+      dependencies?: TypstLoadedFile[];
       format: "png";
-      pages: PageOutput<Uint8Array>[];
-    })
-  | (CompileResultBase & {
+      pages: Array<{ page: number; output: Uint8Array }>;
+    }
+  | {
+      diagnostics: TypstDiagnostic[];
+      metadata?: TypstDocumentMetadata;
+      dependencies?: TypstLoadedFile[];
       format: "svg";
-      pages: PageOutput<string>[];
-    })
-  | (CompileResultBase & {
+      pages: Array<{ page: number; output: string }>;
+    }
+  | {
+      diagnostics: TypstDiagnostic[];
+      metadata?: TypstDocumentMetadata;
+      dependencies?: TypstLoadedFile[];
       format: "html";
       output: string;
-    })
-  | (CompileResultBase & {
+    }
+  | {
+      diagnostics: TypstDiagnostic[];
+      metadata?: TypstDocumentMetadata;
+      dependencies?: TypstLoadedFile[];
       format: "bundle";
-      files: BundleFile[];
-    });
-
-/** Extracts the result shape associated with a requested output format. */
-export type CompileResultForFormat<F extends CompileFormat> = Extract<
-  CompileResult,
-  { format: F }
->;
+      files: Array<{ path: string; data: Uint8Array; mediaType?: string }>;
+    };
 
 /** Stateful promise-based Typst compiler. */
 export interface TypstCompiler {
@@ -193,7 +169,7 @@ export interface TypstCompiler {
   /** Compiles the current virtual project. */
   compile<F extends CompileFormat>(
     options: CompileOptions & { format: F },
-  ): Promise<CompileResultForFormat<F>>;
+  ): Promise<Extract<CompileResult, { format: F }>>;
   compile(options?: CompileOptions): Promise<CompileResult>;
   /** Releases compiler and worker resources. */
   dispose(): Promise<void>;

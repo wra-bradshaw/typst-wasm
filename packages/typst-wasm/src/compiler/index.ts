@@ -16,7 +16,6 @@ import type {
   CompileFormat,
   CompileOptions,
   CompileResult,
-  CompileResultForFormat,
   TypstCompiler,
   TypstCompilerOptions,
   TypstDocumentMetadata,
@@ -163,7 +162,7 @@ class PromiseTypstCompiler implements TypstCompiler {
 
   compile<F extends CompileFormat>(
     options: CompileOptions & { format: F },
-  ): Promise<CompileResultForFormat<F>>;
+  ): Promise<Extract<CompileResult, { format: F }>>;
   compile(options?: CompileOptions): Promise<CompileResult>;
   async compile(options: CompileOptions = {}): Promise<CompileResult> {
     if (options.main) await this.setMain(options.main);
