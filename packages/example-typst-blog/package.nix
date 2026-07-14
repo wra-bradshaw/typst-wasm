@@ -53,6 +53,10 @@ pkgs.stdenvNoCC.mkDerivation {
 
   nativeBuildInputs = pnpmNativeBuildInputs;
 
+  env = {
+    CLOUDFLARE_CF_FETCH_ENABLED = "false";
+  };
+
   buildPhase = ''
     runHook preBuild
 
