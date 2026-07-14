@@ -127,12 +127,9 @@
               fi
 
               echo "build-artifact: starting nix build for $flake_attr"
-              out_path=$(timeout --foreground --verbose --signal=TERM --kill-after=30s 15m \
-                nix build "$repo_root#$flake_attr" \
-                  --no-link \
-                  --print-out-paths \
-                  --print-build-logs \
-                  --show-trace)
+              out_path=$(nix build "$repo_root#$flake_attr" \
+                --no-link \
+                --print-out-paths)
               echo "build-artifact: nix build returned $out_path"
 
               mkdir -p "$(dirname "$target")"
