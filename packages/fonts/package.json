@@ -4,12 +4,12 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wra-bradshaw/typst-wasm.git"
+    "url": "git+https://github.com/typst-wasm/typst-wasm.git"
   },
   "bugs": {
-    "url": "https://github.com/wra-bradshaw/typst-wasm/issues"
+    "url": "https://github.com/typst-wasm/typst-wasm/issues"
   },
-  "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
+  "homepage": "https://github.com/typst-wasm/typst-wasm#readme",
   "exports": {
     "./LibertinusSerif-Regular.otf": "./dist/files/LibertinusSerif-Regular.otf",
     "./LibertinusSerif-Semibold.otf": "./dist/files/LibertinusSerif-Semibold.otf",

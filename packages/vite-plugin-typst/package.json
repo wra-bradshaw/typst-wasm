@@ -22,12 +22,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wra-bradshaw/typst-wasm.git"
+    "url": "git+https://github.com/typst-wasm/typst-wasm.git"
   },
   "bugs": {
-    "url": "https://github.com/wra-bradshaw/typst-wasm/issues"
+    "url": "https://github.com/typst-wasm/typst-wasm/issues"
   },
-  "homepage": "https://github.com/wra-bradshaw/typst-wasm#readme",
+  "homepage": "https://github.com/typst-wasm/typst-wasm#readme",
   "scripts": {
     "build": "nix run ../..#build-artifact -- vite-plugin-typst",
     "fix": "pnpm run format:fix && pnpm exec eslint . --fix",
