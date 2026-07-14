@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import typst from "@typst-wasm/vite-plugin-typst";
 import react from "@vitejs/plugin-react";
-import { createWorkerThread } from "typst-wasm/node";
+import { createWorkerThread } from "typst-wasm";
 import { defineConfig } from "vite";
 
 const getCoreModule = async (name: string): Promise<WebAssembly.Module> => {
