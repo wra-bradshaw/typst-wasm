@@ -1,28 +1,32 @@
 import { WorkerError } from "../errors";
-import type { RpcResponseMessage } from "./protocol";
+import type {
+  RequestOf,
+  ResponseOf,
+  RpcRequestMessage,
+  RpcResponseMessage,
+} from "./protocol";
 
-type RpcOutgoingMessage<Protocol> = {
-  kind: keyof Protocol;
-  requestId: number;
-  payload?: unknown;
-};
+type RpcMethod<Protocol, K extends keyof Protocol> = Protocol[K];
+type RpcResult<Protocol, K extends keyof Protocol> = ResponseOf<
+  RpcMethod<Protocol, K>
+>;
+
+type CallArgs<Protocol, K extends keyof Protocol> =
+  RequestOf<RpcMethod<Protocol, K>> extends void
+    ? []
+    : [payload: RequestOf<RpcMethod<Protocol, K>>];
 
 export interface RpcClient<Protocol> {
   call<K extends keyof Protocol>(
     kind: K,
-    ...args: Protocol[K] extends { request: infer P }
-      ? P extends void
-        ? []
-        : [payload: P]
-      : []
-  ): Promise<Protocol[K] extends { response: infer R } ? R : void>;
-  notify(message: unknown): void;
+    ...args: CallArgs<Protocol, K>
+  ): Promise<RpcResult<Protocol, K>>;
   receive(response: RpcResponseMessage): void;
   rejectAll(cause: unknown): void;
 }
 
 export const makeRpcClient = <Protocol>(
-  sender: (message: RpcOutgoingMessage<Protocol>) => void,
+  sender: (message: RpcRequestMessage<Protocol>) => void,
 ): RpcClient<Protocol> => {
   let requestIdCounter = 0;
   const pending = new Map<
@@ -36,28 +40,21 @@ export const makeRpcClient = <Protocol>(
 
   const call = <K extends keyof Protocol>(
     kind: K,
-    ...args: Protocol[K] extends { request: infer P }
-      ? P extends void
-        ? []
-        : [payload: P]
-      : []
-  ): Promise<Protocol[K] extends { response: infer R } ? R : void> => {
-    const requestId = requestIdCounter;
-    requestIdCounter += 1;
-
+    ...args: CallArgs<Protocol, K>
+  ): Promise<RpcResult<Protocol, K>> => {
+    const requestId = requestIdCounter++;
     return new Promise((resolve, reject) => {
       pending.set(requestId, {
         resolve: resolve as (value: unknown) => void,
         reject,
-        kind: kind as string,
+        kind: String(kind),
       });
-
       const payload = args[0];
       try {
         sender(
-          payload === undefined
+          (payload === undefined
             ? { kind, requestId }
-            : { kind, requestId, payload },
+            : { kind, requestId, payload }) as RpcRequestMessage<Protocol>,
         );
       } catch (cause) {
         pending.delete(requestId);
@@ -73,17 +70,14 @@ export const makeRpcClient = <Protocol>(
   const receive = (response: RpcResponseMessage): void => {
     const req = pending.get(response.requestId);
     if (!req) return;
-
     pending.delete(response.requestId);
-    if ("result" in response) {
-      req.resolve(response.result);
-    } else {
+    if ("result" in response) req.resolve(response.result);
+    else
       req.reject(
         new WorkerError(`Worker command failed: ${req.kind}`, {
           cause: response.error,
         }),
       );
-    }
   };
 
   const rejectAll = (cause: unknown): void => {
@@ -95,10 +89,5 @@ export const makeRpcClient = <Protocol>(
     }
   };
 
-  return {
-    call,
-    notify: sender,
-    receive,
-    rejectAll,
-  };
+  return { call, receive, rejectAll };
 };

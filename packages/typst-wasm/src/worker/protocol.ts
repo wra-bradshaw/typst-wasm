@@ -232,27 +232,18 @@ export interface TypstWorkerProtocol {
   };
 }
 
-type NoPayload = Record<never, never>;
-
-export type ExcludePayloadIfEmpty<P> = P extends void
-  ? NoPayload
-  : { payload: P };
+export type RequestOf<M> = M extends { request: infer P } ? P : void;
+export type ResponseOf<M> = M extends { response: infer R } ? R : void;
 
 export type RpcRequestMessage<T> = {
   [K in keyof T]: {
     kind: K;
     requestId: number;
-  } & (T[K] extends { request: infer P }
-    ? ExcludePayloadIfEmpty<P>
-    : NoPayload);
+  } & (RequestOf<T[K]> extends void
+    ? Record<never, never>
+    : { payload: RequestOf<T[K]> });
 }[keyof T];
 
 export type RpcResponseMessage<TResult = unknown, TError = unknown> =
-  | {
-      requestId: number;
-      result: TResult;
-    }
-  | {
-      requestId: number;
-      error: TError;
-    };
+  | { requestId: number; result: TResult }
+  | { requestId: number; error: TError };
