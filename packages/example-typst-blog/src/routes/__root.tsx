@@ -42,7 +42,7 @@ function RootComponent() {
                 {posts.map((post) => (
                   <Link
                     activeProps={{
-                      className: "border-stone-950 bg-stone-950 text-white",
+                      className: "border-stone-950 bg-stone-950",
                     }}
                     className="rounded border border-stone-300 bg-white px-3 py-2 text-left text-sm text-stone-800"
                     key={post.slug}
