@@ -4,6 +4,7 @@ import { z } from "zod";
 const postModules = import.meta.glob<TypstCompiledModule>("./posts/*.typ", {
   eager: true,
   import: "default",
+  query: { typst: "html" },
 });
 
 const slugMetadataSchema = z
