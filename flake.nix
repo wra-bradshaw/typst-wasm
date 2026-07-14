@@ -126,7 +126,11 @@
                 rm -rf "$target"
               fi
 
-              out_path=$(nix build "$repo_root#$flake_attr" --no-link --print-out-paths)
+              out_path=$(nix build "$repo_root#$flake_attr" \
+                --no-link \
+                --print-out-paths \
+                --print-build-logs \
+                --show-trace)
 
               mkdir -p "$(dirname "$target")"
               cp -R "$out_path/$artifact_path" "$target"
