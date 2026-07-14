@@ -11,10 +11,14 @@ const slugMetadataSchema = z
     z.object({
       label: z.literal("slug"),
       value: z
-        .string()
-        .regex(
-          /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-          "use lowercase letters, numbers, and hyphens",
+        .unknown()
+        .pipe(
+          z
+            .string()
+            .regex(
+              /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+              "use lowercase letters, numbers, and hyphens",
+            ),
         ),
     }),
   )
@@ -23,9 +27,7 @@ const slugMetadataSchema = z
 
 const getSlug = (file: string, document: TypstCompiledModule): string => {
   const result = slugMetadataSchema.safeParse(
-    document.metadata?.custom.filter(
-      (entry: { label?: string; value: unknown }) => entry.label === "slug",
-    ) ?? [],
+    document.metadata?.custom.filter((entry) => entry.label === "slug") ?? [],
   );
 
   if (!result.success) {

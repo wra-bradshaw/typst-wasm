@@ -1,12 +1,8 @@
-import {
-  CompileError,
-  type TypstCompiler,
-  type TypstDiagnostic,
-} from "typst-wasm";
+import { CompileError, type TypstCompiler, type Diagnostic } from "typst-wasm";
 
 export interface CompileView {
   html: string;
-  diagnostics: TypstDiagnostic[];
+  diagnostics: Diagnostic[];
 }
 
 export const formatCompileError = (error: unknown): string => {
@@ -45,10 +41,7 @@ export const createCompileModule = <Args extends any[]>(
       format: "html",
     });
 
-    return {
-      html: result.output,
-      diagnostics: result.diagnostics,
-    };
+    return { html: result.output, diagnostics: result.diagnostics };
   };
 
   const compileTypstHtml = (
