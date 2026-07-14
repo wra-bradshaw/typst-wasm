@@ -44,7 +44,7 @@ jobs:
         run: nix run .#build-artifact -- example-typst-playground-vercel .vercel/output
 
       - name: Deploy playground to Vercel
-        run: nix develop .#ci -c pnpm exec vercel deploy --prebuilt --prod --yes --archive=tgz --token "$VERCEL_TOKEN"
+        run: nix develop .#ci -c pnpm exec vercel --cwd packages/example-typst-playground-vercel deploy --prebuilt --prod --yes --archive=tgz --token "$VERCEL_TOKEN"
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}

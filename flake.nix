@@ -118,7 +118,12 @@
                   ;;
               esac
 
-              package_root=$(pwd)
+              package_root="$repo_root/packages/$flake_attr"
+              if [ ! -d "$package_root" ]; then
+                echo "build-artifact: package directory does not exist: $package_root" >&2
+                exit 64
+              fi
+
               target="$package_root/$artifact_path"
 
               if [ -e "$target" ]; then
