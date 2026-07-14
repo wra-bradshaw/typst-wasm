@@ -89,8 +89,8 @@ const makeCompiler = (dependencies: TypstLoadedFile[] = []) => {
     listFiles: vi.fn(async () => [...sources.keys()]),
     hasFile: vi.fn(async (file: string) => sources.has(file)),
     setMain: vi.fn(async () => undefined),
-    compile: vi.fn(async (options?: CompileOptions) => {
-      const main = options?.main ?? "";
+    compile: vi.fn(async (options: CompileOptions) => {
+      const main = options.main ?? "";
       return {
         format: "html",
         output: `<p>${sources.get(main) ?? ""}</p>`,

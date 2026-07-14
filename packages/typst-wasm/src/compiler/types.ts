@@ -83,8 +83,8 @@ export interface TypstCompilerOptions {
 
 /** Options controlling one compilation. */
 export interface CompileOptions {
-  /** Output format; defaults to Typst's default format. */
-  format?: CompileFormat;
+  /** Output format. */
+  format: CompileFormat;
   /** Entry-point file path. */
   main?: string;
   /** String inputs made available through Typst's `sys.inputs` mechanism. */
@@ -167,10 +167,18 @@ export interface TypstCompiler {
   /** Sets the default entry-point path. */
   setMain(path: string): Promise<void>;
   /** Compiles the current virtual project. */
-  compile<F extends CompileFormat>(
-    options: CompileOptions & { format: F },
-  ): Promise<Extract<CompileResult, { format: F }>>;
-  compile(options?: CompileOptions): Promise<CompileResult>;
+  compile<O extends CompileOptions>(
+    options: O & Record<Exclude<keyof O, keyof CompileOptions>, never>,
+  ): Promise<
+    Extract<
+      CompileResult,
+      {
+        format: (
+          O & Record<Exclude<keyof O, keyof CompileOptions>, never>
+        )["format"];
+      }
+    >
+  >;
   /** Releases compiler and worker resources. */
   dispose(): Promise<void>;
 }

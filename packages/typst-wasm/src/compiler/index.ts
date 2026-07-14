@@ -13,7 +13,6 @@ import type {
   EngineDiagnostic,
 } from "../engine/types";
 import type {
-  CompileFormat,
   CompileOptions,
   CompileResult,
   TypstCompiler,
@@ -117,7 +116,7 @@ const normalizeCompileResult = (
 };
 
 const toEngineCompileOptions = (
-  options: CompileOptions = {},
+  options: CompileOptions,
 ): EngineCompileOptions => ({
   format: options.format,
   main: options.main,
@@ -160,11 +159,18 @@ class PromiseTypstCompiler implements TypstCompiler {
     return this.backend.setMain(path);
   }
 
-  compile<F extends CompileFormat>(
-    options: CompileOptions & { format: F },
-  ): Promise<Extract<CompileResult, { format: F }>>;
-  compile(options?: CompileOptions): Promise<CompileResult>;
-  async compile(options: CompileOptions = {}): Promise<CompileResult> {
+  async compile<O extends CompileOptions>(
+    options: O & Record<Exclude<keyof O, keyof CompileOptions>, never>,
+  ): Promise<
+    Extract<
+      CompileResult,
+      {
+        format: (
+          O & Record<Exclude<keyof O, keyof CompileOptions>, never>
+        )["format"];
+      }
+    >
+  > {
     if (options.main) await this.setMain(options.main);
     this.fileLoaderManager.resetTrace();
 
@@ -177,7 +183,14 @@ class PromiseTypstCompiler implements TypstCompiler {
           diagnostics: result.diagnostics,
         });
       }
-      return normalizeCompileResult(result);
+      return normalizeCompileResult(result) as Extract<
+        CompileResult,
+        {
+          format: (
+            O & Record<Exclude<keyof O, keyof CompileOptions>, never>
+          )["format"];
+        }
+      >;
     } catch (cause) {
       const payload = extractErrorPayload(cause) ?? cause;
       if (
