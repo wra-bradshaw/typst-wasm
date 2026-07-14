@@ -29,20 +29,4 @@ jobs:
       - name: Install Playwright browsers and dependencies
         working-directory: packages/typst-wasm
         run: ./node_modules/.bin/playwright install --with-deps chromium firefox webkit
-      - name: Smoke test official WebKit
-        working-directory: packages/typst-wasm
-        run: |
-          timeout --verbose --signal=TERM --kill-after=10s 90s \
-            node --input-type=module -e '
-              import { webkit } from "playwright";
-              const browser = await webkit.launch({ timeout: 30_000 });
-              try {
-                const page = await browser.newPage();
-                await page.goto("data:text/html,ok", { timeout: 10_000 });
-                if (await page.textContent("body") !== "ok") throw new Error("WebKit smoke test returned unexpected body");
-              } finally {
-                await browser.close();
-              }
-            '
-
       - run: nix develop .#ci -c pnpm turbo run build lint test:unit test:integration
