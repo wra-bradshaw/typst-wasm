@@ -4,10 +4,10 @@ import type { Plugin, ResolvedConfig } from "vite";
 import typst from "./index";
 import type {
   CompileOptions,
-  CompileResult,
+  HtmlCompileResult,
   TypstCompiler,
   TypstCompilerOptions,
-  TypstLoadedFile,
+  LoadedFile,
 } from "typst-wasm/node";
 
 const typstWasm = vi.hoisted(() => {
@@ -74,7 +74,7 @@ const makeTransformContext = () => {
   return { context, watchedFiles };
 };
 
-const makeCompiler = (dependencies: TypstLoadedFile[] = []) => {
+const makeCompiler = (dependencies: LoadedFile[] = []) => {
   const sources = new Map<string, string>();
   const compiler = {
     addFont: vi.fn(async () => undefined),
@@ -96,7 +96,7 @@ const makeCompiler = (dependencies: TypstLoadedFile[] = []) => {
         output: `<p>${sources.get(main) ?? ""}</p>`,
         diagnostics: [],
         dependencies,
-      } satisfies CompileResult;
+      } satisfies HtmlCompileResult;
     }),
     dispose: vi.fn(async () => undefined),
   } satisfies TypstCompiler;

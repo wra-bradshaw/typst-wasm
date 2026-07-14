@@ -6,10 +6,13 @@ import {
   type PackageCache,
   type TypstCompiler,
   type TypstCompilerOptions,
-  type TypstDocumentMetadata,
+  type DocumentMetadata,
   type TypstFileLoader,
-  type TypstLoadedFile,
+  type LoadedFile,
+  type Diagnostic,
   type TypstDiagnostic,
+  type TypstDocumentMetadata,
+  type TypstLoadedFile,
 } from "typst-wasm/node";
 import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
@@ -39,9 +42,9 @@ export interface TypstPluginOptions {
 /** Values exported by a compiled `.typ` module. */
 export interface TypstCompiledModule {
   html: string;
-  metadata: TypstDocumentMetadata | undefined;
-  diagnostics: TypstDiagnostic[];
-  dependencies: TypstLoadedFile[];
+  metadata: DocumentMetadata | undefined;
+  diagnostics: Diagnostic[];
+  dependencies: LoadedFile[];
 }
 
 const typstRequestRE = /\.typ(?:$|\?)/;
@@ -62,19 +65,14 @@ const isInsideRoot = (root: string, file: string): boolean => {
   );
 };
 
-const makeProjectFileLoader = (root: string): TypstFileLoader => ({
-  async load(request) {
+const makeProjectFileLoader =
+  (root: string): TypstFileLoader =>
+  async (request) => {
     if (request.kind !== "project") return null;
-
     const file = path.resolve(root, request.path);
     if (!isInsideRoot(root, file)) return null;
-
-    return {
-      data: new Uint8Array(await readFile(file)),
-      resolvedPath: file,
-    };
-  },
-});
+    return { data: new Uint8Array(await readFile(file)), resolvedPath: file };
+  };
 
 const serialize = (value: unknown): string => JSON.stringify(value);
 
@@ -125,7 +123,7 @@ const compileTypst = async (
     html: result.output,
     metadata: result.metadata,
     diagnostics: result.diagnostics,
-    dependencies: result.dependencies ?? [],
+    dependencies: result.dependencies,
   };
 };
 
@@ -255,8 +253,11 @@ export const typst = (options: TypstPluginOptions): Plugin => {
 export default typst;
 
 export type {
+  Diagnostic,
+  DocumentMetadata,
+  LoadedFile,
+  TypstDiagnostic,
   TypstDocumentMetadata,
   TypstFileLoader,
   TypstLoadedFile,
-  TypstDiagnostic,
 };
