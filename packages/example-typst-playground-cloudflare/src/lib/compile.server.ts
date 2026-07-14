@@ -24,6 +24,6 @@ const coreModules = new Map<string, WebAssembly.Module>([
   ["engine.core3.wasm", core3],
 ]);
 
-export const { compileTypstHtml } = createCompileModule(
+export const { compileTypst } = createCompileModule(
   createInitializedCompiler,
 );

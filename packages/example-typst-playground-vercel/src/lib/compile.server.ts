@@ -37,6 +37,6 @@ const createInitializedCompiler = async (
   });
 };
 
-export const { compileTypstHtml } = createCompileModule(
+export const { compileTypst } = createCompileModule(
   createInitializedCompiler,
 );

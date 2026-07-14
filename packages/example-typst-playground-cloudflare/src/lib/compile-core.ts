@@ -1,9 +1,16 @@
-import { CompileError, type TypstCompiler, type Diagnostic } from "typst-wasm";
+import {
+  CompileError,
+  type CompileFormat,
+  type Diagnostic,
+  type TypstCompiler,
+} from "typst-wasm";
 
-export interface CompileView {
-  html: string;
-  diagnostics: Diagnostic[];
-}
+export type PlaygroundFormat = Exclude<CompileFormat, "bundle">;
+export type CompileView =
+  | { format: "html"; output: string; diagnostics: Diagnostic[] }
+  | { format: "pdf"; output: Uint8Array; diagnostics: Diagnostic[] }
+  | { format: "png"; pages: Array<{ page: number; output: Uint8Array }>; diagnostics: Diagnostic[] }
+  | { format: "svg"; pages: Array<{ page: number; output: string }>; diagnostics: Diagnostic[] };
 
 export const formatCompileError = (error: unknown): string => {
   if (error instanceof CompileError && error.diagnostics.length > 0) {
@@ -33,23 +40,25 @@ export const createCompileModule = <Args extends any[]>(
   const compileWithCompiler = async (
     compiler: TypstCompiler,
     source: string,
+    format: PlaygroundFormat,
   ): Promise<CompileView> => {
     await compiler.addSource("main.typ", source);
 
     const result = await compiler.compile({
       main: "main.typ",
-      format: "html",
+      format,
     });
 
-    return { html: result.output, diagnostics: result.diagnostics };
+    return result as CompileView;
   };
 
-  const compileTypstHtml = (
+  const compileTypst = (
     source: string,
+    format: PlaygroundFormat,
     ...args: Args
   ): Promise<CompileView> => {
     const compile = compileQueue.then(async () =>
-      compileWithCompiler(await getCompiler(...args), source),
+      compileWithCompiler(await getCompiler(...args), source, format),
     );
 
     compileQueue = compile.then(
@@ -61,6 +70,6 @@ export const createCompileModule = <Args extends any[]>(
   };
 
   return {
-    compileTypstHtml,
+    compileTypst,
   };
 };

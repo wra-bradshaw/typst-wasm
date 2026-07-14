@@ -1,18 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  compileTypstHtml,
+  compileTypst,
   formatCompileError,
   type CompileView,
+  type PlaygroundFormat,
 } from "../browser-compiler";
 import useAbortableCallback from "../lib/useAbortableCallback";
 import { sampleSource } from "../sample";
 
+const formats: PlaygroundFormat[] = ["html", "pdf", "png", "svg"];
+
 const getInitialPreview = createServerFn({ method: "GET" }).handler(async () => {
   const { getRequestUrl } = await import("@tanstack/react-start/server");
-  const { compileTypstHtml } = await import("../lib/compile.server");
-  return compileTypstHtml(sampleSource, getRequestUrl().origin);
+  const { compileTypst } = await import("../lib/compile.server");
+  // SSR always starts with HTML so the initial document is rendered on the server.
+  const result = await compileTypst(sampleSource, "html", getRequestUrl().origin);
+  if (result.format !== "html") throw new Error("Expected HTML SSR output");
+  return { format: "html" as const, output: result.output, diagnostics: result.diagnostics };
 });
 
 export const Route = createFileRoute("/")({
@@ -20,71 +26,68 @@ export const Route = createFileRoute("/")({
   component: Playground,
 });
 
+function OutputPreview({ result }: { result: CompileView }) {
+  const [url, setUrl] = useState<string | string[] | null>(null);
+
+  useEffect(() => {
+    if (typeof URL === "undefined") return;
+    const next = result.format === "pdf"
+      ? URL.createObjectURL(new Blob([result.output as unknown as BlobPart], { type: "application/pdf" }))
+      : result.format === "png"
+        ? result.pages.map((page) => URL.createObjectURL(new Blob([page.output as unknown as BlobPart], { type: "image/png" })))
+        : null;
+    setUrl(next);
+    return () => {
+      for (const value of next ? (Array.isArray(next) ? next : [next]) : []) URL.revokeObjectURL(value);
+    };
+  }, [result]);
+
+  switch (result.format) {
+    case "html":
+      return <article className="preview" dangerouslySetInnerHTML={{ __html: result.output }} />;
+    case "svg":
+      return <div className="preview output-pages">{result.pages.map((page) => <article key={page.page} dangerouslySetInnerHTML={{ __html: page.output }} />)}</div>;
+    case "png":
+      return <div className="preview output-pages">{Array.isArray(url) && result.pages.map((page, index) => <img key={page.page} src={url[index]} alt={`Page ${page.page}`} />)}</div>;
+    case "pdf":
+      return <div className="preview pdf-preview">{typeof url === "string" ? <><object data={url} type="application/pdf" /><a href={url} target="_blank" rel="noreferrer">Open PDF</a></> : null}</div>;
+  }
+}
+
 function Playground() {
   const initial = Route.useLoaderData() as CompileView;
-  const [preview, setPreview] = useState(initial.html);
-  const [diagnostics, setDiagnostics] = useState(initial.diagnostics);
+  const [result, setResult] = useState<CompileView>(initial);
+  const [source, setSource] = useState(sampleSource);
+  const [format, setFormat] = useState<PlaygroundFormat>("html");
   const [error, setError] = useState<string | null>(null);
-  const [isCompiling, setIsCompiling] = useState<boolean>(false);
+  const [isCompiling, setIsCompiling] = useState(false);
 
-  const { run } = useAbortableCallback(async (signal, source: string) => {
+  const { run } = useAbortableCallback(async (signal, nextSource: string, nextFormat: PlaygroundFormat) => {
     setIsCompiling(true);
-
-    await compileTypstHtml(source)
-      .then((result) => {
+    await compileTypst(nextSource, nextFormat)
+      .then((nextResult) => {
         if (signal.aborted) return;
-        setPreview(result.html);
-        setDiagnostics(result.diagnostics);
+        setResult(nextResult);
         setError(null);
       })
       .catch((reason: unknown) => {
-        if (signal.aborted) return;
-        setError(formatCompileError(reason));
+        if (!signal.aborted) setError(formatCompileError(reason));
       });
-
-    if (!signal.aborted) {
-      setIsCompiling(false);
-    }
+    if (!signal.aborted) setIsCompiling(false);
   });
 
-  const status = useMemo(() => {
-    if (isCompiling) return "Compiling";
-    if (error) return "Compile error";
-    return "Browser preview";
-  }, [error, isCompiling]);
+  const status = useMemo(() => isCompiling ? "Compiling" : error ? "Compile error" : `${format.toUpperCase()} preview`, [error, format, isCompiling]);
 
-  return (
-    <main className="shell">
-      <section className="pane">
-        <div className="pane-header">
-          <h1>Typst editor</h1>
-        </div>
-        <textarea
-          className="source"
-          spellCheck={false}
-          defaultValue={sampleSource}
-          onChange={(event) => run(event.target.value)}
-        />
-      </section>
-
-      <section className="pane">
-        <div className="pane-header">
-          <h2>Preview</h2>
-          <span className="status">{status}</span>
-        </div>
-        {error ? <pre className="error">{error}</pre> : null}
-        <article
-          className="preview"
-          dangerouslySetInnerHTML={{ __html: preview }}
-        />
-        <div className="diagnostics">
-          {diagnostics.length === 0
-            ? ""
-            : `${diagnostics.length} diagnostic${
-                diagnostics.length === 1 ? "" : "s"
-              }`}
-        </div>
-      </section>
-    </main>
-  );
+  return <main className="shell">
+    <section className="pane">
+      <div className="pane-header"><h1>Typst editor</h1></div>
+      <textarea className="source" spellCheck={false} value={source} onChange={(event) => { const value = event.target.value; setSource(value); run(value, format); }} />
+    </section>
+    <section className="pane">
+      <div className="pane-header"><h2>Preview</h2><label className="format-select">Output <select value={format} onChange={(event) => { const value = event.target.value as PlaygroundFormat; setFormat(value); run(source, value); }}>{formats.map((value) => <option key={value} value={value}>{value.toUpperCase()}</option>)}</select></label><span className="status">{status}</span></div>
+      {error ? <pre className="error">{error}</pre> : null}
+      <OutputPreview result={result} />
+      <div className="diagnostics">{result.diagnostics.length === 0 ? "" : `${result.diagnostics.length} diagnostic${result.diagnostics.length === 1 ? "" : "s"}`}</div>
+    </section>
+  </main>;
 }

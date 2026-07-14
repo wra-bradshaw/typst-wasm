@@ -6,17 +6,35 @@ import {
 import * as engine from "@typst-wasm/engine-wasm/jspi";
 import browserWorkerUrl from "typst-wasm/worker/web-worker?worker&url";
 import { createCompileModule } from "./lib/compile-core";
+import libertinusUrl from "@typst-wasm/fonts/LibertinusSerif-Regular.otf?url";
+import mathUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
 
-export { formatCompileError, type CompileView } from "./lib/compile-core";
+export {
+  formatCompileError,
+  type CompileView,
+  type PlaygroundFormat,
+} from "./lib/compile-core";
 
 const createInitializedCompiler = async (): Promise<TypstCompiler> => {
-  return await createTypstCompiler({
+  const compiler = await createTypstCompiler({
     backend: "auto",
     engine,
     worker: () => createWebWorker(browserWorkerUrl),
   });
+
+  compiler.addFont(
+    await fetch(libertinusUrl).then((res) =>
+      res.arrayBuffer().then((res) => new Uint8Array(res)),
+    ),
+  );
+
+  compiler.addFont(
+    await fetch(mathUrl).then((res) =>
+      res.arrayBuffer().then((res) => new Uint8Array(res)),
+    ),
+  );
+
+  return compiler;
 };
 
-export const { compileTypstHtml } = createCompileModule(
-  createInitializedCompiler,
-);
+export const { compileTypst } = createCompileModule(createInitializedCompiler);
