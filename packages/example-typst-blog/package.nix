@@ -53,6 +53,12 @@ pkgs.stdenvNoCC.mkDerivation {
 
   nativeBuildInputs = pnpmNativeBuildInputs;
 
+  # TanStack Start prerendering starts a local Vite preview server. This
+  # derivation must be allowed to use the host loopback interface; the Nix
+  # network namespace otherwise makes the request fail and workerd teardown
+  # hang until the build timeout.
+  __noChroot = true;
+
   env = {
     CLOUDFLARE_CF_FETCH_ENABLED = "false";
   };

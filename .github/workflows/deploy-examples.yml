@@ -29,6 +29,8 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
+        with:
+          extra-conf: sandbox = relaxed
 
       - name: Setup Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@v13
