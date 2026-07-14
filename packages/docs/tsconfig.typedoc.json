@@ -1,0 +1,19 @@
+{
+  "extends": "../typst-wasm/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "typst-wasm/node": ["../typst-wasm/src/index.ts"],
+      "@typst-wasm/engine-wasm": ["../engine-wasm"]
+    },
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": []
+  },
+  "include": [
+    "reference-entrypoints/**/*.ts",
+    "../vite-plugin-typst/src/index.ts",
+    "../vite-plugin-typst/src/html-assets.ts"
+  ],
+  "exclude": ["**/*.test.ts"]
+}

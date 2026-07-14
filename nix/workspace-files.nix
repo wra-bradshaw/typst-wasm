@@ -47,9 +47,16 @@ in
       sharedFiles
       ++ packageJsons
       ++ [
-        (workspaceRoot + "/packages/docs")
+        (workspaceRoot + "/packages/docs/src")
+        (workspaceRoot + "/packages/docs/public")
+        (workspaceRoot + "/packages/docs/reference-entrypoints")
+        (workspaceRoot + "/packages/docs/astro.config.mjs")
+        (workspaceRoot + "/packages/docs/package.json")
+        (workspaceRoot + "/packages/docs/tsconfig.json")
+        (workspaceRoot + "/packages/docs/tsconfig.typedoc.json")
         (workspaceRoot + "/packages/typst-wasm/src")
         (workspaceRoot + "/packages/typst-wasm/tsconfig.json")
+        (workspaceRoot + "/packages/typst-wasm/tsconfig.base.json")
         (workspaceRoot + "/packages/vite-plugin-typst/src")
         (workspaceRoot + "/packages/vite-plugin-typst/tsconfig.json")
       ]
