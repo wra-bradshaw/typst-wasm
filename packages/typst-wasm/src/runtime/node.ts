@@ -1,6 +1,9 @@
 import type { Worker as NodeWorker } from "node:worker_threads";
 import type { TypstRuntime } from "../backends/index";
-import { supportsJspiBackend } from "../backends/capabilities";
+import {
+  supportsJspiBackend,
+  supportsWorkerBackend as supportsWorkerBackendPrimitive,
+} from "../backends/capabilities";
 import type { WorkerHost } from "../worker/host";
 
 /** Creates a worker host backed by a Node.js or Bun worker. */
@@ -38,6 +41,7 @@ export const nodeRuntime: TypstRuntime = {
     }
     return options.worker();
   },
-  supportsWorkerBackend: (options) => Boolean(options.worker),
+  supportsWorkerBackend: (options) =>
+    Boolean(options.worker) && supportsWorkerBackendPrimitive(),
   supportsJspiBackend,
 };
