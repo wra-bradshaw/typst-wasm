@@ -46,15 +46,6 @@ try {
     await mkdir(dirname(destination), { recursive: true });
     await writeFile(destination, content);
   }
-  if (backend === "jspi") {
-    const coreModules = Object.keys(files)
-      .filter((file) => file.endsWith(".wasm"))
-      .sort();
-    await writeFile(
-      join(outDir, "core-modules.json"),
-      `${JSON.stringify(coreModules, null, 2)}\n`,
-    );
-  }
   console.log(`${backend} transpile complete:`, Object.keys(files).join(", "));
 } catch (error) {
   console.error(`${backend} transpile failed:`, error);

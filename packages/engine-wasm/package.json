@@ -19,10 +19,12 @@
       "types": "./dist/jspi/engine.d.ts",
       "default": "./dist/jspi/engine.js"
     },
-    "./jspi/core-modules.json": "./dist/jspi/core-modules.json",
-    "./jspi/*.wasm": "./dist/jspi/*.wasm",
-    "./worker/*.wasm": "./dist/worker/*.wasm",
-    "./component.wasm": "./dist/component.wasm"
+    "./jspi/engine.core.wasm": "./dist/jspi/engine.core.wasm",
+    "./jspi/engine.core2.wasm": "./dist/jspi/engine.core2.wasm",
+    "./jspi/engine.core3.wasm": "./dist/jspi/engine.core3.wasm",
+    "./worker/engine.core.wasm": "./dist/worker/engine.core.wasm",
+    "./worker/engine.core2.wasm": "./dist/worker/engine.core2.wasm",
+    "./worker/engine.core3.wasm": "./dist/worker/engine.core3.wasm"
   },
   "scripts": {
     "build": "nix run ../..#build-artifact -- engine-wasm",

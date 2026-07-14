@@ -117,7 +117,6 @@ pkgs.stdenvNoCC.mkDerivation {
 
     mkdir -p "$out/dist"
 
-    cp "${wasmArtifacts}/component.wasm" "$out/dist/component.wasm"
     cp -R packages/engine-wasm/dist/. "$out/dist/"
 
     runHook postInstall
