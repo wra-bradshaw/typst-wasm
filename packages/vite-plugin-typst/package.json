@@ -31,7 +31,7 @@
   "scripts": {
     "build": "nix run ../..#build-artifact -- vite-plugin-typst",
     "fix": "pnpm run format:fix && pnpm exec eslint . --fix",
-    "lint": "pnpm exec eslint . --max-warnings=0",
+    "lint": "pnpm exec eslint . --max-warnings=0 && pnpm exec tsc --noEmit",
     "test": "pnpm run test:unit && pnpm run test:integration",
     "test:unit": "pnpm exec vitest run -c vitest.config.ts",
     "test:integration": "node --experimental-wasm-jspi ./node_modules/vitest/vitest.mjs run -c vitest.integration.config.ts",
