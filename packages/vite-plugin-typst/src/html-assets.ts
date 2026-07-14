@@ -144,6 +144,15 @@ const parseSrcset = (value: string): ImageCandidate[] =>
 
 const cssUrlRE = /url\(\s*(?:"([^"]+)"|'([^']+)'|([^)\s]+))\s*\)/g;
 
+const addUrlQuery = (url: string): string => {
+  const hashIndex = url.indexOf("#");
+  const resource = hashIndex === -1 ? url : url.slice(0, hashIndex);
+  const hash = hashIndex === -1 ? "" : url.slice(hashIndex);
+  const separator = resource.includes("?") ? "&" : "?";
+
+  return `${resource}${separator}url${hash}`;
+};
+
 const walkNodes = (
   nodes: ChildNode[],
   visitor: (node: ChildNode) => void,
@@ -166,7 +175,7 @@ export const transformHtmlAssets = (
 
   const importAsset = (url: string): string => {
     const name = `__typst_asset_${imports.length}`;
-    const request = `${url}?url`;
+    const request = addUrlQuery(url);
     imports.push(`import ${name} from ${JSON.stringify(request)};`);
     return name;
   };
