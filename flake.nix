@@ -27,6 +27,7 @@
         ./packages/engine-wasm/flake-module.nix
         ./packages/typst-wasm/flake-module.nix
         ./packages/vite-plugin-typst/flake-module.nix
+        ./packages/docs/flake-module.nix
         ./packages/example-typst-playground-cloudflare/flake-module.nix
         ./packages/example-typst-playground-vercel/flake-module.nix
         ./packages/example-typst-blog/flake-module.nix
@@ -154,16 +155,14 @@
             shellHook = "";
           };
 
-          devShells.ci = pkgs.mkShell (
-            {
-              inputsFrom = [ config.devShells.typst-wasm ];
-              packages = [
-                config.formatter
-                pkgs.nodejs
-                pkgs.pnpm
-              ];
-            }
-          );
+          devShells.ci = pkgs.mkShell ({
+            inputsFrom = [ config.devShells.typst-wasm ];
+            packages = [
+              config.formatter
+              pkgs.nodejs
+              pkgs.pnpm
+            ];
+          });
         };
     };
 }

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/packages/typst-wasm/src/**",
+        "$TURBO_ROOT$/packages/vite-plugin-typst/src/**"
+      ]
+    }
+  }
+}

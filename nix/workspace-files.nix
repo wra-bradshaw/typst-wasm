@@ -39,4 +39,20 @@ in
     root = workspaceRoot;
     fileset = fs.unions (sharedFiles ++ packageJsons);
   };
+
+  # Documentation TypeDoc runs against source files from the public packages.
+  sourceForDocs = fs.toSource {
+    root = workspaceRoot;
+    fileset = fs.unions (
+      sharedFiles
+      ++ packageJsons
+      ++ [
+        (workspaceRoot + "/packages/docs")
+        (workspaceRoot + "/packages/typst-wasm/src")
+        (workspaceRoot + "/packages/typst-wasm/tsconfig.json")
+        (workspaceRoot + "/packages/vite-plugin-typst/src")
+        (workspaceRoot + "/packages/vite-plugin-typst/tsconfig.json")
+      ]
+    );
+  };
 }
