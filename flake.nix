@@ -126,15 +126,21 @@
                 rm -rf "$target"
               fi
 
-              out_path=$(nix build "$repo_root#$flake_attr" \
-                --no-link \
-                --print-out-paths \
-                --print-build-logs \
-                --show-trace)
+              echo "build-artifact: starting nix build for $flake_attr"
+              out_path=$(timeout --foreground --verbose --signal=TERM --kill-after=30s 15m \
+                nix build "$repo_root#$flake_attr" \
+                  --no-link \
+                  --print-out-paths \
+                  --print-build-logs \
+                  --show-trace)
+              echo "build-artifact: nix build returned $out_path"
 
               mkdir -p "$(dirname "$target")"
+              echo "build-artifact: copying $out_path/$artifact_path to $target"
               cp -R "$out_path/$artifact_path" "$target"
+              echo "build-artifact: copy complete"
               chmod -R u+w "$target"
+              echo "build-artifact: finished $flake_attr"
             '';
           };
         in
