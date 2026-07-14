@@ -26,7 +26,7 @@ export const makeFetchBridge = (
     if (isDisposed()) return;
 
     try {
-      const loaded = await fileLoaderManager.loadFile(request);
+      const loaded = await fileLoaderManager.load(request);
       if (isDisposed()) return;
 
       sharedMemoryCommunication.setBuffer(loaded.data);

@@ -1,4 +1,4 @@
-import type { TypstDiagnostic } from "./compiler/types";
+import type { Diagnostic } from "./compiler/types";
 
 /** Base class for errors raised by the Typst compiler API. */
 export class TypstError extends Error {
@@ -10,11 +10,11 @@ export class TypstError extends Error {
 
 /** Indicates that compilation failed or produced error diagnostics. */
 export class CompileError extends TypstError {
-  readonly diagnostics: TypstDiagnostic[];
+  readonly diagnostics: Diagnostic[];
 
   constructor(
     message: string,
-    options: { diagnostics?: TypstDiagnostic[]; cause?: unknown } = {},
+    options: { diagnostics?: Diagnostic[]; cause?: unknown } = {},
   ) {
     super(message, { cause: options.cause });
     this.diagnostics = options.diagnostics ?? [];

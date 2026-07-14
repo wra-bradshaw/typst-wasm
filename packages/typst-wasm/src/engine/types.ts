@@ -1,27 +1,42 @@
-export type EngineFileKind = "project" | "package" | "url";
+import type {
+  CompileOptions,
+  CompileSuccess,
+  CompileFailure,
+  CompilePayload,
+  CompileFormat,
+  Diagnostic,
+  DocumentMetadata,
+  FetchRequest,
+  FetchedFile,
+  FileKind,
+  LoadedFile,
+  PdfStandard,
+} from "@typst-wasm/engine-wasm/types";
 
-export interface EngineFetchRequest {
-  path: string;
-  kind: EngineFileKind;
-}
+export type {
+  CompileOptions,
+  CompileSuccess,
+  CompileFailure,
+  CompilePayload,
+  CompileFormat,
+  Diagnostic,
+  DocumentMetadata,
+  FetchRequest,
+  FetchedFile,
+  FileKind,
+  LoadedFile,
+  PdfStandard,
+};
 
-export interface EngineFetchedFile {
-  data: Uint8Array;
-  resolvedPath?: string;
-  mediaType?: string;
-}
-
-export type EngineFetchError =
-  | { tag: "not-found" }
-  | { tag: "denied" }
-  | { tag: "timeout" }
-  | { tag: "unavailable" }
-  | { tag: "other"; val: string };
+export type EngineFetchRequest = FetchRequest;
+export type EngineFetchedFile = FetchedFile;
+export type EngineCompileOptions = CompileOptions;
+export type EngineCompileSuccess = CompileSuccess;
+export type EngineDiagnostic = Diagnostic;
+export type EngineLoadedFile = LoadedFile;
 
 export interface EngineHost {
-  fetch(
-    request: EngineFetchRequest,
-  ): EngineFetchedFile | Promise<EngineFetchedFile>;
+  fetch(request: FetchRequest): FetchedFile | Promise<FetchedFile>;
   today(
     offsetSeconds?: bigint,
   ): { year: number; month: number; day: number } | undefined;
@@ -30,71 +45,6 @@ export interface EngineHost {
 export interface EngineImports {
   "typst:engine/host": EngineHost;
 }
-
-export interface EngineCompileOptions {
-  format?: "pdf" | "png" | "svg" | "html" | "bundle";
-  main?: string;
-  inputs?: Array<{ key: string; value: string }>;
-  pages?: string;
-  pdfStandards?: Array<"v17" | "a2b" | "a3b">;
-  ppi?: number;
-}
-
-export interface EngineDiagnostic {
-  message: string;
-  severity: "warning" | "error";
-  file?: string;
-  line?: number;
-  column?: number;
-  start?: number;
-  end?: number;
-  formatted: string;
-  hints: string[];
-  trace: string[];
-}
-
-export interface EngineLoadedFile {
-  kind: EngineFileKind;
-  path: string;
-  resolvedPath?: string;
-  mediaType?: string;
-}
-
-export interface EngineDocumentMetadata {
-  title?: string;
-  description?: string;
-  author: string[];
-  keywords: string[];
-  custom: Array<{ label?: string; valueJson: string }>;
-}
-
-export type EngineCompilePayload =
-  | { tag: "pdf"; val: Uint8Array }
-  | { tag: "png"; val: Array<{ page: number; data: Uint8Array }> }
-  | { tag: "svg"; val: Array<{ page: number; data: string }> }
-  | { tag: "html"; val: string }
-  | {
-      tag: "bundle";
-      val: Array<{ path: string; data: Uint8Array; mediaType?: string }>;
-    };
-
-export interface EngineCompileSuccess {
-  output: EngineCompilePayload;
-  diagnostics: EngineDiagnostic[];
-  metadata?: EngineDocumentMetadata;
-  dependencies: EngineLoadedFile[];
-}
-
-export interface EngineCompileFailure {
-  diagnostics: EngineDiagnostic[];
-  dependencies: EngineLoadedFile[];
-  message?: string;
-}
-
-export type EngineOperationError =
-  | { tag: "invalid-path"; val: string }
-  | { tag: "font-parse-failed" }
-  | { tag: "other"; val: string };
 
 export interface EngineCompiler {
   addFont(data: Uint8Array): string;
@@ -105,9 +55,7 @@ export interface EngineCompiler {
   clearFiles(): void;
   listFiles(): string[];
   hasFile(path: string): boolean;
-  compile(
-    options: EngineCompileOptions,
-  ): EngineCompileSuccess | Promise<EngineCompileSuccess>;
+  compile(options: CompileOptions): CompileSuccess | Promise<CompileSuccess>;
 }
 
 export interface EngineRoot {

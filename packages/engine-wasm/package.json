@@ -11,6 +11,7 @@
   },
   "homepage": "https://github.com/typst-wasm/typst-wasm#readme",
   "exports": {
+    "./types": "./dist/worker/interfaces/typst-engine-types.d.ts",
     "./worker": {
       "types": "./dist/worker/engine.d.ts",
       "default": "./dist/worker/engine.js"

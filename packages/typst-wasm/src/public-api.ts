@@ -1,12 +1,24 @@
-export type { EngineCoreModuleLoader, EngineModule } from "./engine/types";
-export type { WorkerHost } from "./worker/host";
-export type { PackageCache } from "./files";
 export type {
+  AnyCompileResult,
+  BundleCompileResult,
   CompileFormat,
+  CompileInputs,
   CompileOptions,
   CompileResult,
+  Diagnostic,
+  DocumentMetadata,
+  FetchRequest,
+  FetchedFile,
+  FileKind,
+  HtmlCompileResult,
+  LoadedFile,
+  PdfCompileResult,
+  PdfStandard,
+  PngCompileResult,
+  SvgCompileResult,
   TypstCompiler,
   TypstCompilerOptions,
+  TypstDiagnostic,
   TypstDocumentMetadata,
   TypstFileKind,
   TypstFileLoad,
@@ -15,8 +27,10 @@ export type {
   TypstLoadedFile,
   TypstLogLevel,
   TypstLogger,
-  TypstDiagnostic,
 } from "./compiler/types";
+export type { EngineCoreModuleLoader, EngineModule } from "./engine/types";
+export type { WorkerHost } from "./worker/host";
+export type { PackageCache } from "./files";
 export {
   CompileError,
   CompilerDisposedError,

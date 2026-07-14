@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
-  FetchFileLoader,
+  makeFetchFileLoader,
   FileLoaderManager,
   type FetchImpl,
 } from "../files/loaders";
@@ -16,12 +16,12 @@ const projectRequest: EngineFetchRequest = {
 describe("fetch bridge", () => {
   it("writes package bytes into shared memory on success", async () => {
     const bridge = makeFetchBridge(
-      new FileLoaderManager([{ load: async () => new Uint8Array([1, 2, 3]) }]),
+      new FileLoaderManager([
+        async () => ({ data: new Uint8Array([1, 2, 3]) }),
+      ]),
       () => false,
     );
-
     await bridge.handleFetchRequest(projectRequest);
-
     expect(bridge.sharedMemoryCommunication.getStatus()).toBe(
       SharedMemoryCommunicationStatus.Success,
     );
@@ -33,17 +33,13 @@ describe("fetch bridge", () => {
   it("sets error status on loader failure", async () => {
     const bridge = makeFetchBridge(
       new FileLoaderManager([
-        {
-          load: async () => {
-            throw new Error("not found");
-          },
+        async () => {
+          throw new Error("not found");
         },
       ]),
       () => false,
     );
-
     await bridge.handleFetchRequest(projectRequest);
-
     expect(bridge.sharedMemoryCommunication.getStatus()).toBe(
       SharedMemoryCommunicationStatus.Error,
     );
@@ -52,13 +48,13 @@ describe("fetch bridge", () => {
   it("does not publish results after disposal", async () => {
     let disposed = false;
     const bridge = makeFetchBridge(
-      new FileLoaderManager([{ load: async () => new Uint8Array([9, 9, 9]) }]),
+      new FileLoaderManager([
+        async () => ({ data: new Uint8Array([9, 9, 9]) }),
+      ]),
       () => disposed,
     );
-
     disposed = true;
     await bridge.handleFetchRequest(projectRequest);
-
     expect(bridge.sharedMemoryCommunication.getStatus()).toBe(
       SharedMemoryCommunicationStatus.None,
     );
@@ -69,12 +65,10 @@ describe("fetch bridge", () => {
       async () => new Response(new Uint8Array([4, 5])),
     );
     const bridge = makeFetchBridge(
-      new FileLoaderManager([new FetchFileLoader(fetchImpl)]),
+      new FileLoaderManager([makeFetchFileLoader(fetchImpl)]),
       () => false,
     );
-
     await bridge.handleFetchRequest({ path: "/image.png", kind: "url" });
-
     expect(fetchImpl).toHaveBeenCalledWith("/image.png");
     expect([...bridge.sharedMemoryCommunication.getBuffer()]).toEqual([4, 5]);
   });

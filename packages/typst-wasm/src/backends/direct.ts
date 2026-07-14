@@ -116,7 +116,7 @@ export class DirectService {
     const host: EngineHost = {
       fetch: async (request) => {
         try {
-          return await this.fileLoaderManager.loadFile(request);
+          return await this.fileLoaderManager.load(request);
         } catch (error) {
           return toFetchError(error);
         }

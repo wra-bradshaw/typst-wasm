@@ -31,7 +31,7 @@ export const backendCases: readonly CanonicalCase[] = [
           main: "main.typ",
           format: "svg",
         });
-        expect(result.format).toBe("svg");
+        expect(result.pages.length).toBeGreaterThan(0);
       } finally {
         await compiler.dispose();
       }
@@ -50,9 +50,9 @@ export const backendCases: readonly CanonicalCase[] = [
         async (compiler) => {
           await compiler.addSource("main.typ", "= JSPI");
           await compiler.setMain("main.typ");
-          expect((await compiler.compile({ format: "svg" })).format).toBe(
-            "svg",
-          );
+          expect(
+            (await compiler.compile({ format: "svg" })).pages.length,
+          ).toBeGreaterThan(0);
         },
         { backend: "jspi" },
       );

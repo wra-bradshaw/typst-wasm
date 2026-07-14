@@ -1,20 +1,28 @@
 export type { PackageCache } from "./cache";
 export type {
-  TypstFileKind,
-  TypstFileLoad,
+  CompileFormat,
+  CompileInputs,
+  CompileOptions,
+  CompileResult,
+  AnyCompileResult,
+  BundleCompileResult,
+  HtmlCompileResult,
+  PdfCompileResult,
+  PngCompileResult,
+  SvgCompileResult,
+  Diagnostic,
+  DocumentMetadata,
+  FetchRequest,
+  FetchedFile,
+  LoadedFile,
+  PdfStandard,
   TypstFileLoader,
-  TypstFileRequest,
-  TypstLoadedFile,
 } from "../compiler/types";
 export {
   makeBrowserCacheStorage,
   makeDefaultPackageCache,
   makeMemoryCacheStorage,
 } from "./cache";
-export {
-  classifyTypstFilePath,
-  FetchFileLoader,
-  FileLoaderManager,
-} from "./loaders";
-export { PackageFileLoader, PackageManager } from "./packages";
+export { FileLoaderManager, makeFetchFileLoader } from "./loaders";
+export { makePackageFileLoader, PackageManager } from "./packages";
 export type { PackageManagerOptions } from "./packages";

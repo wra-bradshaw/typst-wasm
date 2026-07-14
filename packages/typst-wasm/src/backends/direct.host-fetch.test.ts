@@ -3,12 +3,10 @@ import { FileLoaderManager } from "../files/loaders";
 import type { TypstFileLoader } from "../compiler/types";
 import type { EngineImports, EngineModule } from "../engine/types";
 
-const loader: TypstFileLoader = {
-  load: async (request) =>
-    request.path === "shared.typ"
-      ? { data: new Uint8Array([7]), resolvedPath: "shared.typ" }
-      : null,
-};
+const loader: TypstFileLoader = async (request) =>
+  request.path === "shared.typ"
+    ? { data: new Uint8Array([7]), resolvedPath: "shared.typ" }
+    : null;
 
 describe("DirectService host fetch routing", () => {
   it("awaits the WIT host fetch and preserves request metadata", async () => {

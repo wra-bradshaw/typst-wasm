@@ -1,8 +1,110 @@
 import type { PackageCache } from "../files";
-import type { EngineCoreModuleLoader, EngineModule } from "../engine/types";
+import type {
+  CompileFormat,
+  Diagnostic,
+  EngineCoreModuleLoader,
+  EngineModule,
+  FetchedFile,
+  FetchRequest,
+  FileKind,
+  LoadedFile,
+  PdfStandard,
+} from "../engine/types";
 import type { WorkerHost } from "../worker/host";
 
-export type TypstLogLevel = "error" | "debug";
+export type {
+  CompileFormat,
+  Diagnostic,
+  FetchRequest,
+  FetchedFile,
+  FileKind,
+  LoadedFile,
+  PdfStandard,
+} from "../engine/types";
+
+/** String values exposed to Typst through `sys.inputs`. */
+export type CompileInputs = Record<string, string>;
+
+/** Options controlling one compilation. */
+export interface CompileOptions<F extends CompileFormat = CompileFormat> {
+  /** Output format to produce. */
+  format: F;
+  /** Optional entry-point file path. */
+  main?: string;
+  /** String values available through Typst's `sys.inputs` dictionary. */
+  inputs?: CompileInputs;
+  /** Page selector, such as `"1,3-5"`. */
+  pages?: string;
+  /** PDF standards to target. */
+  pdfStandards?: PdfStandard[];
+  /** Pixels per inch for raster output. */
+  ppi?: number;
+}
+
+/** Document metadata extracted from a successful compilation. */
+export interface DocumentMetadata {
+  title?: string;
+  description?: string;
+  author: string[];
+  keywords: string[];
+  /** Custom metadata values decoded from the engine's JSON representation. */
+  custom: Array<{ label?: string; value: unknown }>;
+}
+
+interface CompileResultBase {
+  diagnostics: Diagnostic[];
+  metadata?: DocumentMetadata;
+  dependencies: LoadedFile[];
+}
+
+/** PDF compilation result. */
+export interface PdfCompileResult extends CompileResultBase {
+  format: "pdf";
+  output: Uint8Array;
+}
+
+/** PNG compilation result. */
+export interface PngCompileResult extends CompileResultBase {
+  format: "png";
+  pages: Array<{ page: number; output: Uint8Array }>;
+}
+
+/** SVG compilation result. */
+export interface SvgCompileResult extends CompileResultBase {
+  format: "svg";
+  pages: Array<{ page: number; output: string }>;
+}
+
+/** HTML compilation result. */
+export interface HtmlCompileResult extends CompileResultBase {
+  format: "html";
+  output: string;
+}
+
+/** HTML bundle compilation result. */
+export interface BundleCompileResult extends CompileResultBase {
+  format: "bundle";
+  files: Array<{ path: string; data: Uint8Array; mediaType?: string }>;
+}
+
+/** All caller-facing successful compilation results. */
+export type AnyCompileResult =
+  | PdfCompileResult
+  | PngCompileResult
+  | SvgCompileResult
+  | HtmlCompileResult
+  | BundleCompileResult;
+
+/** Successful result corresponding to a requested output format. */
+export type CompileResult<F extends CompileFormat = CompileFormat> = Extract<
+  AnyCompileResult,
+  { format: F }
+>;
+
+/** Resolves files requested by Typst. */
+export type TypstFileLoader = (
+  request: FetchRequest,
+) => Promise<FetchedFile | null>;
 
 /** Receives diagnostic and debug messages emitted by the library. */
 export interface TypstLogger {
@@ -10,64 +112,21 @@ export interface TypstLogger {
   log(level: TypstLogLevel, message: string, context?: unknown): void;
 }
 
-export type CompileFormat = "pdf" | "png" | "svg" | "html" | "bundle";
-export type TypstFileKind = "project" | "package" | "url";
-
-/** A file requested while compiling a document. */
-export interface TypstFileRequest {
-  /** Path requested by Typst. */
-  path: string;
-  /** Whether the path belongs to the project, a package, or a URL. */
-  kind: TypstFileKind;
-}
-
-/** File data returned by a custom file loader. */
-export interface TypstFileLoad {
-  /** File contents. */
-  data: Uint8Array;
-  /** Host-resolved path, used for dependency tracking. */
-  resolvedPath?: string;
-  /** MIME type of the file, when known. */
-  mediaType?: string;
-}
-
-/** Resolves project, package, or URL files requested by Typst. */
-export interface TypstFileLoader {
-  /** Returns the file, or `null` when this loader does not handle it. */
-  load(
-    request: TypstFileRequest,
-  ): Promise<TypstFileLoad | Uint8Array | null | undefined>;
-}
-
-/** A file loaded during compilation. */
-export interface TypstLoadedFile {
-  path: string;
-  kind: TypstFileKind;
-  resolvedPath?: string;
-  mediaType?: string;
-}
-
-export interface TypstDocumentMetadata {
-  title?: string;
-  description?: string;
-  author: string[];
-  keywords: string[];
-  custom: Array<{ label?: string; value: unknown }>;
-}
+export type TypstLogLevel = "error" | "debug";
 
 /** Options used to create a {@link TypstCompiler}. */
 export interface TypstCompilerOptions {
-  /** Controls library messages. Errors are reported by default; debug includes protocol activity. */
+  /** Controls library messages. */
   logLevel?: TypstLogLevel;
-  /** Receives library messages. Context may contain paths and underlying errors. */
+  /** Receives library messages. */
   logger?: TypstLogger;
   /** Backend to use; `auto` selects the best available backend. */
   backend?: "auto" | "worker" | "jspi";
   /** JCO-generated engine module used by the JSPI backend. */
   engine?: EngineModule;
-  /** Overrides JCO's default core WebAssembly module lookup. */
+  /** Overrides the core WebAssembly module lookup. */
   getCoreModule?: EngineCoreModuleLoader;
-  /** Creates the host used by the worker backend when it is selected. */
+  /** Creates the host used by the worker backend. */
   worker?: () => WorkerHost;
   /** Custom loaders tried before the built-in package and URL loaders. */
   fileLoaders?: TypstFileLoader[];
@@ -77,84 +136,17 @@ export interface TypstCompilerOptions {
   packageBaseUrl?: string;
   /** Package cache, or `false` to disable caching. */
   packageCache?: PackageCache | false;
-  /** Capacity of the default in-memory package cache. */
+  /** Capacity of the in-memory package cache. */
   memoryPackageCacheCapacity?: number;
 }
-
-/** Options controlling one compilation. */
-export interface CompileOptions {
-  /** Output format. */
-  format: CompileFormat;
-  /** Entry-point file path. */
-  main?: string;
-  /** String inputs made available through Typst's `sys.inputs` mechanism. */
-  inputs?: Record<string, string>;
-  /** Page selector, such as `"1,3-5"`. */
-  pages?: string;
-  /** PDF standards to target. */
-  pdfStandards?: string[];
-  /** Pixels per inch for raster output. */
-  ppi?: number;
-}
-
-/** A warning or error reported by Typst. */
-export interface TypstDiagnostic {
-  message: string;
-  severity: "warning" | "error";
-  file?: string;
-  line?: number;
-  column?: number;
-  start?: number;
-  end?: number;
-  formatted: string;
-  hints: string[];
-  trace: string[];
-}
-
-export type CompileResult =
-  | {
-      diagnostics: TypstDiagnostic[];
-      metadata?: TypstDocumentMetadata;
-      dependencies?: TypstLoadedFile[];
-      format: "pdf";
-      output: Uint8Array;
-    }
-  | {
-      diagnostics: TypstDiagnostic[];
-      metadata?: TypstDocumentMetadata;
-      dependencies?: TypstLoadedFile[];
-      format: "png";
-      pages: Array<{ page: number; output: Uint8Array }>;
-    }
-  | {
-      diagnostics: TypstDiagnostic[];
-      metadata?: TypstDocumentMetadata;
-      dependencies?: TypstLoadedFile[];
-      format: "svg";
-      pages: Array<{ page: number; output: string }>;
-    }
-  | {
-      diagnostics: TypstDiagnostic[];
-      metadata?: TypstDocumentMetadata;
-      dependencies?: TypstLoadedFile[];
-      format: "html";
-      output: string;
-    }
-  | {
-      diagnostics: TypstDiagnostic[];
-      metadata?: TypstDocumentMetadata;
-      dependencies?: TypstLoadedFile[];
-      format: "bundle";
-      files: Array<{ path: string; data: Uint8Array; mediaType?: string }>;
-    };
 
 /** Stateful promise-based Typst compiler. */
 export interface TypstCompiler {
   /** Registers a font for subsequent compilations. */
   addFont(data: Uint8Array): Promise<void>;
-  /** Adds binary data at a project path. */
+  /** Adds binary data at a path in the virtual project. */
   addFile(path: string, data: Uint8Array): Promise<void>;
-  /** Adds Typst source at a project path. */
+  /** Adds Typst source at a path in the virtual project. */
   addSource(path: string, text: string): Promise<void>;
   /** Removes a file from the virtual project. */
   removeFile(path: string): Promise<void>;
@@ -166,19 +158,23 @@ export interface TypstCompiler {
   hasFile(path: string): Promise<boolean>;
   /** Sets the default entry-point path. */
   setMain(path: string): Promise<void>;
-  /** Compiles the current virtual project. */
-  compile<O extends CompileOptions>(
-    options: O & Record<Exclude<keyof O, keyof CompileOptions>, never>,
-  ): Promise<
-    Extract<
-      CompileResult,
-      {
-        format: (
-          O & Record<Exclude<keyof O, keyof CompileOptions>, never>
-        )["format"];
-      }
-    >
-  >;
+  /** Compiles the project into the requested format. */
+  compile<F extends CompileFormat>(
+    options: CompileOptions<F>,
+  ): Promise<CompileResult<F>>;
   /** Releases compiler and worker resources. */
   dispose(): Promise<void>;
 }
+
+/** @deprecated Use `Diagnostic`. */
+export type TypstDiagnostic = Diagnostic;
+/** @deprecated Use `FileKind`. */
+export type TypstFileKind = FileKind;
+/** @deprecated Use `FetchedFile`. */
+export type TypstFileLoad = FetchedFile;
+/** @deprecated Use `DocumentMetadata`. */
+export type TypstDocumentMetadata = DocumentMetadata;
+/** @deprecated Use `LoadedFile`. */
+export type TypstLoadedFile = LoadedFile;
+/** @deprecated Use `FetchRequest`. */
+export type TypstFileRequest = FetchRequest;

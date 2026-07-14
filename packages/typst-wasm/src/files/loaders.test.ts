@@ -1,77 +1,53 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  classifyTypstFilePath,
-  FetchFileLoader,
-  FileLoaderManager,
-} from "./loaders";
-import { PackageFileLoader, PackageManager } from "./packages";
+import { FileLoaderManager, makeFetchFileLoader } from "./loaders";
+import { makePackageFileLoader, PackageManager } from "./packages";
 import type { TypstFileLoader } from "../compiler/types";
 
 describe("file loader manager", () => {
-  it("classifies Typst paths", () => {
-    expect(classifyTypstFilePath("@preview/cetz:0.3.4/lib.typ")).toBe(
-      "package",
-    );
-    expect(classifyTypstFilePath("https://example.com/data.typ")).toBe("url");
-    expect(classifyTypstFilePath("chapter.typ")).toBe("project");
-  });
-
   it("tries loaders in order until one handles the request", async () => {
-    const first = {
-      load: vi.fn(async () => null),
-    } satisfies TypstFileLoader;
-    const second = {
-      load: vi.fn(async () => ({
-        data: new Uint8Array([1, 2, 3]),
-        resolvedPath: "/resolved/main.typ",
-      })),
-    } satisfies TypstFileLoader;
-    const third = {
-      load: vi.fn(async () => new Uint8Array([9])),
-    } satisfies TypstFileLoader;
+    const first = vi.fn<TypstFileLoader>(async () => null);
+    const second = vi.fn<TypstFileLoader>(async () => ({
+      data: new Uint8Array([1, 2, 3]),
+      resolvedPath: "/resolved/main.typ",
+    }));
+    const third = vi.fn<TypstFileLoader>(async () => ({
+      data: new Uint8Array([9]),
+    }));
     const manager = new FileLoaderManager([first, second, third]);
+    const request = { path: "main.typ", kind: "project" as const };
 
-    await expect(manager.load("main.typ")).resolves.toEqual(
-      new Uint8Array([1, 2, 3]),
-    );
-
-    expect(first.load).toHaveBeenCalledTimes(1);
-    expect(second.load).toHaveBeenCalledTimes(1);
-    expect(third.load).not.toHaveBeenCalled();
-    expect(manager.getTrace()).toEqual([
-      {
-        path: "main.typ",
-        kind: "project",
-        resolvedPath: "/resolved/main.typ",
-        mediaType: undefined,
-      },
-    ]);
+    await expect(manager.load(request)).resolves.toEqual({
+      data: new Uint8Array([1, 2, 3]),
+      resolvedPath: "/resolved/main.typ",
+    });
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(1);
+    expect(third).not.toHaveBeenCalled();
   });
 
   it("lets project loaders pass package imports to the package loader", async () => {
-    const projectLoader = {
-      load: vi.fn(async (request) =>
-        request.kind === "project" ? new Uint8Array([1]) : null,
-      ),
-    } satisfies TypstFileLoader;
+    const projectLoader = vi.fn<TypstFileLoader>(async (request) =>
+      request.kind === "project" ? { data: new Uint8Array([1]) } : null,
+    );
     const packageManager = new PackageManager();
     const getFile = vi
       .spyOn(packageManager, "getFile")
       .mockResolvedValue(new Uint8Array([4, 5]));
     const manager = new FileLoaderManager([
       projectLoader,
-      new PackageFileLoader(packageManager),
+      makePackageFileLoader(packageManager),
     ]);
-
-    await expect(manager.load("@preview/cetz:0.3.4/lib.typ")).resolves.toEqual(
-      new Uint8Array([4, 5]),
-    );
-
-    expect(projectLoader.load).toHaveBeenCalledWith({
+    const request = {
       path: "@preview/cetz:0.3.4/lib.typ",
-      kind: "package",
+      kind: "package" as const,
+    };
+
+    await expect(manager.load(request)).resolves.toEqual({
+      data: new Uint8Array([4, 5]),
+      resolvedPath: request.path,
     });
-    expect(getFile).toHaveBeenCalledWith("@preview/cetz:0.3.4/lib.typ");
+    expect(projectLoader).toHaveBeenCalledWith(request);
+    expect(getFile).toHaveBeenCalledWith(request.path);
   });
 
   it("uses fetch fallback for non-package paths", async () => {
@@ -81,36 +57,15 @@ describe("file loader manager", () => {
           headers: { "content-type": "application/octet-stream" },
         }),
     );
-    const manager = new FileLoaderManager([new FetchFileLoader(fetchImpl)]);
+    const manager = new FileLoaderManager([makeFetchFileLoader(fetchImpl)]);
 
-    await expect(manager.load("/asset.bin")).resolves.toEqual(
-      new Uint8Array([7]),
-    );
-
+    await expect(
+      manager.load({ path: "/asset.bin", kind: "project" }),
+    ).resolves.toEqual({
+      data: new Uint8Array([7]),
+      resolvedPath: undefined,
+      mediaType: "application/octet-stream",
+    });
     expect(fetchImpl).toHaveBeenCalledWith("/asset.bin");
-    expect(manager.getTrace()).toEqual([
-      {
-        path: "/asset.bin",
-        kind: "project",
-        resolvedPath: undefined,
-        mediaType: "application/octet-stream",
-      },
-    ]);
-  });
-
-  it("deduplicates repeated dependency trace entries", async () => {
-    const manager = new FileLoaderManager([
-      {
-        load: async () => ({
-          data: new Uint8Array([1]),
-          resolvedPath: "/same.typ",
-        }),
-      },
-    ]);
-
-    await manager.load("same.typ");
-    await manager.load("same.typ");
-
-    expect(manager.getTrace()).toHaveLength(1);
   });
 });

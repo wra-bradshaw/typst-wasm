@@ -54,7 +54,6 @@ export const lifecycleCases: readonly CanonicalCase[] = [
           main: "main.typ",
           format: "html",
         });
-        if (result.format !== "html") throw new Error("expected HTML result");
         expect(result.output).toContain("Imported text");
         expect(result.output).toContain("Binary file text");
       }),

@@ -31,7 +31,6 @@ export const formatCases: readonly CanonicalCase[] = [
     run: (context) =>
       withSource(context, async (compiler) => {
         const result = await compiler.compile({ format: "svg" });
-        if (result.format !== "svg") throw new Error("expected SVG result");
         expect(result.pages.length).toBeGreaterThan(0);
         expect(result.pages[0]?.output).toContain("<svg");
       }),
@@ -43,7 +42,6 @@ export const formatCases: readonly CanonicalCase[] = [
     run: (context) =>
       withSource(context, async (compiler) => {
         const result = await compiler.compile({ format: "pdf" });
-        if (result.format !== "pdf") throw new Error("expected PDF result");
         const text = new TextDecoder().decode(result.output);
         expect(text.slice(0, 5)).toBe("%PDF-");
         expect(text.slice(-5)).toContain("%%EOF");
@@ -76,7 +74,6 @@ export const formatCases: readonly CanonicalCase[] = [
           pages: "2",
           ppi: 96,
         });
-        if (result.format !== "png") throw new Error("expected PNG result");
         expect(result.pages).toHaveLength(1);
         expect(result.pages[0]?.page).toBe(2);
         expect([
@@ -91,7 +88,6 @@ export const formatCases: readonly CanonicalCase[] = [
     run: (context) =>
       withSource(context, async (compiler) => {
         const result = await compiler.compile({ format: "html" });
-        if (result.format !== "html") throw new Error("expected HTML result");
         expect(result.output).toContain("First");
         expect(result.output).toContain("Second");
         expect(result.output).toMatch(/<(html|body|main|section)\b/i);
@@ -111,8 +107,6 @@ export const formatCases: readonly CanonicalCase[] = [
           main: "bundle.typ",
           format: "bundle",
         });
-        if (result.format !== "bundle")
-          throw new Error("expected bundle result");
         expect(
           result.files.some(
             (file) =>

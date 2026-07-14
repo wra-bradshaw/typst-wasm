@@ -4,8 +4,8 @@ import {
   type TypstRuntime,
 } from "../backends/index";
 import { CompileError } from "../errors";
-import { FetchFileLoader, FileLoaderManager } from "../files/loaders";
-import { PackageFileLoader, PackageManager } from "../files/packages";
+import { FileLoaderManager, makeFetchFileLoader } from "../files/loaders";
+import { makePackageFileLoader, PackageManager } from "../files/packages";
 import { resolveLogger } from "../logging";
 import type {
   EngineCompileOptions,
@@ -13,12 +13,13 @@ import type {
   EngineDiagnostic,
 } from "../engine/types";
 import type {
+  AnyCompileResult,
+  CompileFormat,
   CompileOptions,
   CompileResult,
+  DocumentMetadata,
   TypstCompiler,
   TypstCompilerOptions,
-  TypstDocumentMetadata,
-  TypstLoadedFile,
 } from "./types";
 
 const hasErrorDiagnostics = (diagnostics: EngineDiagnostic[]): boolean =>
@@ -44,38 +45,39 @@ const extractErrorPayload = (error: unknown): unknown => {
   return undefined;
 };
 
+const toEngineCompileOptions = (
+  options: CompileOptions,
+): EngineCompileOptions => ({
+  ...options,
+  inputs: options.inputs
+    ? Object.entries(options.inputs).map(([key, value]) => ({ key, value }))
+    : undefined,
+});
+
 const normalizeMetadata = (
   metadata: EngineCompileSuccess["metadata"],
-): TypstDocumentMetadata | undefined => {
+): DocumentMetadata | undefined => {
   if (!metadata) return undefined;
-
   return {
-    title: metadata.title,
-    description: metadata.description,
-    author: metadata.author,
-    keywords: metadata.keywords,
+    ...metadata,
     custom: metadata.custom.map((entry) => {
-      let value: unknown = entry.valueJson;
+      let value: unknown;
       try {
-        value = JSON.parse(entry.valueJson);
+        value = JSON.parse(entry.valueJson) as unknown;
       } catch {
-        // Keep malformed custom metadata as its original string value.
+        value = entry.valueJson;
       }
       return { label: entry.label, value };
     }),
   };
 };
 
-const normalizeDependencies = (
-  dependencies: EngineCompileSuccess["dependencies"],
-): TypstLoadedFile[] => dependencies;
-
 const normalizeCompileResult = (
   result: EngineCompileSuccess,
-): CompileResult => {
+): AnyCompileResult => {
   const base = {
     diagnostics: result.diagnostics,
-    dependencies: normalizeDependencies(result.dependencies),
+    dependencies: result.dependencies,
     metadata: normalizeMetadata(result.metadata),
   };
 
@@ -103,36 +105,12 @@ const normalizeCompileResult = (
     case "html":
       return { ...base, format: "html", output: result.output.val };
     case "bundle":
-      return {
-        ...base,
-        format: "bundle",
-        files: result.output.val.map((file) => ({
-          path: file.path,
-          data: file.data,
-          mediaType: file.mediaType,
-        })),
-      };
+      return { ...base, format: "bundle", files: result.output.val };
   }
 };
 
-const toEngineCompileOptions = (
-  options: CompileOptions,
-): EngineCompileOptions => ({
-  format: options.format,
-  main: options.main,
-  inputs: options.inputs
-    ? Object.entries(options.inputs).map(([key, value]) => ({ key, value }))
-    : undefined,
-  pages: options.pages,
-  pdfStandards: options.pdfStandards as EngineCompileOptions["pdfStandards"],
-  ppi: options.ppi,
-});
-
 class PromiseTypstCompiler implements TypstCompiler {
-  constructor(
-    private readonly backend: BackendService,
-    private readonly fileLoaderManager: FileLoaderManager,
-  ) {}
+  constructor(private readonly backend: BackendService) {}
 
   addFont(data: Uint8Array): Promise<void> {
     return this.backend.addFont(data);
@@ -159,21 +137,9 @@ class PromiseTypstCompiler implements TypstCompiler {
     return this.backend.setMain(path);
   }
 
-  async compile<O extends CompileOptions>(
-    options: O & Record<Exclude<keyof O, keyof CompileOptions>, never>,
-  ): Promise<
-    Extract<
-      CompileResult,
-      {
-        format: (
-          O & Record<Exclude<keyof O, keyof CompileOptions>, never>
-        )["format"];
-      }
-    >
-  > {
-    if (options.main) await this.setMain(options.main);
-    this.fileLoaderManager.resetTrace();
-
+  async compile<F extends CompileFormat>(
+    options: CompileOptions<F>,
+  ): Promise<CompileResult<F>> {
     try {
       const result = await this.backend.compile(
         toEngineCompileOptions(options),
@@ -183,14 +149,7 @@ class PromiseTypstCompiler implements TypstCompiler {
           diagnostics: result.diagnostics,
         });
       }
-      return normalizeCompileResult(result) as Extract<
-        CompileResult,
-        {
-          format: (
-            O & Record<Exclude<keyof O, keyof CompileOptions>, never>
-          )["format"];
-        }
-      >;
+      return normalizeCompileResult(result) as CompileResult<F>;
     } catch (cause) {
       const payload = extractErrorPayload(cause) ?? cause;
       if (
@@ -231,8 +190,8 @@ export const createTypstCompilerWithRuntime = async (
   });
   const fileLoaderManager = new FileLoaderManager([
     ...(options.fileLoaders ?? []),
-    new PackageFileLoader(packageManager),
-    new FetchFileLoader(options.fetch),
+    makePackageFileLoader(packageManager),
+    makeFetchFileLoader(options.fetch),
   ]);
   const backend = createRuntimeBackend(
     options.backend ?? "auto",
@@ -242,5 +201,5 @@ export const createTypstCompilerWithRuntime = async (
   );
 
   await backend.init();
-  return new PromiseTypstCompiler(backend, fileLoaderManager);
+  return new PromiseTypstCompiler(backend);
 };

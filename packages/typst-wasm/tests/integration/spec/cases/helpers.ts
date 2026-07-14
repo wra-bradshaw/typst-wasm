@@ -1,5 +1,5 @@
 import { expect } from "@std/expect";
-import type { CompileResult, TypstCompiler } from "typst-wasm";
+import type { SvgCompileResult, TypstCompiler } from "typst-wasm";
 import type { IntegrationContext } from "../types.ts";
 
 export const withCompiler = <T>(
@@ -7,8 +7,7 @@ export const withCompiler = <T>(
   run: (compiler: TypstCompiler) => Promise<T>,
 ): Promise<T> => context.withCompiler(run);
 
-export const expectSvg = (result: CompileResult): void => {
-  if (result.format !== "svg") throw new Error("expected SVG result");
+export const expectSvg = (result: SvgCompileResult): void => {
   expect(result.pages.length).toBeGreaterThan(0);
   const output = result.pages[0]?.output ?? "";
   expect(output).toContain("<svg");

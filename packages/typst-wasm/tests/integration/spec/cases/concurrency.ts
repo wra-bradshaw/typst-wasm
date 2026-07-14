@@ -27,11 +27,9 @@ export const concurrencyCases: readonly CanonicalCase[] = [
         ]);
         expectSvg(leftResult);
         expectSvg(rightResult);
-        if (leftResult.format === "svg" && rightResult.format === "svg") {
-          expect(leftResult.pages[0]?.output).not.toBe(
-            rightResult.pages[0]?.output,
-          );
-        }
+        expect(leftResult.pages[0]?.output).not.toBe(
+          rightResult.pages[0]?.output,
+        );
         expect(await left.hasFile("right.typ")).toBe(false);
         expect(await right.hasFile("left.typ")).toBe(false);
 

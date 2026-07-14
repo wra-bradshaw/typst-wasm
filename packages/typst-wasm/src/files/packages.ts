@@ -6,11 +6,7 @@ import {
 } from "../errors";
 import { makeDefaultPackageCache, type PackageCache } from "./cache";
 import type { ResolvedLogger } from "../logging";
-import type {
-  TypstFileLoad,
-  TypstFileLoader,
-  TypstFileRequest,
-} from "../compiler/types";
+import type { FetchRequest, TypstFileLoader } from "../compiler/types";
 
 type PackageFetch = (
   input: RequestInfo | URL,
@@ -218,15 +214,12 @@ export class PackageManager {
   }
 }
 
-export class PackageFileLoader implements TypstFileLoader {
-  constructor(private readonly packageManager: PackageManager) {}
-
-  async load(request: TypstFileRequest): Promise<TypstFileLoad | null> {
+export const makePackageFileLoader =
+  (packageManager: PackageManager): TypstFileLoader =>
+  async (request: FetchRequest) => {
     if (request.kind !== "package") return null;
-
     return {
-      data: await this.packageManager.getFile(request.path),
+      data: await packageManager.getFile(request.path),
       resolvedPath: request.path,
     };
-  }
-}
+  };

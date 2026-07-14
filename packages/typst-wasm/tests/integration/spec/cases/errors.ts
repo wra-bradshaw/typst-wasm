@@ -47,9 +47,7 @@ export const errorCases: readonly CanonicalCase[] = [
           format: "html",
           inputs: { mode: "integration" },
         });
-        expect(html.format).toBe("html");
-        if (html.format === "html")
-          expect(html.output).toContain("integration");
+        expect(html.output).toContain("integration");
       }),
   },
   {
