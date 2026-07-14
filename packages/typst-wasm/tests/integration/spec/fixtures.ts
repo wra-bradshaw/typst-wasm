@@ -1,4 +1,3 @@
-import { expect } from "@std/expect";
 import { makeMemoryCacheStorage, type PackageCache } from "typst-wasm/files";
 
 const packageArchive =
@@ -26,7 +25,7 @@ export const makePackageFetch = (): {
   let requestCount = 0;
   const packageCache = makeMemoryCacheStorage();
   return {
-    fetch: (async (input) => {
+    fetch: (async (_) => {
       requestCount++;
       return new Response(new Blob([archiveBytes().buffer as ArrayBuffer]), {
         headers: { "content-type": "application/gzip" },
