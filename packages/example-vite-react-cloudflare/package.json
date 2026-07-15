@@ -1,0 +1,27 @@
+{
+  "name": "@typst-wasm/example-vite-react-cloudflare",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "nix run ../..#build-artifact -- example-vite-react-cloudflare dist",
+    "deploy": "pnpm run build && wrangler deploy",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@typst-wasm/fonts": "workspace:*",
+    "@vitejs/plugin-react": "^6.0.3",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "typst-wasm": "workspace:*",
+    "vite": "^8.0.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.105.0"
+  }
+}

@@ -1,0 +1,6 @@
+:root { font-family: system-ui, sans-serif; color: #242424; background: #f6f3ee; }
+body { margin: 0; }
+main { max-width: 52rem; margin: 4rem auto; padding: 0 1.5rem; }
+h1 { color: #6b21a8; }
+main > div { margin-top: 2rem; padding: 2rem; background: white; border-radius: 0.5rem; box-shadow: 0 1px 5px #0002; }
+.error { color: #b91c1c; white-space: pre-wrap; }
