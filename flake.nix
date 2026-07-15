@@ -28,6 +28,8 @@
         ./packages/vite-plugin-typst/flake-module.nix
         ./packages/docs/flake-module.nix
         ./packages/example-typst-playground-cloudflare/flake-module.nix
+        ./packages/example-vite-react-cloudflare/flake-module.nix
+        ./packages/example-node/flake-module.nix
         ./packages/example-typst-playground-vercel/flake-module.nix
         ./packages/example-typst-blog/flake-module.nix
       ];

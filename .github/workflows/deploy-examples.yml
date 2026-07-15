@@ -54,6 +54,15 @@ jobs:
         run: nix run ../..#build-artifact -- example-typst-playground-cloudflare dist
         working-directory: packages/example-typst-playground-cloudflare
 
+      - name: Build Vite React Cloudflare artifact
+        run: nix run .#build-artifact -- example-vite-react-cloudflare dist
+
+      - name: Deploy Vite React example to Cloudflare Workers
+        run: nix develop .#ci -c pnpm --dir packages/example-vite-react-cloudflare exec wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Deploy playground to Cloudflare Workers
         run: nix develop .#ci -c pnpm --dir packages/example-typst-playground-cloudflare exec wrangler deploy --config dist/server/wrangler.json
         env:
