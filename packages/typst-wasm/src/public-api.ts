@@ -19,13 +19,7 @@ export type {
   SvgCompileResult,
   TypstCompiler,
   TypstCompilerOptions,
-  TypstDiagnostic,
-  TypstDocumentMetadata,
-  TypstFileKind,
-  TypstFileLoad,
   TypstFileLoader,
-  TypstFileRequest,
-  TypstLoadedFile,
   TypstLogLevel,
   TypstLogger,
 } from "./compiler/types";

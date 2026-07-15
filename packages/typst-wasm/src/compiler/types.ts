@@ -167,16 +167,3 @@ export interface TypstCompiler {
   /** Releases compiler and worker resources. */
   dispose(): Promise<void>;
 }
-
-/** @deprecated Use `Diagnostic`. */
-export type TypstDiagnostic = Diagnostic;
-/** @deprecated Use `FileKind`. */
-export type TypstFileKind = FileKind;
-/** @deprecated Use `FetchedFile`. */
-export type TypstFileLoad = FetchedFile;
-/** @deprecated Use `DocumentMetadata`. */
-export type TypstDocumentMetadata = DocumentMetadata;
-/** @deprecated Use `LoadedFile`. */
-export type TypstLoadedFile = LoadedFile;
-/** @deprecated Use `FetchRequest`. */
-export type TypstFileRequest = FetchRequest;
