@@ -1,0 +1,33 @@
+---
+title: typst-wasm
+description: Compile Typst documents with WebAssembly from JavaScript.
+---
+
+`typst-wasm` provides a JavaScript API for compiling Typst documents with WebAssembly.
+
+It supports browser, Node.js, Deno, Bun, and Cloudflare Worker runtimes. You control where the WASM, workers, and fonts are loaded; the package does not download runtime assets from a CDN.
+
+## Install
+
+```sh
+npm install typst-wasm
+```
+
+For the fonts distributed with the Typst compiler:
+
+```sh
+npm install @typst-wasm/fonts
+```
+
+## Learn typst-wasm
+
+- [Compile your first document](./tutorials/compile-your-first-document/)
+- [Use in the browser and with Vite](./how-to/use-browser-and-vite/)
+- [Use with Node.js](./how-to/use-node/)
+- [Deploy to Cloudflare Workers](./how-to/deploy-to-cloudflare-workers/)
+- [Configure fonts](./how-to/configure-fonts/)
+- [Configure worker backends](./how-to/configure-worker-backends/)
+- [Manage files and packages](./how-to/manage-files-and-packages/)
+- [Troubleshoot](./how-to/troubleshoot/)
+
+See the [API reference](./reference/).

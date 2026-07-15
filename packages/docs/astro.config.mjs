@@ -31,7 +31,7 @@ export default defineConfig({
             "./reference-entrypoints/workerd-functions.ts",
           ],
           tsconfig: "./tsconfig.typedoc.json",
-          output: "reference/packages/typst-wasm/api",
+          output: "packages/typst-wasm/reference/api",
           sidebar: { label: "API reference", collapsed: true },
           typeDoc: {
             entryPointStrategy: "resolve",
@@ -49,7 +49,7 @@ export default defineConfig({
             "./reference-entrypoints/vite-functions.ts",
           ],
           tsconfig: "./tsconfig.typedoc.json",
-          output: "reference/packages/vite-plugin-typst/api",
+          output: "packages/vite-plugin-typst/reference/api",
           sidebar: { label: "API reference", collapsed: true },
           typeDoc: {
             entryPointStrategy: "resolve",
@@ -64,72 +64,42 @@ export default defineConfig({
         }),
       ],
       sidebar: [
+        { label: "Overview", link: "/" },
         {
-          label: "Tutorials",
-          items: [{ autogenerate: { directory: "tutorials" } }],
-        },
-        {
-          label: "How-to guides",
-          items: [{ autogenerate: { directory: "how-to" } }],
-        },
-        {
-          label: "Explanation",
-          items: [{ autogenerate: { directory: "explanation" } }],
-        },
-        {
-          label: "Reference",
+          label: "typst-wasm",
           items: [
-            "reference",
+            { label: "Overview", link: "/packages/typst-wasm/" },
             {
-              label: "typst-wasm",
-              items: [
-                { label: "Overview", link: "/reference/packages/typst-wasm/" },
-                {
-                  label: "Shared API — Classes",
-                  link: "/reference/packages/typst-wasm/api/shared-api--classes/",
-                },
-                {
-                  label: "Shared API — Interfaces",
-                  link: "/reference/packages/typst-wasm/api/shared-api--interfaces/",
-                },
-                {
-                  label: "Shared API — Type Aliases",
-                  link: "/reference/packages/typst-wasm/api/shared-api--type-aliases/",
-                },
-                {
-                  label: "Browser — Functions",
-                  link: "/reference/packages/typst-wasm/api/browser--functions/",
-                },
-                {
-                  label: "Node.js — Functions",
-                  link: "/reference/packages/typst-wasm/api/nodejs--functions/",
-                },
-                {
-                  label: "Cloudflare Workers — Functions",
-                  link: "/reference/packages/typst-wasm/api/cloudflare-workers--functions/",
-                },
-              ],
+              label: "Tutorials",
+              items: [{ autogenerate: { directory: "packages/typst-wasm/tutorials" } }],
             },
             {
-              label: "@typst-wasm/vite-plugin-typst",
-              items: [
-                {
-                  label: "Overview",
-                  link: "/reference/packages/vite-plugin-typst/",
-                },
-                {
-                  label: "Interfaces",
-                  link: "/reference/packages/vite-plugin-typst/api/vite-plugin--interfaces/",
-                },
-                {
-                  label: "Functions",
-                  link: "/reference/packages/vite-plugin-typst/api/vite-plugin--functions/",
-                },
-              ],
+              label: "How-to guides",
+              items: [{ autogenerate: { directory: "packages/typst-wasm/how-to" } }],
             },
-            "reference/packages/engine",
-            "reference/packages/fonts",
+            {
+              label: "Explanation",
+              items: [{ autogenerate: { directory: "packages/typst-wasm/explanation" } }],
+            },
+            { label: "Reference", link: "/packages/typst-wasm/reference/" },
+            { label: "API reference", link: "/packages/typst-wasm/reference/api/readme/" },
           ],
+        },
+        {
+          label: "@typst-wasm/vite-plugin-typst",
+          items: [
+            { label: "Overview", link: "/packages/vite-plugin-typst/" },
+            {
+              label: "How-to guides",
+              items: [{ autogenerate: { directory: "packages/vite-plugin-typst/how-to" } }],
+            },
+            { label: "Reference", link: "/packages/vite-plugin-typst/reference/" },
+            { label: "API reference", link: "/packages/vite-plugin-typst/reference/api/readme/" },
+          ],
+        },
+        {
+          label: "Supporting packages",
+          items: [{ label: "@typst-wasm/fonts", link: "/packages/supporting/fonts/" }],
         },
       ],
     }),

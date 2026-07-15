@@ -40,6 +40,8 @@ pkgs.stdenvNoCC.mkDerivation {
     pkgs.pnpm
   ];
 
+  PAGEFIND_BINARY_PATH = pkgs.lib.getExe pkgs.pagefind;
+
   buildPhase = ''
     runHook preBuild
     ${prepareBuildArtifacts}

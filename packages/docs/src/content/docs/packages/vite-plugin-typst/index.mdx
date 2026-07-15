@@ -1,0 +1,39 @@
+---
+title: '@typst-wasm/vite-plugin-typst'
+description: Compile Typst documents to HTML modules with Vite.
+---
+
+`@typst-wasm/vite-plugin-typst` transforms explicit `?typst=html` imports into modules containing compiled HTML and document metadata.
+
+## Install
+
+```sh
+npm install @typst-wasm/vite-plugin-typst typst-wasm
+```
+
+## Usage
+
+Register the plugin in `vite.config.ts`:
+
+```ts
+import typst from "@typst-wasm/vite-plugin-typst";
+
+export default {
+  plugins: [
+    typst({
+      /* configure a worker or JSPI backend for your environment */
+    }),
+  ],
+};
+```
+
+Import a Typst document:
+
+```ts
+/// <reference types="@typst-wasm/vite-plugin-typst/client" />
+import document from "./post.typ?typst=html";
+
+const html = document.html;
+```
+
+The plugin currently supports HTML output only. See the [Vite plugin guide](./how-to/use-the-vite-plugin/) and [API reference](./reference/api/readme/).
