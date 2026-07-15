@@ -1,5 +1,5 @@
 ---
-title: '@typst-wasm/engine-wasm'
+title: 'typst-wasm/engine'
 description: "TODO: Reference the generated engine modules and core WASM assets."
 ---
 

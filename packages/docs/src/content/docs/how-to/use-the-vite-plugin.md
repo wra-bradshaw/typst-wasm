@@ -6,7 +6,7 @@ description: "Import Typst documents as HTML modules in Vite."
 Install the plugin and its Typst WASM runtime:
 
 ```sh
-pnpm add @typst-wasm/vite-plugin-typst typst-wasm @typst-wasm/engine-wasm
+pnpm add @typst-wasm/vite-plugin-typst typst-wasm
 ```
 
 Add the plugin to `vite.config.ts`. The plugin currently requires an explicit

@@ -1,6 +1,6 @@
 # typst-wasm
 
-`typst-wasm` is the compiler API. `@typst-wasm/engine-wasm` publishes JCO's generated engine modules and core WASM assets.
+`typst-wasm` is the compiler API and publishes JCO's generated engine modules and core WASM assets.
 
 ## Browser / Vite Usage
 
@@ -9,8 +9,8 @@ import { createTypstCompiler, createWebWorker } from "typst-wasm/browser";
 import newComputerModernMathBoldUrl from "@typst-wasm/fonts/NewCMMath-Bold.otf?url";
 import newComputerModernMathBookUrl from "@typst-wasm/fonts/NewCMMath-Book.otf?url";
 import newComputerModernMathRegularUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
-import workerUrl from "typst-wasm/worker/browser?url";
-import * as engine from "@typst-wasm/engine-wasm/jspi";
+import workerUrl from "typst-wasm/worker/web-worker?url";
+import * as engine from "typst-wasm/engine";
 
 const compiler = await createTypstCompiler({
   backend: "auto",
@@ -32,10 +32,16 @@ for (const fontUrl of [
 
 ```ts
 import { createTypstCompiler } from "typst-wasm/workerd";
-import * as engine from "@typst-wasm/engine-wasm/jspi";
-import core from "@typst-wasm/engine-wasm/jspi/engine.core.wasm";
+import * as engine from "typst-wasm/engine";
+import core from "typst-wasm/engine/engine.core.wasm";
+import core2 from "typst-wasm/engine/engine.core2.wasm";
+import core3 from "typst-wasm/engine/engine.core3.wasm";
 
-const coreModules = new Map([["engine.core.wasm", core]]);
+const coreModules = new Map([
+  ["engine.core.wasm", core],
+  ["engine.core2.wasm", core2],
+  ["engine.core3.wasm", core3],
+]);
 
 const compiler = await createTypstCompiler({
   backend: "jspi",
@@ -53,13 +59,13 @@ const compiler = await createTypstCompiler({
 ```ts
 import { readFile } from "node:fs/promises";
 import { createTypstCompiler, createWorkerThread } from "typst-wasm/node";
-import * as engine from "@typst-wasm/engine-wasm/jspi";
+import * as engine from "typst-wasm/engine";
 
 const compiler = await createTypstCompiler({
   backend: "auto",
   engine,
   worker: () =>
-    createWorkerThread(new URL(import.meta.resolve("typst-wasm/worker/node"))),
+    createWorkerThread(new URL(import.meta.resolve("typst-wasm/worker/worker-thread"))),
 });
 
 try {
@@ -134,14 +140,13 @@ nix develop .#ci -c pnpm build
 Package-specific shells are also available:
 
 ```bash
-nix develop .#engine-wasm
 nix develop .#typst-wasm
 ```
 
 ## Release
 
 Publishing is handled by Changesets and GitHub Actions on pushes to `main`.
-Changesets keeps `@typst-wasm/fonts`, `@typst-wasm/engine-wasm`, and `typst-wasm` on one synchronized version, updates internal workspace dependencies, and publishes to npm through trusted publishing after the generated version PR is merged.
+Changesets keeps `@typst-wasm/fonts` and `typst-wasm` on one synchronized version, updates internal workspace dependencies, and publishes to npm through trusted publishing after the generated version PR is merged.
 
 When a PR needs a release note or version bump, add a changeset:
 

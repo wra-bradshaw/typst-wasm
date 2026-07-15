@@ -127,7 +127,7 @@ export default defineConfig({
                 },
               ],
             },
-            "reference/packages/engine-wasm",
+            "reference/packages/engine",
             "reference/packages/fonts",
           ],
         },
