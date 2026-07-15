@@ -1,6 +1,5 @@
 {
   pkgs,
-  engineWasm,
   fonts,
   typstWasm,
   vitePluginTypst,
@@ -29,10 +28,6 @@ let
   '';
 
   prepareBuildArtifacts = prepareWorkspaceArtifacts [
-    {
-      packageDir = "packages/engine-wasm";
-      derivation = engineWasm;
-    }
     {
       packageDir = "packages/fonts";
       derivation = fonts;

@@ -11,7 +11,7 @@ import type {
   FileKind,
   LoadedFile,
   PdfStandard,
-} from "@typst-wasm/engine-wasm/types";
+} from "typst-wasm/engine/types";
 
 export type {
   CompileOptions,

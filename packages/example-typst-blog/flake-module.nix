@@ -8,7 +8,6 @@
     }:
     let
       example-typst-blog = pkgs.callPackage ./package.nix {
-        engineWasm = config.packages.engine-wasm;
         fonts = config.packages.fonts;
         typstWasm = config.packages.typst-wasm;
         vitePluginTypst = config.packages.vite-plugin-typst;

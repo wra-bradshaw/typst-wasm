@@ -8,7 +8,7 @@ import {
   type TypstCompilerOptions,
   type WorkerHost,
 } from "typst-wasm/browser";
-import * as jspiEngine from "@typst-wasm/engine-wasm/jspi";
+import * as jspiEngine from "typst-wasm/engine";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
 import type { IntegrationBackend } from "../spec/types.ts";
 import type { IntegrationContext } from "../spec/types.ts";
@@ -42,7 +42,7 @@ export const makeDenoContext = async (
   const getCoreModule = async (name: string) =>
     WebAssembly.compile(
       await (
-        await fetch(asset(`@typst-wasm/engine-wasm/worker/${name}`))
+        await fetch(asset(`typst-wasm/engine/worker/${name}`))
       ).arrayBuffer(),
     );
   const worker = () => denoWorker(asset("typst-wasm/worker/web-worker"));

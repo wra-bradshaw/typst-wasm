@@ -1,8 +1,8 @@
 import { Buffer } from "node:buffer";
 import workerSource from "typst-wasm/worker/worker-thread?raw";
-import coreUrl from "@typst-wasm/engine-wasm/worker/engine.core.wasm?url";
-import core2Url from "@typst-wasm/engine-wasm/worker/engine.core2.wasm?url";
-import core3Url from "@typst-wasm/engine-wasm/worker/engine.core3.wasm?url";
+import coreUrl from "typst-wasm/engine/worker/engine.core.wasm?url";
+import core2Url from "typst-wasm/engine/worker/engine.core2.wasm?url";
+import core3Url from "typst-wasm/engine/worker/engine.core3.wasm?url";
 import {
   createTypstCompiler,
   createWorkerThread,

@@ -16,14 +16,14 @@ if (backend !== "worker" && backend !== "jspi") {
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const componentPath = process.env.COMPONENT_PATH
   ? resolve(process.env.COMPONENT_PATH)
-  : resolve(root, "target/component/typst_wasm.component.wasm");
+  : resolve(root, "engine", "target/component/typst_wasm.component.wasm");
 const outDir = process.env.OUT_DIR
   ? resolve(process.env.OUT_DIR, backend)
-  : resolve(root, "dist", backend);
+  : resolve(root, "src", "engine", "generated", backend);
 
 const options = {
   name: "engine",
-  instantiation: "async",
+  instantiation: "async" as const,
   wasiShim: false,
   // Keep the tiny JCO helper modules in the generated JavaScript while
   // leaving the main Typst engine as a separate streaming/loadable asset.

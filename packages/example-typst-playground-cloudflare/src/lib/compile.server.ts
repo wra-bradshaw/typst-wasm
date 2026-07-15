@@ -1,8 +1,8 @@
 import { createTypstCompiler, type TypstCompiler } from "typst-wasm/workerd";
-import * as engine from "@typst-wasm/engine-wasm/jspi";
-import core from "@typst-wasm/engine-wasm/jspi/engine.core.wasm";
-import core2 from "@typst-wasm/engine-wasm/jspi/engine.core2.wasm";
-import core3 from "@typst-wasm/engine-wasm/jspi/engine.core3.wasm";
+import * as engine from "typst-wasm/engine";
+import core from "typst-wasm/engine/engine.core.wasm";
+import core2 from "typst-wasm/engine/engine.core2.wasm";
+import core3 from "typst-wasm/engine/engine.core3.wasm";
 import { createCompileModule } from "./compile-core";
 
 export { formatCompileError } from "./compile-core";

@@ -44,7 +44,22 @@
     "./worker/web-worker": {
       "types": "./dist/worker/web-worker.d.ts",
       "default": "./dist/worker/web-worker.js"
-    }
+    },
+    "./engine": {
+      "types": "./dist/engine/jspi/engine.d.ts",
+      "default": "./dist/engine/jspi/engine.js"
+    },
+    "./engine/types": "./dist/engine/jspi/interfaces/typst-engine-types.d.ts",
+    "./engine/engine.core.wasm": "./dist/engine/jspi/engine.core.wasm",
+    "./engine/engine.core2.wasm": "./dist/engine/jspi/engine.core2.wasm",
+    "./engine/engine.core3.wasm": "./dist/engine/jspi/engine.core3.wasm",
+    "./engine/worker": {
+      "types": "./dist/engine/worker/engine.d.ts",
+      "default": "./dist/engine/worker/engine.js"
+    },
+    "./engine/worker/engine.core.wasm": "./dist/engine/worker/engine.core.wasm",
+    "./engine/worker/engine.core2.wasm": "./dist/engine/worker/engine.core2.wasm",
+    "./engine/worker/engine.core3.wasm": "./dist/engine/worker/engine.core3.wasm"
   },
   "files": [
     "dist"
@@ -61,6 +76,9 @@
   "homepage": "https://github.com/typst-wasm/typst-wasm#readme",
   "scripts": {
     "build": "nix run ../..#build-artifact -- typst-wasm",
+    "transpile:engine": "pnpm run transpile:engine:worker && pnpm run transpile:engine:jspi",
+    "transpile:engine:worker": "node --experimental-strip-types scripts/transpile-engine.mts worker",
+    "transpile:engine:jspi": "node --experimental-strip-types scripts/transpile-engine.mts jspi",
     "fix": "pnpm run format:fix && pnpm exec eslint . --fix",
     "lint": "pnpm exec eslint . --max-warnings=0 && pnpm exec tsc --noEmit",
     "test": "pnpm run test:unit && pnpm run test:integration",
@@ -76,6 +94,7 @@
     "knip": "pnpm exec knip"
   },
   "devDependencies": {
+    "@bytecodealliance/jco": "1.24.6",
     "@cloudflare/vitest-pool-workers": "0.18.0",
     "@cloudflare/workers-types": "^5.20260705.1",
     "@eslint/js": "^10.0.1",
@@ -96,7 +115,6 @@
     "vitest": "^4.1.2"
   },
   "dependencies": {
-    "@typst-wasm/engine-wasm": "workspace:*",
     "nanotar": "^0.2.0",
     "tsdown-plugin-worker": "^0.1.6"
   }

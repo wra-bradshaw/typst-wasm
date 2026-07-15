@@ -1,8 +1,8 @@
 // eslint-disable-next-line  @typescript-eslint/triple-slash-reference
 /// <reference path="./assets.d.ts" />
-import core1 from "@typst-wasm/engine-wasm/jspi/engine.core.wasm?module";
-import core2 from "@typst-wasm/engine-wasm/jspi/engine.core2.wasm?module";
-import core3 from "@typst-wasm/engine-wasm/jspi/engine.core3.wasm?module";
+import core1 from "typst-wasm/engine/engine.core.wasm?module";
+import core2 from "typst-wasm/engine/engine.core2.wasm?module";
+import core3 from "typst-wasm/engine/engine.core3.wasm?module";
 import regular from "@typst-wasm/fonts/NewCMMath-Regular.otf";
 import bold from "@typst-wasm/fonts/NewCMMath-Bold.otf";
 import book from "@typst-wasm/fonts/NewCMMath-Book.otf";

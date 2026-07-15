@@ -3,7 +3,7 @@ import {
   createWebWorker,
   type TypstCompiler,
 } from "typst-wasm/browser";
-import * as engine from "@typst-wasm/engine-wasm/jspi";
+import * as engine from "typst-wasm/engine";
 import browserWorkerUrl from "typst-wasm/worker/web-worker?worker&url";
 import { createCompileModule } from "./lib/compile-core";
 import libertinusUrl from "@typst-wasm/fonts/LibertinusSerif-Regular.otf?url";

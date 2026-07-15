@@ -9,7 +9,7 @@ import { defineConfig } from "vite";
 
 const getCoreModule = async (name: string): Promise<WebAssembly.Module> => {
   const url = new URL(
-    import.meta.resolve(`@typst-wasm/engine-wasm/worker/${name}`),
+    import.meta.resolve(`typst-wasm/engine/worker/${name}`),
   );
   return WebAssembly.compile(await readFile(url));
 };

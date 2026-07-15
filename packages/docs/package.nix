@@ -1,7 +1,6 @@
 {
   pkgs,
   typstWasm,
-  engineWasm,
   vitePluginTypst,
 }:
 
@@ -20,10 +19,6 @@ let
     {
       packageDir = "packages/typst-wasm";
       derivation = typstWasm;
-    }
-    {
-      packageDir = "packages/engine-wasm";
-      derivation = engineWasm;
     }
     {
       packageDir = "packages/vite-plugin-typst";

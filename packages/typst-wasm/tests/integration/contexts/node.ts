@@ -6,7 +6,7 @@ import {
   supportsJspiBackend,
   supportsWorkerBackend,
 } from "typst-wasm/node";
-import * as jspiEngine from "@typst-wasm/engine-wasm/jspi";
+import * as jspiEngine from "typst-wasm/engine";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
 import type { IntegrationBackend, IntegrationRuntime } from "../spec/types.ts";
 import type { IntegrationContext } from "../spec/types.ts";
@@ -23,9 +23,7 @@ export const makeNodeContext = async (
     fontFilenames.map((name) => readAsset(`@typst-wasm/fonts/${name}`)),
   );
   const getCoreModule = async (name: string) =>
-    WebAssembly.compile(
-      await readAsset(`@typst-wasm/engine-wasm/worker/${name}`),
-    );
+    WebAssembly.compile(await readAsset(`typst-wasm/engine/worker/${name}`));
   const defaultWorker = () =>
     createWorkerThread(
       new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),

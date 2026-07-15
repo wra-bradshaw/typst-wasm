@@ -42,7 +42,7 @@ export default defineConfig({
   },
 
   ssr: {
-    noExternal: ["typst-wasm", "@typst-wasm/engine-wasm"],
+    noExternal: ["typst-wasm", "typst-wasm/engine"],
   },
 
   plugins: [

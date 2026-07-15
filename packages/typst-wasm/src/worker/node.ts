@@ -1,5 +1,5 @@
 import { parentPort } from "node:worker_threads";
-import * as engine from "@typst-wasm/engine-wasm/worker";
+import * as engine from "typst-wasm/engine/worker";
 import type { WorkerPort } from "./port";
 import { installTypstWorkerRuntime } from "./runtime";
 

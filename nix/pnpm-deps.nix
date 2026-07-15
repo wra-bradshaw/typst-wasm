@@ -16,5 +16,5 @@ pkgs.fetchPnpmDeps {
   inherit (workspaceFiles) pnpmWorkspaces;
 
   fetcherVersion = 4;
-  hash = "sha256-8F1etohfVSbRIlHLT8pIO8xkZIrxD6K0hq5ufmIAIbQ=";
+  hash = "sha256-iOtjRRJQbPK/fgPa0DjMkAuBzZyr/wHKZJqsIrH7SLU=";
 }

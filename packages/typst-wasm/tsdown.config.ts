@@ -2,9 +2,8 @@ import { defineConfig } from "tsdown";
 import workerPlugins from "tsdown-plugin-worker";
 
 const external = [
-  "@typst-wasm/engine-wasm",
-  "@typst-wasm/engine-wasm/jspi",
-  "@typst-wasm/engine-wasm/worker",
+  "typst-wasm/engine",
+  "typst-wasm/engine/worker",
   "node:fs/promises",
   "node:worker_threads",
 ];
@@ -50,7 +49,7 @@ export default defineConfig([
   {
     ...common,
     external: ["node:worker_threads", "node:fs/promises"],
-    noExternal: ["@typst-wasm/engine-wasm/worker"],
+    noExternal: ["typst-wasm/engine/worker"],
     entry: {
       "worker/worker-thread": "./src/worker/node.ts",
     },
@@ -58,7 +57,7 @@ export default defineConfig([
   },
   {
     ...common,
-    external: ["@typst-wasm/engine-wasm/worker"],
+    external: ["typst-wasm/engine/worker"],
     entry: {
       "worker/web-worker": "./src/worker/browser.ts",
     },

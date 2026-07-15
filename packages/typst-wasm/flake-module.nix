@@ -1,4 +1,4 @@
-{ ... }:
+{ inputs, ... }:
 {
   perSystem =
     {
@@ -7,30 +7,42 @@
       ...
     }:
     let
-      typstWasmNativeBuildInputs = with pkgs; [
-        nodejs
-        bun
-        deno
-        gnutar
-        pnpm
-        xz
+      lib = pkgs.lib;
+      stdenv = pkgs.stdenv;
+      rustSrc = pkgs.fenix.complete."rust-src";
+      rustToolchain = pkgs.fenix.combine [
+        (pkgs.fenix.complete.withComponents [
+          "cargo"
+          "clippy"
+          "rust-src"
+          "rustc"
+          "rustfmt"
+          "llvm-tools-preview"
+        ])
+        pkgs.fenix.targets.wasm32-unknown-unknown.latest.rust-std
       ];
-
+      craneLib = (inputs.crane.mkLib pkgs).overrideToolchain rustToolchain;
+      fonts = config.packages.fonts;
       typst-wasm = pkgs.callPackage ./package.nix {
-        engineWasm = config.packages.engine-wasm;
-        fonts = config.packages.fonts;
+        inherit craneLib rustSrc rustToolchain fonts;
       };
-
     in
     {
       packages.typst-wasm = typst-wasm;
       packages.default = typst-wasm;
 
       devShells.typst-wasm = pkgs.mkShell {
-        inputsFrom = [
-          config.devShells.engine-wasm
-        ];
-        packages = typstWasmNativeBuildInputs;
+        packages = with pkgs; [
+          rustToolchain
+          binaryen
+          nodejs
+          bun
+          deno
+          gnutar
+          pnpm
+          wasm-tools
+          xz
+        ] ++ lib.optionals stdenv.isDarwin [ apple-sdk libiconv ];
         shellHook = "";
       };
     };

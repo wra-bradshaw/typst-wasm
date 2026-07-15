@@ -9,7 +9,11 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "paths": {
-      "@typst-wasm/engine-wasm": ["../engine-wasm"]
+      "typst-wasm/engine": ["./src/engine/generated/jspi"],
+      "typst-wasm/engine/worker": ["./src/engine/generated/worker"],
+      "typst-wasm/engine/types": [
+        "./src/engine/generated/jspi/interfaces/typst-engine-types.d.ts"
+      ]
     },
     "types": ["tsdown-plugin-worker/types"]
   }
