@@ -18,6 +18,7 @@ import type {
   CompileOptions,
   CompileResult,
   DocumentMetadata,
+  FontInput,
   TypstCompiler,
   TypstCompilerOptions,
 } from "./types";
@@ -112,8 +113,8 @@ const normalizeCompileResult = (
 class PromiseTypstCompiler implements TypstCompiler {
   constructor(private readonly backend: BackendService) {}
 
-  addFont(data: Uint8Array): Promise<void> {
-    return this.backend.addFont(data);
+  addFonts(...fonts: FontInput[]): Promise<void> {
+    return this.backend.addFonts(...fonts);
   }
   addFile(path: string, data: Uint8Array): Promise<void> {
     return this.backend.addFile(path, data);

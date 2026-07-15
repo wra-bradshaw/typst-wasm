@@ -22,14 +22,11 @@ const createInitializedCompiler = async (): Promise<TypstCompiler> => {
     worker: () => createWebWorker(browserWorkerUrl),
   });
 
-  compiler.addFont(
-    await fetch(libertinusUrl).then((res) =>
+  await compiler.addFonts(
+    fetch(libertinusUrl).then((res) =>
       res.arrayBuffer().then((res) => new Uint8Array(res)),
     ),
-  );
-
-  compiler.addFont(
-    await fetch(mathUrl).then((res) =>
+    fetch(mathUrl).then((res) =>
       res.arrayBuffer().then((res) => new Uint8Array(res)),
     ),
   );

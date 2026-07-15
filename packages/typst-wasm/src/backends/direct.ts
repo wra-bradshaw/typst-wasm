@@ -7,6 +7,7 @@ import {
   WorkerError,
 } from "../errors";
 import type { FileLoaderManager } from "../files/loaders";
+import type { FontInput } from "../compiler/types";
 import type {
   EngineCompileOptions,
   EngineCompileSuccess,
@@ -58,8 +59,12 @@ export class DirectService {
     this.compileAsync = null;
   }
 
-  async addFont(data: Uint8Array): Promise<void> {
-    this.withCompiler((compiler) => void compiler.addFont(data), "add-font");
+  async addFonts(...fonts: FontInput[]): Promise<void> {
+    this.assertNotDisposed();
+    const data = await Promise.all(fonts);
+    this.withCompiler((compiler) => {
+      for (const font of data) compiler.addFont(font);
+    }, "add-fonts");
   }
 
   async addFile(path: string, data: Uint8Array): Promise<void> {

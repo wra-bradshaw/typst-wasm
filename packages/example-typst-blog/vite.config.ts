@@ -45,9 +45,11 @@ export default defineConfig({
           new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
         ),
       configureCompiler: async (compiler) => {
-        for (const fontUrl of fontUrls) {
-          await compiler.addFont(new Uint8Array(await readFile(fontUrl)));
-        }
+        await compiler.addFonts(
+          ...fontUrls.map(async (fontUrl) =>
+            new Uint8Array(await readFile(fontUrl)),
+          ),
+        );
       },
     }),
     react(),

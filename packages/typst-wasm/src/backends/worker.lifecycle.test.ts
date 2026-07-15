@@ -42,6 +42,23 @@ describe("worker service lifecycle", () => {
     await workerService.dispose();
   });
 
+  it("batches direct and promised fonts before posting them", async () => {
+    const workerService = await makeService();
+
+    await workerService.init();
+    const first = new Uint8Array([1]);
+    const second = new Uint8Array([2]);
+    await workerService.addFonts(first, Promise.resolve(second));
+
+    const message = workerState.initMessages.at(-1) as {
+      kind: string;
+      payload: { data: Uint8Array[] };
+    };
+    expect(message.kind).toBe("add_fonts");
+    expect(message.payload.data).toEqual([first, second]);
+    await workerService.dispose();
+  });
+
   it("makes dispose idempotent", async () => {
     const workerService = await makeService();
 

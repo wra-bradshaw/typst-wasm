@@ -18,14 +18,16 @@ const compiler = await createTypstCompiler({
   worker: () => createWebWorker(workerUrl),
 });
 
-for (const fontUrl of [
-  newComputerModernMathRegularUrl,
-  newComputerModernMathBoldUrl,
-  newComputerModernMathBookUrl,
-]) {
-  const response = await fetch(fontUrl);
-  await compiler.addFont(new Uint8Array(await response.arrayBuffer()));
-}
+await compiler.addFonts(
+  ...[
+    newComputerModernMathRegularUrl,
+    newComputerModernMathBoldUrl,
+    newComputerModernMathBookUrl,
+  ].map(async (fontUrl) => {
+    const response = await fetch(fontUrl);
+    return new Uint8Array(await response.arrayBuffer());
+  }),
+);
 ```
 
 ## Cloudflare Workers Usage
@@ -69,13 +71,13 @@ const compiler = await createTypstCompiler({
 });
 
 try {
-  for (const fontUrl of [
-    new URL(import.meta.resolve("@typst-wasm/fonts/NewCMMath-Regular.otf")),
-    new URL(import.meta.resolve("@typst-wasm/fonts/NewCMMath-Bold.otf")),
-    new URL(import.meta.resolve("@typst-wasm/fonts/NewCMMath-Book.otf")),
-  ]) {
-    await compiler.addFont(new Uint8Array(await readFile(fontUrl)));
-  }
+  await compiler.addFonts(
+    ...[
+      new URL(import.meta.resolve("@typst-wasm/fonts/NewCMMath-Regular.otf")),
+      new URL(import.meta.resolve("@typst-wasm/fonts/NewCMMath-Bold.otf")),
+      new URL(import.meta.resolve("@typst-wasm/fonts/NewCMMath-Book.otf")),
+    ].map(async (fontUrl) => new Uint8Array(await readFile(fontUrl))),
+  );
 
   await compiler.addSource("main.typ", "= Hello from Typst");
 

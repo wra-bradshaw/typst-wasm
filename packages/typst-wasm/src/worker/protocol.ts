@@ -186,9 +186,9 @@ export interface TypstWorkerProtocol {
     response: void;
   };
 
-  add_font: {
+  add_fonts: {
     request: {
-      data: Uint8Array;
+      data: Uint8Array[];
     };
     response: void;
   };

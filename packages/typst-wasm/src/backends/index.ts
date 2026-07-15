@@ -1,4 +1,4 @@
-import type { TypstCompilerOptions } from "../compiler/types";
+import type { FontInput, TypstCompilerOptions } from "../compiler/types";
 import type { FileLoaderManager } from "../files/loaders";
 import type {
   EngineCompileOptions,
@@ -18,7 +18,7 @@ export type BackendSelection = Exclude<BackendKind, "auto"> | "none";
 export type BackendService = {
   init(): Promise<void>;
   dispose(): Promise<void>;
-  addFont(data: Uint8Array): Promise<void>;
+  addFonts(...fonts: FontInput[]): Promise<void>;
   addFile(path: string, data: Uint8Array): Promise<void>;
   addSource(path: string, text: string): Promise<void>;
   removeFile(path: string): Promise<void>;

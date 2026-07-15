@@ -1,4 +1,5 @@
 import type { FileLoaderManager } from "../files/loaders";
+import type { FontInput } from "../compiler/types";
 import { CompilerDisposedError } from "../errors";
 import type { ResolvedLogger } from "../logging";
 import { makeFetchBridge } from "../worker/fetch-bridge";
@@ -115,9 +116,11 @@ export class WorkerService {
     void this.worker.terminate();
   }
 
-  addFont(data: Uint8Array): Promise<void> {
+  async addFonts(...fonts: FontInput[]): Promise<void> {
     this.assertNotDisposed();
-    return this.rpcClient.call("add_font", { data });
+    const data = await Promise.all(fonts);
+    this.assertNotDisposed();
+    return this.rpcClient.call("add_fonts", { data });
   }
 
   addFile(path: string, data: Uint8Array): Promise<void> {

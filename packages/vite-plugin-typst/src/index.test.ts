@@ -77,7 +77,7 @@ const makeTransformContext = () => {
 const makeCompiler = (dependencies: LoadedFile[] = []) => {
   const sources = new Map<string, string>();
   const compiler = {
-    addFont: vi.fn(async () => undefined),
+    addFonts: vi.fn(async () => undefined),
     addFile: vi.fn(async () => undefined),
     addSource: vi.fn(async (file: string, source: string) => {
       sources.set(file, source);
@@ -287,7 +287,7 @@ describe("typst vite plugin compiler lifecycle", () => {
   test("runs custom compiler setup once", async () => {
     const compiler = makeCompiler();
     const configureCompiler = vi.fn(async (configured: TypstCompiler) => {
-      await configured.addFont(new Uint8Array([1, 2, 3]));
+      await configured.addFonts(new Uint8Array([1, 2, 3]));
     });
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
     const plugin = resolvePlugin(typst({ worker, configureCompiler }));
@@ -302,6 +302,6 @@ describe("typst vite plugin compiler lifecycle", () => {
 
     expect(configureCompiler).toHaveBeenCalledOnce();
     expect(configureCompiler).toHaveBeenCalledWith(compiler);
-    expect(compiler.addFont).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]));
+    expect(compiler.addFonts).toHaveBeenCalledWith(new Uint8Array([1, 2, 3]));
   });
 });

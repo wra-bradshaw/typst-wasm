@@ -13,7 +13,7 @@ export const lifecycleCases: readonly CanonicalCase[] = [
         await compiler.addFile("data.txt", new TextEncoder().encode("fixture"));
         const font = context.fonts[0];
         if (!font) throw new Error("integration fixture has no fonts");
-        await compiler.addFont(font);
+        await compiler.addFonts(font);
         await compiler.setMain("main.typ");
         expect(await compiler.hasFile("main.typ")).toBe(true);
         expect(await compiler.hasFile("data.txt")).toBe(true);

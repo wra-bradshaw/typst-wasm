@@ -226,9 +226,9 @@ export const installTypstWorkerRuntime = (
           readyCompiler.addSource(request.payload.path, request.payload.text);
         });
         return successResponse(request.requestId, undefined);
-      case "add_font":
-        runCompilerCommand(request.requestId, "add-font", (readyCompiler) => {
-          readyCompiler.addFont(request.payload.data);
+      case "add_fonts":
+        runCompilerCommand(request.requestId, "add-fonts", (readyCompiler) => {
+          for (const font of request.payload.data) readyCompiler.addFont(font);
         });
         return successResponse(request.requestId, undefined);
       case "remove_file":

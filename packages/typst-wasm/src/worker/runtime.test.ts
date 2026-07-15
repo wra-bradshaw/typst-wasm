@@ -120,7 +120,7 @@ describe("installTypstWorkerRuntime", () => {
     await response(port, request("add_source", 12, { path: "a", text: "a" }));
     await response(
       port,
-      request("add_font", 13, { data: new Uint8Array([1]) }),
+      request("add_fonts", 13, { data: [new Uint8Array([1])] }),
     );
     await response(port, request("remove_file", 14, { path: "a" }));
     await response(port, request("clear_files", 15));

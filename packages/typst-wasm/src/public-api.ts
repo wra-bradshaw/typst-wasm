@@ -8,6 +8,7 @@ export type {
   Diagnostic,
   DocumentMetadata,
   FetchRequest,
+  FontInput,
   FetchedFile,
   FileKind,
   HtmlCompileResult,

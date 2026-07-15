@@ -140,10 +140,12 @@ export interface TypstCompilerOptions {
   memoryPackageCacheCapacity?: number;
 }
 
+export type FontInput = Uint8Array | Promise<Uint8Array>;
+
 /** Stateful promise-based Typst compiler. */
 export interface TypstCompiler {
-  /** Registers a font for subsequent compilations. */
-  addFont(data: Uint8Array): Promise<void>;
+  /** Registers fonts for subsequent compilations. */
+  addFonts(...fonts: FontInput[]): Promise<void>;
   /** Adds binary data at a path in the virtual project. */
   addFile(path: string, data: Uint8Array): Promise<void>;
   /** Adds Typst source at a path in the virtual project. */
