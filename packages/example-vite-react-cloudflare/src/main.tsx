@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createTypstCompiler, createWebWorker } from "typst-wasm/browser";
 import * as engine from "typst-wasm/engine";
-import workerUrl from "typst-wasm/worker/web-worker?url";
+import workerUrl from "typst-wasm/worker/web-worker?worker&url";
 import regularFontUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
 import "./style.css";
 
