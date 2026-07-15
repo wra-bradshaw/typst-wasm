@@ -10,7 +10,6 @@
   "fixed": [
     [
       "@typst-wasm/fonts",
-      "@typst-wasm/engine-wasm",
       "typst-wasm"
     ]
   ],
