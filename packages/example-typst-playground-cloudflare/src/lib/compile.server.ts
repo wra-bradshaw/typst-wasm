@@ -1,4 +1,4 @@
-import { createTypstCompiler, type TypstCompiler } from "typst-wasm/workerd";
+import { createTypstCompiler, type TypstCompiler } from "typst-wasm";
 import core from "typst-wasm/engine/engine.core.wasm";
 import core2 from "typst-wasm/engine/engine.core2.wasm";
 import core3 from "typst-wasm/engine/engine.core3.wasm";

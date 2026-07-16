@@ -5,8 +5,8 @@ import {
   selectAutomaticBackendKind,
   supportsJspiBackend,
   supportsWorkerBackend,
-  createWebWorker,
-} from "typst-wasm/browser";
+} from "typst-wasm";
+import { createWebWorker } from "typst-wasm/worker/browser";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
 import type {
   IntegrationBackend,
@@ -53,13 +53,7 @@ export const makeDenoContext = async (
     });
   const selectBackend = (options: IntegrationCompilerOptions = {}) => {
     if (options.backend === "worker")
-      return supportsWorkerBackend({
-        ...options,
-        worker: options.worker ?? worker,
-        coreModules: options.coreModules ?? coreModules,
-      })
-        ? "worker"
-        : "none";
+      return supportsWorkerBackend() ? "worker" : "none";
     if (options.backend === "jspi")
       return supportsJspiBackend() ? "jspi" : "none";
     return selectAutomaticBackendKind({

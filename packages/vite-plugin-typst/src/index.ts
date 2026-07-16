@@ -9,7 +9,7 @@ import {
   type TypstFileLoader,
   type LoadedFile,
   type Diagnostic,
-} from "typst-wasm/node";
+} from "typst-wasm";
 import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
 

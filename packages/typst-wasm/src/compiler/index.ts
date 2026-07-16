@@ -1,7 +1,6 @@
 import {
   createRuntimeBackend,
   type BackendService,
-  type TypstRuntime,
 } from "../backends/index";
 import { CompileError } from "../errors";
 import { FileLoaderManager, makeFetchFileLoader } from "../files/loaders";
@@ -177,9 +176,8 @@ class PromiseTypstCompiler implements TypstCompiler {
   }
 }
 
-export const createTypstCompilerWithRuntime = async (
+export const createTypstCompiler = async (
   options: TypstCompilerOptions,
-  runtime: TypstRuntime,
 ): Promise<TypstCompiler> => {
   if (!options.coreModules) {
     throw new Error("typst-wasm requires coreModules");
@@ -200,7 +198,6 @@ export const createTypstCompilerWithRuntime = async (
   const backend = createRuntimeBackend(
     options.backend ?? "auto",
     { fileLoaderManager, logger },
-    runtime,
     options,
   );
 

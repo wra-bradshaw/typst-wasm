@@ -1,9 +1,6 @@
 import type { FontInput, TypstCompilerOptions } from "../compiler/types";
 import type { FileLoaderManager } from "../files/loaders";
-import type {
-  EngineCompileOptions,
-  EngineCompileSuccess,
-} from "../engine/types";
+import type { EngineCompileOptions, EngineCompileSuccess } from "../engine/types";
 import { supportsJspiBackend, supportsWorkerBackend } from "./capabilities";
 import type { ResolvedLogger } from "../logging";
 import { DirectService } from "./direct";
@@ -12,7 +9,6 @@ import { WorkerService } from "./worker";
 export { supportsJspiBackend, supportsWorkerBackend };
 
 export type BackendKind = "auto" | "worker" | "jspi";
-
 export type BackendSelection = Exclude<BackendKind, "auto"> | "none";
 
 export type BackendService = {
@@ -34,60 +30,39 @@ export interface BackendOptions {
   logger?: ResolvedLogger;
 }
 
-interface RuntimeWorkerHost {
-  listen(
-    onMessage: (data: unknown) => void,
-    onError: (cause: unknown) => void,
-  ): void;
-  postMessage(data: unknown): void;
-  terminate(): void | Promise<unknown>;
-}
-
-export interface TypstRuntime {
-  createWorker(options: TypstCompilerOptions): RuntimeWorkerHost;
-  supportsWorkerBackend(options: TypstCompilerOptions): boolean;
-  supportsJspiBackend(): boolean;
-  unavailableWorkerMessage?: string;
-}
-
 export const selectAutomaticBackendKind = (
-  runtime: TypstRuntime,
   options: TypstCompilerOptions,
 ): BackendSelection => {
-  if (runtime.supportsWorkerBackend(options)) return "worker";
-  if (runtime.supportsJspiBackend()) return "jspi";
+  if (options.worker && supportsWorkerBackend()) return "worker";
+  if (supportsJspiBackend()) return "jspi";
   return "none";
 };
 
 export const createRuntimeBackend = (
   backend: BackendKind,
   options: BackendOptions,
-  runtime: TypstRuntime,
   compilerOptions: TypstCompilerOptions,
 ): BackendService => {
-  const selected =
-    backend === "auto"
-      ? selectAutomaticBackendKind(runtime, compilerOptions)
-      : backend;
+  const selected = backend === "auto"
+    ? selectAutomaticBackendKind(compilerOptions)
+    : backend;
   const coreModules = compilerOptions.coreModules;
 
   switch (selected) {
     case "worker":
-      if (!runtime.supportsWorkerBackend(compilerOptions)) {
-        throw new Error(
-          runtime.unavailableWorkerMessage ?? "Worker backend requires worker",
-        );
+      if (!compilerOptions.worker) {
+        throw new Error("Worker backend requires worker");
+      }
+      if (!supportsWorkerBackend()) {
+        throw new Error("Worker backend is unavailable: SharedArrayBuffer and growable SharedArrayBuffer support are required");
       }
       return new WorkerService(options.fileLoaderManager, {
-        createWorker: () => runtime.createWorker(compilerOptions),
+        createWorker: compilerOptions.worker,
         coreModules,
         logger: options.logger,
       });
     case "jspi":
-      return new DirectService(
-        options.fileLoaderManager,
-        coreModules,
-      );
+      return new DirectService(options.fileLoaderManager, coreModules);
     case "none":
       throw new Error(
         "No compatible typst-wasm backend available. Requires Worker+SharedArrayBuffer+Atomics.wait or JSPI.",

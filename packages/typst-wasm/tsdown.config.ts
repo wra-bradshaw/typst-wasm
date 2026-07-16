@@ -38,10 +38,9 @@ export default defineConfig([
   {
     ...common,
     entry: {
-      "public-api": "./src/public-api.ts",
       index: "./src/index.ts",
-      "index.browser": "./src/index.browser.ts",
-      "index.workerd": "./src/index.workerd.ts",
+      "worker/node": "./src/worker/host-node.ts",
+      "worker/browser": "./src/worker/host-browser.ts",
     },
     noExternal: ["typst-wasm/engine"],
     inputOptions: {
@@ -75,7 +74,7 @@ export default defineConfig([
       },
     },
     entry: {
-      "worker/worker-thread": "./src/worker/node.ts",
+      "worker/worker-thread": "./src/worker/worker-thread.ts",
     },
     clean: false,
   },
@@ -92,7 +91,7 @@ export default defineConfig([
       },
     },
     entry: {
-      "worker/web-worker": "./src/worker/browser.ts",
+      "worker/web-worker": "./src/worker/web-worker.ts",
     },
     clean: false,
   },

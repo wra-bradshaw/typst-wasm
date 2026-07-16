@@ -1,10 +1,10 @@
 import {
   createTypstCompiler,
-  createWebWorker,
   selectAutomaticBackendKind,
   supportsJspiBackend,
   supportsWorkerBackend,
-} from "typst-wasm/browser";
+} from "typst-wasm";
+import { createWebWorker } from "typst-wasm/worker/browser";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
 import type {
   IntegrationBackend,
@@ -66,11 +66,7 @@ export const makeBrowserContext = async (
     });
   const selectBackend = (options: IntegrationCompilerOptions = {}) =>
     options.backend === "worker"
-      ? supportsWorkerBackend({
-          ...options,
-          worker: options.worker ?? worker,
-          coreModules: options.coreModules ?? coreModules,
-        })
+      ? supportsWorkerBackend()
         ? "worker"
         : "none"
       : options.backend === "jspi"

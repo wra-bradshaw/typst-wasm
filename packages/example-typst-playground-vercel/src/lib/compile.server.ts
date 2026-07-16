@@ -5,9 +5,9 @@ import core2Url from "typst-wasm/engine/engine.core2.wasm?url";
 import core3Url from "typst-wasm/engine/engine.core3.wasm?url";
 import {
   createTypstCompiler,
-  createWorkerThread,
   type TypstCompiler,
-} from "typst-wasm/node";
+} from "typst-wasm";
+import { createWorkerThread } from "typst-wasm/worker/node";
 import { createCompileModule } from "./compile-core";
 
 export { formatCompileError } from "./compile-core";

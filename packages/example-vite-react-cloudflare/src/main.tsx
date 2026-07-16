@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { createTypstCompiler, createWebWorker } from "typst-wasm/browser";
+import { createTypstCompiler } from "typst-wasm";
+import { createWebWorker } from "typst-wasm/worker/browser";
 import workerUrl from "typst-wasm/worker/web-worker?worker&url";
 import coreUrl from "typst-wasm/engine/engine.core.wasm?url";
 import core2Url from "typst-wasm/engine/engine.core2.wasm?url";

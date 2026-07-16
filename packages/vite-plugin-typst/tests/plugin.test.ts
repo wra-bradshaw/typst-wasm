@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { createWorkerThread } from "typst-wasm/node";
+import { createWorkerThread } from "typst-wasm/worker/node";
 import typst from "@typst-wasm/vite-plugin-typst";
 import { describe, expect, test } from "vitest";
 import { buildFixture, fixturePath, getChunk, importChunk } from "./helpers";

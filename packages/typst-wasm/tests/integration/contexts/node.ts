@@ -1,11 +1,11 @@
 import { readFile } from "node:fs/promises";
 import {
-  createWorkerThread,
   createTypstCompiler,
   selectAutomaticBackendKind,
   supportsJspiBackend,
   supportsWorkerBackend,
-} from "typst-wasm/node";
+} from "typst-wasm";
+import { createWorkerThread } from "typst-wasm/worker/node";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
 import type {
   IntegrationBackend,
@@ -67,7 +67,7 @@ export const makeNodeContext = async (
           }
         : { ...options, coreModules: options.coreModules ?? coreModules };
     if (effective.backend === "worker")
-      return supportsWorkerBackend(effective) ? "worker" : "none";
+      return supportsWorkerBackend() ? "worker" : "none";
     if (effective.backend === "jspi")
       return supportsJspiBackend() ? "jspi" : "none";
     return selectAutomaticBackendKind(effective);

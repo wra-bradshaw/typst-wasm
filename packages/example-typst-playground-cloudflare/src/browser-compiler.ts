@@ -1,8 +1,8 @@
 import {
   createTypstCompiler,
-  createWebWorker,
   type TypstCompiler,
-} from "typst-wasm/browser";
+} from "typst-wasm";
+import { createWebWorker } from "typst-wasm/worker/browser";
 import browserWorkerUrl from "typst-wasm/worker/web-worker?worker&url";
 import coreUrl from "typst-wasm/engine/engine.core.wasm?url";
 import core2Url from "typst-wasm/engine/engine.core2.wasm?url";

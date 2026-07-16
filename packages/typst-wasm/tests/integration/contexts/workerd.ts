@@ -3,7 +3,7 @@ import {
   selectAutomaticBackendKind,
   supportsJspiBackend,
   supportsWorkerBackend,
-} from "typst-wasm/workerd";
+} from "typst-wasm";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
 import type {
   IntegrationCompilerOptions,
@@ -37,10 +37,7 @@ export const makeWorkerdContext = async (
     });
   const selectBackend = (options: IntegrationCompilerOptions = {}) =>
     options.backend === "worker"
-      ? supportsWorkerBackend({
-          ...options,
-          coreModules: options.coreModules ?? coreModules,
-        })
+      ? Boolean(options.worker) && supportsWorkerBackend()
         ? "worker"
         : "none"
       : options.backend === "jspi"
@@ -62,15 +59,7 @@ export const makeWorkerdContext = async (
         throw new Error("worker backend is available in workerd");
       }
       try {
-        const compiler = await createCompiler({
-          backend: "worker",
-          // The runtime must reject before this host is ever used.
-          worker: () => ({
-            listen: () => {},
-            postMessage: () => {},
-            terminate: () => {},
-          }),
-        });
+        const compiler = await createCompiler({ backend: "worker" });
         await compiler.dispose();
       } catch {
         return;

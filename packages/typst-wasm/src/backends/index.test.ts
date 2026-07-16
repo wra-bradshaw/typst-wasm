@@ -1,19 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createRuntimeBackend,
   selectAutomaticBackendKind,
-  type TypstRuntime,
-  type BackendSelection,
+  supportsJspiBackend,
+  supportsWorkerBackend,
 } from "./index";
 import type { TypstCompilerOptions } from "../compiler/types";
-
-const makeRuntime = (worker: boolean, jspi: boolean): TypstRuntime => ({
-  createWorker: (_options) => {
-    throw new Error("not used");
-  },
-  supportsWorkerBackend: () => worker,
-  supportsJspiBackend: () => jspi,
-});
 
 const options = {
   coreModules: {
@@ -21,43 +13,38 @@ const options = {
     "engine.core2.wasm": {} as WebAssembly.Module,
     "engine.core3.wasm": {} as WebAssembly.Module,
   },
-};
-const compilerOptions = options as unknown as TypstCompilerOptions;
+} as unknown as TypstCompilerOptions;
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe("compiler backend selection", () => {
-  it.each([
-    { worker: true, jspi: true, selected: "worker" },
-    { worker: true, jspi: false, selected: "worker" },
-    { worker: false, jspi: true, selected: "jspi" },
-    { worker: false, jspi: false, selected: "none" },
-  ] satisfies Array<{
-    worker: boolean;
-    jspi: boolean;
-    selected: BackendSelection;
-  }>)(
-    "selects $selected when runtime reports worker=$worker and jspi=$jspi",
-    ({ worker, jspi, selected }) => {
-      expect(
-        selectAutomaticBackendKind(makeRuntime(worker, jspi), compilerOptions),
-      ).toBe(selected);
-    },
-  );
+  it("reports capabilities without requiring compiler options", () => {
+    expect(typeof supportsWorkerBackend()).toBe("boolean");
+    expect(typeof supportsJspiBackend()).toBe("boolean");
+  });
 
-  it("throws immediately when the worker backend is requested without worker configuration", () => {
-    const runtime = {
-      ...makeRuntime(false, true),
-      unavailableWorkerMessage: "Worker backend requires worker",
-    };
+  it("does not select worker without a configured worker", () => {
+    expect(selectAutomaticBackendKind(options)).not.toBe("worker");
+  });
 
-    expect(() =>
-      createRuntimeBackend(
-        "worker",
-        {
-          fileLoaderManager: {} as never,
-        },
-        runtime,
-        compilerOptions,
-      ),
-    ).toThrow("Worker backend requires worker");
+  it("selects worker automatically when a worker is configured and primitives allow it", () => {
+    const withWorker = {
+      ...options,
+      worker: () => ({ listen() {}, postMessage() {}, terminate() {} }),
+    } as unknown as TypstCompilerOptions;
+    const selected = selectAutomaticBackendKind(withWorker);
+    expect(selected).toBe(supportsWorkerBackend() ? "worker" : supportsJspiBackend() ? "jspi" : "none");
+  });
+
+  it("reports missing worker configuration for explicit worker selection", () => {
+    expect(() => createRuntimeBackend("worker", { fileLoaderManager: {} as never }, options))
+      .toThrow("Worker backend requires worker");
+  });
+
+  it("reports unavailable worker primitives separately", () => {
+    vi.stubGlobal("SharedArrayBuffer", undefined);
+    const withWorker = { ...options, worker: () => ({}) } as never;
+    expect(() => createRuntimeBackend("worker", { fileLoaderManager: {} as never }, withWorker))
+      .toThrow("Worker backend is unavailable");
   });
 });

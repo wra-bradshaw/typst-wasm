@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
-import { createTypstCompiler, createWorkerThread } from "typst-wasm/node";
+import { createTypstCompiler } from "typst-wasm";
+import { createWorkerThread } from "typst-wasm/worker/node";
 
 const compiler = await createTypstCompiler({
   backend: "auto",
