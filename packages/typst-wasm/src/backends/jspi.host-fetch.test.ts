@@ -14,7 +14,7 @@ const loader: TypstFileLoader = async (request) =>
     ? { data: new Uint8Array([7]), resolvedPath: "shared.typ" }
     : null;
 
-describe("DirectService host fetch routing", () => {
+describe("JspiService host fetch routing", () => {
   it("awaits the WIT host fetch and preserves request metadata", async () => {
     const requests: unknown[] = [];
     const engine = {
@@ -38,8 +38,8 @@ describe("DirectService host fetch routing", () => {
       }),
     } as unknown as EngineModule;
     mockEngine = engine;
-    const { DirectService } = await import("./direct");
-    const service = new DirectService(new FileLoaderManager([loader]), {
+    const { JspiService } = await import("./jspi");
+    const service = new JspiService(new FileLoaderManager([loader]), {
       "engine.core.wasm": {} as WebAssembly.Module,
       "engine.core2.wasm": Promise.resolve({} as WebAssembly.Module),
       "engine.core3.wasm": {} as WebAssembly.Module,
@@ -62,13 +62,13 @@ describe("DirectService host fetch routing", () => {
       },
     } as unknown as EngineModule;
     mockEngine = engine;
-    const { DirectService } = await import("./direct");
+    const { JspiService } = await import("./jspi");
     const modules = {
       "engine.core.wasm": {} as WebAssembly.Module,
       "engine.core2.wasm": Promise.resolve({} as WebAssembly.Module),
       "engine.core3.wasm": {} as WebAssembly.Module,
     };
-    const service = new DirectService(new FileLoaderManager([]), modules);
+    const service = new JspiService(new FileLoaderManager([]), modules);
 
     await service.init();
     expect(received?.("engine.core2.wasm")).toBe(

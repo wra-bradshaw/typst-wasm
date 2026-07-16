@@ -32,7 +32,7 @@ const toFetchError = (error: unknown): never => {
   };
 };
 
-export class DirectService {
+export class JspiService {
   private disposed = false;
   private initPromise: Promise<void> | null = null;
   private compiler: EngineCompiler | null = null;
@@ -47,7 +47,7 @@ export class DirectService {
 
   async init(): Promise<void> {
     this.assertNotDisposed();
-    this.initPromise ??= this.initDirect();
+    this.initPromise ??= this.initJspi();
     try {
       await this.initPromise;
     } catch (error) {
@@ -116,11 +116,11 @@ export class DirectService {
     try {
       return await compile(options);
     } catch (cause) {
-      throw new WorkerError("Direct command failed: compile", { cause });
+      throw new WorkerError("JSPI command failed: compile", { cause });
     }
   }
 
-  private async initDirect(): Promise<void> {
+  private async initJspi(): Promise<void> {
     const host: EngineHost = {
       fetch: async (request) => {
         try {
@@ -152,7 +152,7 @@ export class DirectService {
     try {
       return run(this.compiler);
     } catch (cause) {
-      throw new WorkerError(`Direct command failed: ${name}`, { cause });
+      throw new WorkerError(`JSPI command failed: ${name}`, { cause });
     }
   }
 

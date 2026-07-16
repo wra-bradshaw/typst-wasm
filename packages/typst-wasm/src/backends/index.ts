@@ -3,7 +3,7 @@ import type { FileLoaderManager } from "../files/loaders";
 import type { EngineCompileOptions, EngineCompileSuccess } from "../engine/types";
 import { supportsJspiBackend, supportsWorkerBackend } from "./capabilities";
 import type { ResolvedLogger } from "../logging";
-import { DirectService } from "./direct";
+import { JspiService } from "./jspi";
 import { WorkerService } from "./worker";
 
 export { supportsJspiBackend, supportsWorkerBackend };
@@ -62,7 +62,7 @@ export const createRuntimeBackend = (
         logger: options.logger,
       });
     case "jspi":
-      return new DirectService(options.fileLoaderManager, coreModules);
+      return new JspiService(options.fileLoaderManager, coreModules);
     case "none":
       throw new Error(
         "No compatible typst-wasm backend available. Requires Worker+SharedArrayBuffer+Atomics.wait or JSPI.",
