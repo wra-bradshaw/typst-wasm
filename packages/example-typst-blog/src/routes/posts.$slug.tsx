@@ -22,7 +22,9 @@ function PostPage() {
           Built with vite-plugin-typst
         </p>
         <h2 className="text-xl font-semibold text-stone-950">{title}</h2>
-        {description ? <p className="mt-1 text-sm text-stone-600">{description}</p> : null}
+        {description ? (
+          <p className="mt-1 text-sm text-stone-600">{description}</p>
+        ) : null}
       </header>
       <div
         className="prose prose-stone max-w-none p-5 [&_svg]:max-w-full"

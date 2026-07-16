@@ -9,8 +9,16 @@ export type PlaygroundFormat = Exclude<CompileFormat, "bundle">;
 export type CompileView =
   | { format: "html"; output: string; diagnostics: Diagnostic[] }
   | { format: "pdf"; output: Uint8Array; diagnostics: Diagnostic[] }
-  | { format: "png"; pages: Array<{ page: number; output: Uint8Array }>; diagnostics: Diagnostic[] }
-  | { format: "svg"; pages: Array<{ page: number; output: string }>; diagnostics: Diagnostic[] };
+  | {
+      format: "png";
+      pages: Array<{ page: number; output: Uint8Array }>;
+      diagnostics: Diagnostic[];
+    }
+  | {
+      format: "svg";
+      pages: Array<{ page: number; output: string }>;
+      diagnostics: Diagnostic[];
+    };
 
 export const formatCompileError = (error: unknown): string => {
   if (error instanceof CompileError && error.diagnostics.length > 0) {

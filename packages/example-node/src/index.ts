@@ -1,16 +1,25 @@
 import { readFile } from "node:fs/promises";
 import { createTypstCompiler, createWorkerThread } from "typst-wasm/node";
-import * as engine from "typst-wasm/engine";
 
 const compiler = await createTypstCompiler({
   backend: "auto",
-  engine,
-  getCoreModule: async (name: string) =>
-    WebAssembly.compile(
+  coreModules: {
+    "engine.core.wasm": WebAssembly.compile(
       await readFile(
-        new URL(import.meta.resolve(`typst-wasm/engine/worker/${name}`)),
+        new URL(import.meta.resolve("typst-wasm/engine/engine.core.wasm")),
       ),
     ),
+    "engine.core2.wasm": WebAssembly.compile(
+      await readFile(
+        new URL(import.meta.resolve("typst-wasm/engine/engine.core2.wasm")),
+      ),
+    ),
+    "engine.core3.wasm": WebAssembly.compile(
+      await readFile(
+        new URL(import.meta.resolve("typst-wasm/engine/engine.core3.wasm")),
+      ),
+    ),
+  },
   worker: () =>
     createWorkerThread(
       new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),

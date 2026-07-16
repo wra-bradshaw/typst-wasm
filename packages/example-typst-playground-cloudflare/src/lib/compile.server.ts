@@ -1,5 +1,4 @@
 import { createTypstCompiler, type TypstCompiler } from "typst-wasm/workerd";
-import * as engine from "typst-wasm/engine";
 import core from "typst-wasm/engine/engine.core.wasm";
 import core2 from "typst-wasm/engine/engine.core2.wasm";
 import core3 from "typst-wasm/engine/engine.core3.wasm";
@@ -10,20 +9,11 @@ export { formatCompileError } from "./compile-core";
 const createInitializedCompiler = (): Promise<TypstCompiler> =>
   createTypstCompiler({
     backend: "jspi",
-    engine,
-    getCoreModule: (name) => {
-      const module = coreModules.get(name);
-      if (!module) throw new Error(`Unknown JSPI core module: ${name}`);
-      return module;
+    coreModules: {
+      "engine.core.wasm": core,
+      "engine.core2.wasm": core2,
+      "engine.core3.wasm": core3,
     },
   });
 
-const coreModules = new Map<string, WebAssembly.Module>([
-  ["engine.core.wasm", core],
-  ["engine.core2.wasm", core2],
-  ["engine.core3.wasm", core3],
-]);
-
-export const { compileTypst } = createCompileModule(
-  createInitializedCompiler,
-);
+export const { compileTypst } = createCompileModule(createInitializedCompiler);

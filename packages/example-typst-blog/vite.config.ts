@@ -7,13 +7,6 @@ import react from "@vitejs/plugin-react";
 import { createWorkerThread } from "typst-wasm";
 import { defineConfig } from "vite";
 
-const getCoreModule = async (name: string): Promise<WebAssembly.Module> => {
-  const url = new URL(
-    import.meta.resolve(`typst-wasm/engine/worker/${name}`),
-  );
-  return WebAssembly.compile(await readFile(url));
-};
-
 const fontUrls = [
   new URL(import.meta.resolve("@typst-wasm/fonts/NewCMMath-Regular.otf")),
   new URL(import.meta.resolve("@typst-wasm/fonts/NewCMMath-Bold.otf")),
@@ -39,15 +32,31 @@ export default defineConfig({
     }),
     typst({
       backend: "worker",
-      getCoreModule,
+      coreModules: {
+        "engine.core.wasm": WebAssembly.compile(
+          await readFile(
+            new URL(import.meta.resolve("typst-wasm/engine/engine.core.wasm")),
+          ),
+        ),
+        "engine.core2.wasm": WebAssembly.compile(
+          await readFile(
+            new URL(import.meta.resolve("typst-wasm/engine/engine.core2.wasm")),
+          ),
+        ),
+        "engine.core3.wasm": WebAssembly.compile(
+          await readFile(
+            new URL(import.meta.resolve("typst-wasm/engine/engine.core3.wasm")),
+          ),
+        ),
+      },
       worker: () =>
         createWorkerThread(
           new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
         ),
       configureCompiler: async (compiler) => {
         await compiler.addFonts(
-          ...fontUrls.map(async (fontUrl) =>
-            new Uint8Array(await readFile(fontUrl)),
+          ...fontUrls.map(
+            async (fontUrl) => new Uint8Array(await readFile(fontUrl)),
           ),
         );
       },

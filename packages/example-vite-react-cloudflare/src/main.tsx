@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createTypstCompiler, createWebWorker } from "typst-wasm/browser";
-import * as engine from "typst-wasm/engine";
 import workerUrl from "typst-wasm/worker/web-worker?worker&url";
+import coreUrl from "typst-wasm/engine/engine.core.wasm?url";
+import core2Url from "typst-wasm/engine/engine.core2.wasm?url";
+import core3Url from "typst-wasm/engine/engine.core3.wasm?url";
 import regularFontUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
 import "./style.css";
 
@@ -16,8 +18,12 @@ function App() {
       try {
         const compiler = await createTypstCompiler({
           backend: "auto",
-          engine,
           worker: () => createWebWorker(workerUrl),
+          coreModules: {
+            "engine.core.wasm": WebAssembly.compileStreaming(fetch(coreUrl)),
+            "engine.core2.wasm": WebAssembly.compileStreaming(fetch(core2Url)),
+            "engine.core3.wasm": WebAssembly.compileStreaming(fetch(core3Url)),
+          },
         });
         try {
           await compiler.addFonts(
