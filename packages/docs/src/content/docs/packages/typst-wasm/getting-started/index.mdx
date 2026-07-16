@@ -5,7 +5,14 @@ description: Choose the typst-wasm getting-started guide for your runtime.
 
 import { Aside, CardGrid, LinkCard } from "@astrojs/starlight/components";
 
-`typst-wasm` has runtime-specific entry points. Choose the guide that matches where compilation will run.
+`typst-wasm` provides two backends to help you compile Typst in any runtime:
+
+- The "workers" backend compiles your Typst in a separate worker. This backend is supported in most runtimes that support web workers or worker threads.
+- The "JSPI" backend compiles your Typst on the main thread, but it requires experimental JSPI (which has [limited availability](https://caniuse.com/wf-wasm-jspi)).
+
+Between the two backends we can support all major browsers engines (Chrome, Firefox, Safari) and all major server side runtimes (Node, Deno, Bun, workerd).
+
+Use the unified `typst-wasm` compiler API everywhere. Choose a host adapter only when configuring a worker: `typst-wasm/worker/node` for Node/Bun or `typst-wasm/worker/browser` for browsers.
 
 <CardGrid>
   <LinkCard

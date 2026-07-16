@@ -26,7 +26,8 @@ This is an advanced setup. Unlike the Vite guide, you must publish the worker, e
 2. **Create a module worker**
 
    ```ts
-   import { createTypstCompiler, createWebWorker } from "typst-wasm/browser";
+   import { createTypstCompiler } from "typst-wasm";
+    import { createWebWorker } from "typst-wasm/worker/browser";
    const workerUrl = "/assets/typst-wasm/web-worker.js";
    const compiler = await createTypstCompiler({
      backend: "auto",

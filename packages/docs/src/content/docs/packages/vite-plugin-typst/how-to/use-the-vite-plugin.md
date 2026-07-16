@@ -48,7 +48,7 @@ The plugin transforms explicit `?typst=html` imports into modules containing com
 
    ```ts
    import { readFile } from "node:fs/promises";
-   import { createWorkerThread } from "typst-wasm/node";
+   import { createWorkerThread } from "typst-wasm/worker/node";
    import typst from "@typst-wasm/vite-plugin-typst";
 
    export default {

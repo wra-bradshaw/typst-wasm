@@ -1,2 +1,2 @@
-/** Browser runtime APIs for `typst-wasm/browser`. */
-export * from "typst-wasm/browser";
+/** Browser host adapter for `typst-wasm/worker/browser`. */
+export * from "typst-wasm/worker/browser";

@@ -5,7 +5,7 @@ description: Deploy typst-wasm in the Cloudflare Workers runtime.
 
 import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
-Cloudflare Workers uses the `workerd` runtime. This is different from deploying a browser application to static hosting: use `typst-wasm/workerd`, JSPI, and precompiled core modules. The Worker backend and browser isolation headers are not needed for server-side compilation.
+Cloudflare Workers uses the `workerd` runtime. This is different from deploying a browser application to static hosting: use `typst-wasm`, JSPI, and precompiled core modules. The Worker backend and browser isolation headers are not needed for server-side compilation.
 
 <Steps>
 
@@ -64,7 +64,7 @@ Cloudflare Workers uses the `workerd` runtime. This is different from deploying 
 4.  **Bundle the JSPI core modules**
 
     ```ts
-    import { createTypstCompiler } from "typst-wasm/workerd";
+    import { createTypstCompiler } from "typst-wasm";
     import core from "typst-wasm/engine/engine.core.wasm";
     import core2 from "typst-wasm/engine/engine.core2.wasm";
     import core3 from "typst-wasm/engine/engine.core3.wasm";
@@ -112,7 +112,7 @@ Cloudflare Workers uses the `workerd` runtime. This is different from deploying 
 </Steps>
 
 <Aside type="caution" title="Do not use the browser setup here">
-  Do not import `typst-wasm/browser`, create a Web Worker, or rely on
+  Do not import `typst-wasm`, create a Web Worker, or rely on
   `SharedArrayBuffer` headers in a server-side Worker. Those are browser-runtime
   concerns. For a browser compiler hosted by a separate frontend, follow the
   [browser deployment requirements](../browser-requirements/).

@@ -5,16 +5,23 @@
 ## Browser / Vite Usage
 
 ```ts
-import { createTypstCompiler, createWebWorker } from "typst-wasm/browser";
+import { createTypstCompiler } from "typst-wasm";
+import { createWebWorker } from "typst-wasm/worker/browser";
 import newComputerModernMathBoldUrl from "@typst-wasm/fonts/NewCMMath-Bold.otf?url";
 import newComputerModernMathBookUrl from "@typst-wasm/fonts/NewCMMath-Book.otf?url";
 import newComputerModernMathRegularUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
 import workerUrl from "typst-wasm/worker/web-worker?url";
-import * as engine from "typst-wasm/engine";
+import coreUrl from "typst-wasm/engine/engine.core.wasm?url";
+import core2Url from "typst-wasm/engine/engine.core2.wasm?url";
+import core3Url from "typst-wasm/engine/engine.core3.wasm?url";
 
 const compiler = await createTypstCompiler({
   backend: "auto",
-  engine,
+  coreModules: {
+    "engine.core.wasm": fetch(coreUrl).then((r) => WebAssembly.compileStreaming(r)),
+    "engine.core2.wasm": fetch(core2Url).then((r) => WebAssembly.compileStreaming(r)),
+    "engine.core3.wasm": fetch(core3Url).then((r) => WebAssembly.compileStreaming(r)),
+  },
   worker: () => createWebWorker(workerUrl),
 });
 
@@ -33,26 +40,20 @@ await compiler.addFonts(
 ## Cloudflare Workers Usage
 
 ```ts
-import { createTypstCompiler } from "typst-wasm/workerd";
-import * as engine from "typst-wasm/engine";
+import { createTypstCompiler } from "typst-wasm";
 import core from "typst-wasm/engine/engine.core.wasm";
 import core2 from "typst-wasm/engine/engine.core2.wasm";
 import core3 from "typst-wasm/engine/engine.core3.wasm";
 
-const coreModules = new Map([
-  ["engine.core.wasm", core],
-  ["engine.core2.wasm", core2],
-  ["engine.core3.wasm", core3],
-]);
+const coreModules = {
+  "engine.core.wasm": core,
+  "engine.core2.wasm": core2,
+  "engine.core3.wasm": core3,
+};
 
 const compiler = await createTypstCompiler({
   backend: "jspi",
-  engine,
-  getCoreModule: (name) => {
-    const module = coreModules.get(name);
-    if (!module) throw new Error(`Unknown JSPI core module: ${name}`);
-    return module;
-  },
+  coreModules,
 });
 ```
 
@@ -60,12 +61,16 @@ const compiler = await createTypstCompiler({
 
 ```ts
 import { readFile } from "node:fs/promises";
-import { createTypstCompiler, createWorkerThread } from "typst-wasm/node";
-import * as engine from "typst-wasm/engine";
+import { createTypstCompiler } from "typst-wasm";
+import { createWorkerThread } from "typst-wasm/worker/node";
 
 const compiler = await createTypstCompiler({
   backend: "auto",
-  engine,
+  coreModules: {
+    "engine.core.wasm": readFile(new URL(import.meta.resolve("typst-wasm/engine/engine.core.wasm"))).then((bytes) => WebAssembly.compile(bytes)),
+    "engine.core2.wasm": readFile(new URL(import.meta.resolve("typst-wasm/engine/engine.core2.wasm"))).then((bytes) => WebAssembly.compile(bytes)),
+    "engine.core3.wasm": readFile(new URL(import.meta.resolve("typst-wasm/engine/engine.core3.wasm"))).then((bytes) => WebAssembly.compile(bytes)),
+  },
   worker: () =>
     createWorkerThread(new URL(import.meta.resolve("typst-wasm/worker/worker-thread"))),
 });
@@ -95,7 +100,7 @@ try {
 
 Supported compile formats are `pdf`, `png`, `svg`, `html`, and `bundle`. The public API is promise-based; Effect is no longer part of the runtime or package API.
 
-Compile options include `main`, `format`, `inputs`, `pages`, `ppi`, and `pdfStandards`. Browser and server resource loading can be customized with `fetch`, `packageBaseUrl`, and `packageCache`. For JSPI, import JCO's generated `engine` module and let it use its runtime default core-WASM loader. Use optional `getCoreModule(name)` only when a runtime needs precompiled modules, such as Cloudflare Workers. Worker deployments provide `worker` as a `WorkerHost` factory created directly or with the runtime-specific worker helper.
+Compile options include `main`, `format`, `inputs`, `pages`, `ppi`, and `pdfStandards`. Browser and server resource loading can be customized with `fetch`, `packageBaseUrl`, and `packageCache`. For JSPI, provide the required core WASM modules in `coreModules`; Cloudflare Workers commonly import them as precompiled modules. Worker deployments provide `worker` as a `WorkerHost` factory created directly or with the `typst-wasm/worker/node` or `typst-wasm/worker/browser` adapter.
 
 For Vercel SSR, compile inside route loaders only when you have explicitly configured a Node-compatible backend. The package will not infer worker files from bundled output.
 

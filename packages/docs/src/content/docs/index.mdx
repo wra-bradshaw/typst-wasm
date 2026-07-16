@@ -3,9 +3,9 @@ title: typst-wasm
 description: Documentation for typst-wasm and its Vite plugin.
 ---
 
-Compile [Typst](https://typst.app/) documents with WebAssembly from JavaScript.
+A promise based API for compiling [Typst](https://typst.app/) using wasm in as many runtimes as possible.
 
-- [Get started with typst-wasm](./packages/typst-wasm/)
-- [Use the Vite plugin](./packages/vite-plugin-typst/)
+There are two main packages:
 
-`typst-wasm` provides the compiler API for browser, Node.js, and Cloudflare Worker runtimes. The Vite plugin builds on it and lets you import `.typ` files directly in a Vite application.
+- [typst-wasm](./packages/typst-wasm/getting-started)—the main library for compiling typst.
+- [vite-plugin-typst](./packages/vite-plugin-typst/)—an experimental way to use typst-wasm as a HTML generator.

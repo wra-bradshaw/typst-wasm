@@ -27,11 +27,12 @@ Also verify that Vercel serves `.wasm` files as `application/wasm` and that all 
 
 ## Server-side rendering
 
-For SSR, compile in a Node-compatible route or loader and import `typst-wasm/node`. Configure the worker module explicitly with `createWorkerThread`; Vercel does not infer worker files from bundled output.
+For SSR, compile in a Node-compatible route or loader and import `typst-wasm`. Configure the worker module explicitly with `createWorkerThread`; Vercel does not infer worker files from bundled output.
 
 ```ts
 import { readFile } from "node:fs/promises";
-import { createTypstCompiler, createWorkerThread } from "typst-wasm/node";
+import { createTypstCompiler } from "typst-wasm";
+    import { createWorkerThread } from "typst-wasm/worker/node";
 
 const compiler = await createTypstCompiler({
   backend: "auto",

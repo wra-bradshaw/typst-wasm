@@ -36,8 +36,8 @@ Deno uses the browser entry point. Resolve package assets with `import.meta.reso
     ```ts
     import {
       createTypstCompiler,
-      createWebWorker,
-    } from "npm:typst-wasm/browser";
+    } from "npm:typst-wasm";
+    import { createWebWorker } from "npm:typst-wasm/worker/browser";
     const asset = (specifier: string) =>
       new URL(import.meta.resolve(specifier));
 
@@ -87,6 +87,6 @@ Deno uses the browser entry point. Resolve package assets with `import.meta.reso
 </Steps>
 
 <Aside type="note" title="Deno entry point">
-  There is no separate `typst-wasm/deno` export. Deno uses `typst-wasm/browser`
+  There is no separate `typst-wasm/deno` export. Deno uses `typst-wasm`
   because its `Worker` API is compatible with the browser runtime.
 </Aside>

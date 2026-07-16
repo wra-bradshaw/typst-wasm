@@ -2,8 +2,8 @@
 
 TanStack Start SSR example for `typst-wasm`, suitable for Vercel.
 
-The first preview is compiled on the server with `typst-wasm/node`.
-After hydration, editor changes compile in the browser with `typst-wasm/browser`.
+The first preview is compiled on the server with `typst-wasm`.
+After hydration, editor changes compile in the browser with `typst-wasm`.
 Vite handles the wasm, font, and worker assets; Nitro emits the Vercel Build
 Output API artifact.
 

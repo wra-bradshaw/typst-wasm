@@ -1,2 +1,2 @@
-/** Node.js runtime APIs for `typst-wasm/node`. */
-export * from "typst-wasm/node";
+/** Node/Bun host adapter for `typst-wasm/worker/node`. */
+export * from "typst-wasm/worker/node";

@@ -11,11 +11,11 @@ Prefer an explicit runtime subpath in application code:
 
 | Runtime            | Import               |
 | ------------------ | -------------------- |
-| Browser            | `typst-wasm/browser` |
-| Node.js or Bun     | `typst-wasm/node`    |
-| Cloudflare Workers | `typst-wasm/workerd` |
+| Browser            | `typst-wasm` |
+| Node.js or Bun     | `typst-wasm`    |
+| Cloudflare Workers | `typst-wasm` |
 
-See the [API reference](/typst-wasm/packages/typst-wasm/reference/api/readme/) for shared and runtime-specific compiler APIs.
+See the [API reference](/typst-wasm/packages/typst-wasm/reference/api/readme/) for the compiler API and worker host adapters.
 
 ## Guides
 

@@ -59,7 +59,8 @@ This guide runs the compiler in a browser worker. Vite turns the worker, engine,
     Create `src/typst.ts`:
 
     ```ts
-    import { createTypstCompiler, createWebWorker } from "typst-wasm/browser";
+    import { createTypstCompiler } from "typst-wasm";
+    import { createWebWorker } from "typst-wasm/worker/browser";
     import workerUrl from "typst-wasm/worker/web-worker?worker&url";
     import coreUrl from "typst-wasm/engine/engine.core.wasm?url";
     import core2Url from "typst-wasm/engine/engine.core2.wasm?url";

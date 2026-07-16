@@ -5,7 +5,7 @@ description: Compile Typst documents in Node.js or Bun.
 
 import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
-The Node entry point uses a worker thread when available and works with Bun's Node-compatible worker APIs. Use `typst-wasm/node` explicitly in server-side code.
+The Node entry point uses a worker thread when available and works with Bun's Node-compatible worker APIs. Use `typst-wasm` explicitly in server-side code.
 
 <Steps>
 
@@ -51,7 +51,8 @@ The Node entry point uses a worker thread when available and works with Bun's No
 
     ```ts
     import { readFile, writeFile } from "node:fs/promises";
-    import { createTypstCompiler, createWorkerThread } from "typst-wasm/node";
+    import { createTypstCompiler } from "typst-wasm";
+    import { createWorkerThread } from "typst-wasm/worker/node";
     const compiler = await createTypstCompiler({
       backend: "auto",
       coreModules: {
@@ -111,7 +112,7 @@ The Node entry point uses a worker thread when available and works with Bun's No
 </Steps>
 
 <Aside type="tip" title="Bun">
-  Bun uses the same `typst-wasm/node` entry point and `createWorkerThread`
+  Bun uses the same `typst-wasm` entry point and `createWorkerThread`
   helper. You do not need a Bun-specific import. Use the Bun package-manager tab
   above for installation.
 </Aside>

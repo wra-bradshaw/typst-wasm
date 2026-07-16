@@ -23,9 +23,9 @@ export default defineConfig({
       plugins: [
         typstWasmTypeDoc({
           entryPoints: [
+            "./reference-entrypoints/root.ts",
             "./reference-entrypoints/node.ts",
             "./reference-entrypoints/browser.ts",
-            "./reference-entrypoints/workerd.ts",
           ],
           tsconfig: "./tsconfig.typedoc.json",
           output: "packages/typst-wasm/reference/api",
@@ -45,7 +45,6 @@ export default defineConfig({
         {
           label: "typst-wasm",
           items: [
-            { label: "Overview", link: "/packages/typst-wasm/" },
             {
               label: "Getting started",
               items: [
@@ -96,7 +95,6 @@ export default defineConfig({
         {
           label: "@typst-wasm/vite-plugin-typst",
           items: [
-            { label: "Overview", link: "/packages/vite-plugin-typst/" },
             {
               label: "How-to guides",
               items: [
