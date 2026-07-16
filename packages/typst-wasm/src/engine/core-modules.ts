@@ -1,6 +1,6 @@
 import type { CoreModuleName, CoreModules } from "./types";
 
-export const coreModuleNames = [
+const coreModuleNames = [
   "engine.core.wasm",
   "engine.core2.wasm",
   "engine.core3.wasm",

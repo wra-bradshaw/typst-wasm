@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "vitest.browser.config.ts",
+    "vitest.workerd.config.ts",
+    "tests/integration/adapters/deno.ts",
+    "tests/integration/adapters/workerd/guest.ts"
+  ],
+  "ignoreDependencies": ["cloudflare", "@types/deno"],
+  "ignoreBinaries": ["nix"]
+}

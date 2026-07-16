@@ -8,7 +8,7 @@ export type IntegrationRuntime =
   | "firefox"
   | "webkit";
 export type IntegrationBackend = "worker" | "jspi";
-export type IntegrationCell = `${IntegrationRuntime}:${IntegrationBackend}`;
+type IntegrationCell = `${IntegrationRuntime}:${IntegrationBackend}`;
 export type IntegrationCompilerOptions = Omit<
   TypstCompilerOptions,
   "coreModules"

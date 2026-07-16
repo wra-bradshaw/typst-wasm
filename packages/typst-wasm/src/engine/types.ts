@@ -1,11 +1,8 @@
 import type {
   CompileOptions,
   CompileSuccess,
-  CompileFailure,
-  CompilePayload,
   CompileFormat,
   Diagnostic,
-  DocumentMetadata,
   FetchRequest,
   FetchedFile,
   FileKind,
@@ -14,13 +11,8 @@ import type {
 } from "typst-wasm/engine/types";
 
 export type {
-  CompileOptions,
-  CompileSuccess,
-  CompileFailure,
-  CompilePayload,
   CompileFormat,
   Diagnostic,
-  DocumentMetadata,
   FetchRequest,
   FetchedFile,
   FileKind,
@@ -29,17 +21,13 @@ export type {
 };
 
 export type EngineFetchRequest = FetchRequest;
-export type EngineFetchedFile = FetchedFile;
 export type EngineCompileOptions = CompileOptions;
 export type EngineCompileSuccess = CompileSuccess;
 export type EngineDiagnostic = Diagnostic;
-export type EngineLoadedFile = LoadedFile;
 
 export interface EngineHost {
   fetch(request: FetchRequest): FetchedFile | Promise<FetchedFile>;
-  today(
-    offsetSeconds?: bigint,
-  ): { year: number; month: number; day: number } | undefined;
+  today(offsetSeconds?: bigint): { year: number; month: number; day: number } | undefined;
 }
 
 export interface EngineImports {
@@ -58,10 +46,8 @@ export interface EngineCompiler {
   compile(options: CompileOptions): CompileSuccess | Promise<CompileSuccess>;
 }
 
-export interface EngineRoot {
-  api: {
-    Compiler: new () => EngineCompiler;
-  };
+interface EngineRoot {
+  api: { Compiler: new () => EngineCompiler };
 }
 
 export type CoreModuleName =
@@ -73,7 +59,7 @@ export type CoreModules = Readonly<
   Record<CoreModuleName, WebAssembly.Module | Promise<WebAssembly.Module>>
 >;
 
-export type EngineCoreModuleLoader = (
+type EngineCoreModuleLoader = (
   name: string,
 ) => WebAssembly.Module | Promise<WebAssembly.Module>;
 

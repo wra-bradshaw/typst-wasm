@@ -40,8 +40,8 @@ const assertCaseSet = (
   }
 };
 
-/** Execute a validated case list. Exported so the executor can be unit tested with fakes. */
-export const executeSuite = async (
+/** Execute a validated case list. */
+const executeSuite = async (
   context: IntegrationContext,
   cases: readonly CanonicalCase[],
   expectedCases: readonly CanonicalCase[] = cases,

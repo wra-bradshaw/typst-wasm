@@ -1,10 +1,10 @@
-export type JspiHostFetch = (
+type JspiHostFetch = (
   pathPtr: number,
   pathLen: number,
   resultLenPtr: number,
 ) => Promise<number>;
 
-export type JspiCompileThunk<TOptions> = (
+type JspiCompileThunk<TOptions> = (
   compilerPtr: number,
   options: TOptions,
 ) => [number, number, number];

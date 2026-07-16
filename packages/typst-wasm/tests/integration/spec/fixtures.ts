@@ -10,12 +10,7 @@ export const fontFilenames = [
   "NewCMMath-Book.otf",
 ] as const;
 
-export const importSource = `#import "@preview/wordometer:0.1.5": word-count-of
-#set page(width: auto, height: auto, margin: 10pt)
-= Word Count Demo
-#word-count-of[Hello world, this is a test.]`;
-
-export const archiveBytes = (): Uint8Array =>
+const archiveBytes = (): Uint8Array =>
   Uint8Array.from(atob(packageArchive), (character) => character.charCodeAt(0));
 
 export const makePackageFetch = (): {

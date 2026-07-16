@@ -16,7 +16,7 @@ import type {
   EngineFetchRequest,
 } from "../engine/types";
 
-export type TypstWorkerFactory = () => WorkerHost;
+type TypstWorkerFactory = () => WorkerHost;
 
 export interface WorkerServiceInternals {
   createWorker?: TypstWorkerFactory;

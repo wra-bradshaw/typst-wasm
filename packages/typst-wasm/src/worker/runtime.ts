@@ -15,8 +15,6 @@ import type {
   EngineModule,
 } from "../engine/types";
 
-export type { MainToWorkerMessage, WorkerToMainMessage } from "./messages";
-
 type WorkerRpcErrorCode =
   | "COMPILER_NOT_INITIALIZED"
   | "INIT_FAILED"
