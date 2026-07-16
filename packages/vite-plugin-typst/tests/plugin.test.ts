@@ -22,14 +22,23 @@ const plugin = () =>
       createWorkerThread(
         new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
       ),
-    getCoreModule: async (name) =>
-      WebAssembly.compile(
+    coreModules: {
+      "engine.core.wasm": WebAssembly.compile(
         await readFile(
-          new URL(
-            import.meta.resolve(`typst-wasm/engine/${name}`),
-          ),
+          new URL(import.meta.resolve("typst-wasm/engine/engine.core.wasm")),
         ),
       ),
+      "engine.core2.wasm": WebAssembly.compile(
+        await readFile(
+          new URL(import.meta.resolve("typst-wasm/engine/engine.core2.wasm")),
+        ),
+      ),
+      "engine.core3.wasm": WebAssembly.compile(
+        await readFile(
+          new URL(import.meta.resolve("typst-wasm/engine/engine.core3.wasm")),
+        ),
+      ),
+    },
   });
 
 describe("vite-plugin-typst fixtures", () => {
@@ -87,7 +96,10 @@ describe("vite-plugin-typst fixtures", () => {
 
   test("reports Typst compile errors with source context", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "typst-vite-error-"));
-    await writeFile(path.join(root, "main.js"), 'import "./broken.typ?typst=html";');
+    await writeFile(
+      path.join(root, "main.js"),
+      'import "./broken.typ?typst=html";',
+    );
     await writeFile(path.join(root, "broken.typ"), "#let = invalid");
     try {
       await expect(buildFixture("basic", plugin(), { root })).rejects.toThrow(
