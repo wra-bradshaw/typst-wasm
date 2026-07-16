@@ -5,7 +5,7 @@ description: Compile Typst documents in Deno with typst-wasm.
 
 import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
-Deno uses the browser entry point, but it does not use Vite's `?url` imports. Resolve package assets with `import.meta.resolve`, fetch them, and adapt Deno's `Worker` to the `WorkerHost` interface.
+Deno uses the browser entry point. Resolve package assets with `import.meta.resolve` and fetch them; Deno's `Worker` API is compatible with the browser worker runtime.
 
 <Steps>
 
@@ -31,30 +31,12 @@ Deno uses the browser entry point, but it does not use Vite's `?url` imports. Re
 
     </Tabs>
 
-2.  **Adapt a Deno worker**
-
-    ```ts
-    import type { WorkerHost } from "npm:typst-wasm";
-
-    const createDenoWorker = (url: string | URL): WorkerHost => {
-      const worker = new Worker(url, { type: "module" });
-      return {
-        listen(onMessage, onError) {
-          worker.onmessage = (event) => onMessage(event.data);
-          worker.onerror = (event) => onError(event.error ?? event.message);
-        },
-        postMessage: (data) => worker.postMessage(data),
-        terminate: () => worker.terminate(),
-      };
-    };
-    ```
-
-3.  **Resolve assets and create the compiler**
+2.  **Resolve assets and create the compiler**
 
     ```ts
     import {
       createTypstCompiler,
-      type TypstCompilerOptions,
+      createWebWorker,
     } from "npm:typst-wasm/browser";
     const asset = (specifier: string) =>
       new URL(import.meta.resolve(specifier));
@@ -72,11 +54,11 @@ Deno uses the browser entry point, but it does not use Vite's `?url` imports. Re
           fetch(asset("typst-wasm/engine/engine.core3.wasm")),
         ),
       },
-      worker: () => createDenoWorker(asset("typst-wasm/worker/web-worker")),
+      worker: () => createWebWorker(asset("typst-wasm/worker/web-worker")),
     });
     ```
 
-4.  **Add a font and compile**
+3.  **Add a font and compile**
 
     ```ts
     try {
@@ -96,7 +78,7 @@ Deno uses the browser entry point, but it does not use Vite's `?url` imports. Re
     }
     ```
 
-5.  **Grant the required permissions**
+4.  **Grant the required permissions**
 
     ```sh
     deno run --allow-read --allow-net src/main.ts
@@ -106,6 +88,5 @@ Deno uses the browser entry point, but it does not use Vite's `?url` imports. Re
 
 <Aside type="note" title="Deno entry point">
   There is no separate `typst-wasm/deno` export. Deno uses `typst-wasm/browser`
-  because its worker API is compatible with the browser runtime after the
-  adapter above.
+  because its `Worker` API is compatible with the browser runtime.
 </Aside>
