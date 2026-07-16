@@ -7,12 +7,12 @@ import { Aside, CardGrid, LinkCard } from "@astrojs/starlight/components";
 
 `typst-wasm` provides two backends to help you compile Typst in any runtime:
 
-- The "workers" backend compiles your Typst in a separate worker. This backend is supported in most runtimes that support web workers or worker threads.
-- The "JSPI" backend compiles your Typst on the main thread, but it requires experimental JSPI (which has [limited availability](https://caniuse.com/wf-wasm-jspi)).
+- The `worker` backend compiles Typst in a separate worker. Configure a host with `typst-wasm/worker/browser` or `typst-wasm/worker/node`.
+- The `jspi` backend compiles Typst on the current thread, but it requires experimental JSPI (which has [limited availability](https://caniuse.com/wf-wasm-jspi)).
 
 Between the two backends we can support all major browsers engines (Chrome, Firefox, Safari) and all major server side runtimes (Node, Deno, Bun, workerd).
 
-Use the unified `typst-wasm` compiler API everywhere. Choose a host adapter only when configuring a worker: `typst-wasm/worker/node` for Node/Bun or `typst-wasm/worker/browser` for browsers.
+Use the unified `typst-wasm` compiler API everywhere. Choose a host adapter only when configuring a worker.
 
 <CardGrid>
   <LinkCard
@@ -28,7 +28,7 @@ Use the unified `typst-wasm` compiler API everywhere. Choose a host adapter only
   <LinkCard
     title="Deno"
     href="/typst-wasm/packages/typst-wasm/getting-started/deno/"
-    description="Use the browser entry point with Deno's Worker and asset APIs."
+    description="Use the root compiler API with Deno's browser-compatible Worker and asset APIs."
   />
   <LinkCard
     title="Cloudflare Workers"
@@ -44,6 +44,6 @@ Use the unified `typst-wasm` compiler API everywhere. Choose a host adapter only
 
 ## Runtime and deployment are separate
 
-The runtime determines which import and compiler backend to use. Your hosting provider determines how those assets and headers are deployed. See the [deployment guides](../deployment/) after completing a runtime guide.
+The runtime determines which compiler backend and worker adapter to use. Your hosting provider determines how those assets and headers are deployed. See the [deployment guides](../deployment/) after completing a runtime guide.
 
 For browser compilation without Vite, see [Use the browser without Vite](../how-to/browser-without-vite/).

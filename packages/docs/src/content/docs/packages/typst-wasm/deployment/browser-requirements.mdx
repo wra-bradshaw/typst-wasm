@@ -5,7 +5,7 @@ description: Configure browser headers and assets for typst-wasm.
 
 import { Aside, Steps } from "@astrojs/starlight/components";
 
-The browser worker backend uses `SharedArrayBuffer` and `Atomics.wait`. A production browser page must be cross-origin isolated for that backend to work.
+The browser worker backend uses growable `SharedArrayBuffer` and `Atomics.wait`. A production browser page must be cross-origin isolated for that backend to work.
 
 <Steps>
 

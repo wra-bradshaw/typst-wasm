@@ -112,7 +112,7 @@ Cloudflare Workers uses the `workerd` runtime. This is different from deploying 
 </Steps>
 
 <Aside type="caution" title="Do not use the browser setup here">
-  Do not import `typst-wasm`, create a Web Worker, or rely on
+  Do not import a worker adapter, create a Web Worker, or rely on
   `SharedArrayBuffer` headers in a server-side Worker. Those are browser-runtime
   concerns. For a browser compiler hosted by a separate frontend, follow the
   [browser deployment requirements](../browser-requirements/).

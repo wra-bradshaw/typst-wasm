@@ -5,7 +5,7 @@ description: Compile Typst documents in a browser using Vite and typst-wasm.
 
 import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
-This guide runs the compiler in a browser worker. Vite turns the worker, engine, and font imports into URLs that can be fetched at runtime.
+This guide runs the compiler in a browser worker. Vite turns the worker, core WASM, and font imports into URLs that can be fetched at runtime.
 
 <Aside type="caution" title="This is not the Vite Typst plugin">
   This guide uses Vite to bundle `typst-wasm` at runtime. If you want to import

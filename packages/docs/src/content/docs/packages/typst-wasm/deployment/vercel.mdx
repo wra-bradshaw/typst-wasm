@@ -32,7 +32,7 @@ For SSR, compile in a Node-compatible route or loader and import `typst-wasm`. C
 ```ts
 import { readFile } from "node:fs/promises";
 import { createTypstCompiler } from "typst-wasm";
-    import { createWorkerThread } from "typst-wasm/worker/node";
+import { createWorkerThread } from "typst-wasm/worker/node";
 
 const compiler = await createTypstCompiler({
   backend: "auto",
@@ -60,4 +60,4 @@ const compiler = await createTypstCompiler({
 });
 ```
 
-Dispose the compiler after the request or manage a carefully bounded application-level cache. Do not use the `workerd` entry point or assume Vercel Edge provides the same runtime guarantees as Cloudflare Workers.
+Dispose the compiler after the request or manage a carefully bounded application-level cache. Do not assume Vercel Edge provides the same runtime guarantees as Cloudflare Workers.

@@ -5,7 +5,7 @@ description: Compile Typst documents in Deno with typst-wasm.
 
 import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
-Deno uses the browser entry point. Resolve package assets with `import.meta.resolve` and fetch them; Deno's `Worker` API is compatible with the browser worker runtime.
+Deno uses the root compiler API with the browser worker adapter. Resolve package assets with `import.meta.resolve` and fetch them; Deno's `Worker` API is compatible with the browser worker runtime.
 
 <Steps>
 
@@ -34,9 +34,7 @@ Deno uses the browser entry point. Resolve package assets with `import.meta.reso
 2.  **Resolve assets and create the compiler**
 
     ```ts
-    import {
-      createTypstCompiler,
-    } from "npm:typst-wasm";
+    import { createTypstCompiler } from "npm:typst-wasm";
     import { createWebWorker } from "npm:typst-wasm/worker/browser";
     const asset = (specifier: string) =>
       new URL(import.meta.resolve(specifier));
@@ -86,7 +84,7 @@ Deno uses the browser entry point. Resolve package assets with `import.meta.reso
 
 </Steps>
 
-<Aside type="note" title="Deno entry point">
-  There is no separate `typst-wasm/deno` export. Deno uses `typst-wasm`
-  because its `Worker` API is compatible with the browser runtime.
+<Aside type="note" title="Deno imports">
+  Import the compiler from `npm:typst-wasm` and the worker host from
+  `npm:typst-wasm/worker/browser`. There is no separate Deno adapter.
 </Aside>

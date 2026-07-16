@@ -4,6 +4,7 @@ import starlight from "@astrojs/starlight";
 import { createStarlightTypeDocPlugin } from "starlight-typedoc";
 
 const [typstWasmTypeDoc, typstWasmApiSidebar] = createStarlightTypeDocPlugin();
+
 const [viteTypeDoc, viteApiSidebar] = createStarlightTypeDocPlugin();
 
 // https://astro.build/config
@@ -30,7 +31,7 @@ export default defineConfig({
           tsconfig: "./tsconfig.typedoc.json",
           output: "packages/typst-wasm/reference/api",
           sidebar: { label: "API reference", collapsed: true },
-          typeDoc: { disableSources: true },
+          typeDoc: { disableSources: true, sortEntryPoints: false },
         }),
         viteTypeDoc({
           entryPoints: ["./reference-entrypoints/vite-plugin.ts"],

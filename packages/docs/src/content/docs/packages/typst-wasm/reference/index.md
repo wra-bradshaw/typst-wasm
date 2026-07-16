@@ -3,19 +3,19 @@ title: typst-wasm API reference
 description: Typst compiler APIs for browser, server, and Cloudflare Worker runtimes.
 ---
 
-`typst-wasm` provides a JavaScript API for compiling Typst documents with WebAssembly.
+`typst-wasm` provides a JavaScript API for compiling Typst documents with WebAssembly. The compiler API is shared by every runtime; worker hosts are supplied by separate adapters.
 
-## Choose a runtime
+## Imports
 
-Prefer an explicit runtime subpath in application code:
+Import the compiler and backend utilities from the package root. Only import a worker adapter when using the worker backend:
 
-| Runtime            | Import               |
-| ------------------ | -------------------- |
-| Browser            | `typst-wasm` |
-| Node.js or Bun     | `typst-wasm`    |
-| Cloudflare Workers | `typst-wasm` |
+| Purpose                    | Import                      |
+| -------------------------- | --------------------------- |
+| Compiler API and types     | `typst-wasm`                |
+| Browser worker host        | `typst-wasm/worker/browser` |
+| Node.js or Bun worker host | `typst-wasm/worker/node`    |
 
-See the [API reference](/typst-wasm/packages/typst-wasm/reference/api/readme/) for the compiler API and worker host adapters.
+Cloudflare Workers uses the root compiler API with `backend: "jspi"` and does not need a worker adapter. Use the **API reference** section in the sidebar for the complete compiler API and host adapters.
 
 ## Guides
 

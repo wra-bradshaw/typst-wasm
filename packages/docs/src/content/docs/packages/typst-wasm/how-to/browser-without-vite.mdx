@@ -5,7 +5,7 @@ description: Load typst-wasm assets explicitly in a bundler-neutral browser appl
 
 import { Aside, Steps } from "@astrojs/starlight/components";
 
-This is an advanced setup. Unlike the Vite guide, you must publish the worker, engine, WASM, and font assets yourself and provide their URLs to the compiler.
+This is an advanced setup. Unlike the Vite guide, you must publish the worker, core WASM, and font assets yourself and provide their URLs to the compiler.
 
 <Aside type="caution" title="Prefer Vite when possible">
   Vite's `?worker&url` and `?url` imports handle asset copying and URL
@@ -20,14 +20,14 @@ This is an advanced setup. Unlike the Vite guide, you must publish the worker, e
    Install `typst-wasm` and `@typst-wasm/fonts`, then copy these package assets into your public asset directory:
 
    - `typst-wasm/worker/web-worker`
-   - the engine module and its core WASM files
+   - the core WASM files
    - the fonts your documents require
 
 2. **Create a module worker**
 
    ```ts
    import { createTypstCompiler } from "typst-wasm";
-    import { createWebWorker } from "typst-wasm/worker/browser";
+   import { createWebWorker } from "typst-wasm/worker/browser";
    const workerUrl = "/assets/typst-wasm/web-worker.js";
    const compiler = await createTypstCompiler({
      backend: "auto",

@@ -5,7 +5,7 @@ description: Compile Typst documents in Node.js or Bun.
 
 import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
-The Node entry point uses a worker thread when available and works with Bun's Node-compatible worker APIs. Use `typst-wasm` explicitly in server-side code.
+The compiler is imported from `typst-wasm`. The worker backend uses a Node/Bun host from `typst-wasm/worker/node`.
 
 <Steps>
 
@@ -112,9 +112,9 @@ The Node entry point uses a worker thread when available and works with Bun's No
 </Steps>
 
 <Aside type="tip" title="Bun">
-  Bun uses the same `typst-wasm` entry point and `createWorkerThread`
-  helper. You do not need a Bun-specific import. Use the Bun package-manager tab
-  above for installation.
+  Bun uses the same `typst-wasm` compiler entry point and
+  `typst-wasm/worker/node` adapter. You do not need a Bun-specific import. Use
+  the Bun package-manager tab above for installation.
 </Aside>
 
 For Vercel SSR, compile in a Node-compatible server route or loader. Do not use the Edge runtime; see [Vercel deployment](../../deployment/vercel/).

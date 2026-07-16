@@ -1,2 +1,6 @@
-/** Browser host adapter for `typst-wasm/worker/browser`. */
+/**
+ * Browser host adapter for `typst-wasm/worker/browser`.
+ *
+ * @module typst-wasm/worker/browser
+ */
 export * from "typst-wasm/worker/browser";

@@ -5,7 +5,7 @@ description: Compile Typst documents in the Cloudflare Workers runtime.
 
 import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
-Cloudflare Workers runs on `workerd`, not Node.js. Use the `workerd` entry point and JSPI. The worker backend is unavailable in this runtime, so do not create a Web Worker or configure browser isolation headers.
+Cloudflare Workers runs on `workerd`, not Node.js. Import the compiler from `typst-wasm` and use the `jspi` backend. The worker backend is unavailable in this runtime, so do not create a Web Worker or configure browser isolation headers.
 
 <Steps>
 
@@ -31,7 +31,7 @@ Cloudflare Workers runs on `workerd`, not Node.js. Use the `workerd` entry point
 
     </Tabs>
 
-2.  **Import the workerd engine and core modules**
+2.  **Import the compiler and core modules**
 
     ```ts
     import { createTypstCompiler } from "typst-wasm";
