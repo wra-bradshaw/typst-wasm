@@ -26,7 +26,7 @@ const plugin = () =>
       WebAssembly.compile(
         await readFile(
           new URL(
-            import.meta.resolve(`typst-wasm/engine/worker/${name}`),
+            import.meta.resolve(`typst-wasm/engine/${name}`),
           ),
         ),
       ),

@@ -23,10 +23,8 @@ export interface TypstPluginOptions {
   logger?: TypstCompilerOptions["logger"];
   /** Controls compiler library messages. */
   logLevel?: TypstCompilerOptions["logLevel"];
-  /** JCO-generated engine module for JSPI. */
-  engine?: TypstCompilerOptions["engine"];
-  /** Optional loader for precompiled core WASM modules. */
-  getCoreModule?: TypstCompilerOptions["getCoreModule"];
+  /** Precompiled core WASM modules. */
+  coreModules: TypstCompilerOptions["coreModules"];
   /** Worker factory passed to the compiler. */
   worker?: TypstCompilerOptions["worker"];
   /** Base URL used for Typst package downloads. */
@@ -192,8 +190,7 @@ export const typst = (options: TypstPluginOptions): Plugin => {
         fetch: options.fetch,
         logger: options.logger,
         logLevel: options.logLevel,
-        engine: options.engine,
-        getCoreModule: options.getCoreModule,
+        coreModules: options.coreModules,
         worker: options.worker,
         fileLoaders: [
           ...(options.fileLoaders ?? []),

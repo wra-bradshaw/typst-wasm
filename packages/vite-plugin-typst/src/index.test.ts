@@ -34,6 +34,11 @@ const worker = (() => ({
   postMessage: () => {},
   terminate: () => {},
 })) as TypstCompilerOptions["worker"];
+const coreModules = {
+  "engine.core.wasm": {} as WebAssembly.Module,
+  "engine.core2.wasm": {} as WebAssembly.Module,
+  "engine.core3.wasm": {} as WebAssembly.Module,
+};
 
 const makeConfig = (): ResolvedConfig =>
   ({
@@ -129,7 +134,7 @@ describe("typst vite plugin request matching", () => {
   test("only transforms explicit html queries", async () => {
     const compiler = makeCompiler();
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ worker }));
+    const plugin = resolvePlugin(typst({ coreModules, worker }));
     const { context } = makeTransformContext();
 
     expect(
@@ -149,7 +154,7 @@ describe("typst vite plugin request matching", () => {
   });
 
   test("rejects unsupported and ambiguous output queries", async () => {
-    const plugin = resolvePlugin(typst({ worker }));
+    const plugin = resolvePlugin(typst({ coreModules, worker }));
     const { context } = makeTransformContext();
 
     await expect(
@@ -175,6 +180,7 @@ describe("typst vite plugin compiler lifecycle", () => {
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
     const plugin = resolvePlugin(
       typst({
+        coreModules,
         worker,
         fetch,
         logger,
@@ -204,7 +210,7 @@ describe("typst vite plugin compiler lifecycle", () => {
   test("reuses one compiler for multiple Typst entry modules", async () => {
     const compiler = makeCompiler();
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ worker }));
+    const plugin = resolvePlugin(typst({ coreModules, worker }));
     const { context } = makeTransformContext();
 
     await transformTypst(
@@ -250,7 +256,7 @@ describe("typst vite plugin compiler lifecycle", () => {
       },
     ]);
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ worker }));
+    const plugin = resolvePlugin(typst({ coreModules, worker }));
     const { context, watchedFiles } = makeTransformContext();
 
     await transformTypst(
@@ -270,7 +276,7 @@ describe("typst vite plugin compiler lifecycle", () => {
   test("disposes the shared compiler when the plugin closes", async () => {
     const compiler = makeCompiler();
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ worker }));
+    const plugin = resolvePlugin(typst({ coreModules, worker }));
     const { context } = makeTransformContext();
 
     await transformTypst(
@@ -290,7 +296,7 @@ describe("typst vite plugin compiler lifecycle", () => {
       await configured.addFonts(new Uint8Array([1, 2, 3]));
     });
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ worker, configureCompiler }));
+    const plugin = resolvePlugin(typst({ coreModules, worker, configureCompiler }));
     const { context } = makeTransformContext();
 
     await transformTypst(
