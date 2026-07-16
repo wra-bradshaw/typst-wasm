@@ -23,21 +23,15 @@ const plugin = () =>
         new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
       ),
     coreModules: {
-      "engine.core.wasm": WebAssembly.compile(
-        await readFile(
-          new URL(import.meta.resolve("typst-wasm/engine/engine.core.wasm")),
-        ),
-      ),
-      "engine.core2.wasm": WebAssembly.compile(
-        await readFile(
-          new URL(import.meta.resolve("typst-wasm/engine/engine.core2.wasm")),
-        ),
-      ),
-      "engine.core3.wasm": WebAssembly.compile(
-        await readFile(
-          new URL(import.meta.resolve("typst-wasm/engine/engine.core3.wasm")),
-        ),
-      ),
+      "engine.core.wasm": readFile(
+        new URL(import.meta.resolve("typst-wasm/engine/engine.core.wasm")),
+      ).then(WebAssembly.compile),
+      "engine.core2.wasm": readFile(
+        new URL(import.meta.resolve("typst-wasm/engine/engine.core2.wasm")),
+      ).then(WebAssembly.compile),
+      "engine.core3.wasm": readFile(
+        new URL(import.meta.resolve("typst-wasm/engine/engine.core3.wasm")),
+      ).then(WebAssembly.compile),
     },
   });
 
