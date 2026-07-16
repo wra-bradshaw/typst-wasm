@@ -5,7 +5,7 @@ import {
   selectAutomaticBackendKind,
   supportsJspiBackend,
   supportsWorkerBackend,
-  type WorkerHost,
+  createWebWorker,
 } from "typst-wasm/browser";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
 import type {
@@ -15,18 +15,6 @@ import type {
 import type { IntegrationContext } from "../spec/types.ts";
 
 const asset = (specifier: string) => new URL(import.meta.resolve(specifier));
-
-const denoWorker = (url: string | URL): WorkerHost => {
-  const worker = new Worker(url, { type: "module" });
-  return {
-    listen: (onMessage, onError) => {
-      worker.onmessage = (event) => onMessage(event.data);
-      worker.onerror = (event) => onError(event.error ?? event.message);
-    },
-    postMessage: (data) => worker.postMessage(data),
-    terminate: () => worker.terminate(),
-  };
-};
 
 export const makeDenoContext = async (
   backend: IntegrationBackend,
@@ -51,7 +39,7 @@ export const makeDenoContext = async (
       fetch(asset("typst-wasm/engine/engine.core3.wasm")),
     ),
   };
-  const worker = () => denoWorker(asset("typst-wasm/worker/web-worker"));
+  const worker = () => createWebWorker(asset("typst-wasm/worker/web-worker"));
   const createCompiler = (options: IntegrationCompilerOptions = {}) =>
     createTypstCompiler({
       ...options,
