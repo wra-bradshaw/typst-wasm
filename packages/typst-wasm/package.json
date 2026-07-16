@@ -50,16 +50,13 @@
       "default": "./dist/engine/jspi/engine.js"
     },
     "./engine/types": "./dist/engine/jspi/interfaces/typst-engine-types.d.ts",
-    "./engine/engine.core.wasm": "./dist/engine/jspi/engine.core.wasm",
-    "./engine/engine.core2.wasm": "./dist/engine/jspi/engine.core2.wasm",
-    "./engine/engine.core3.wasm": "./dist/engine/jspi/engine.core3.wasm",
+    "./engine/engine.core.wasm": "./dist/engine/engine.core.wasm",
+    "./engine/engine.core2.wasm": "./dist/engine/engine.core2.wasm",
+    "./engine/engine.core3.wasm": "./dist/engine/engine.core3.wasm",
     "./engine/worker": {
       "types": "./dist/engine/worker/engine.d.ts",
       "default": "./dist/engine/worker/engine.js"
-    },
-    "./engine/worker/engine.core.wasm": "./dist/engine/worker/engine.core.wasm",
-    "./engine/worker/engine.core2.wasm": "./dist/engine/worker/engine.core2.wasm",
-    "./engine/worker/engine.core3.wasm": "./dist/engine/worker/engine.core3.wasm"
+    }
   },
   "files": [
     "dist"

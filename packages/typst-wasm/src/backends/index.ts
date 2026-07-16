@@ -69,6 +69,7 @@ export const createRuntimeBackend = (
     backend === "auto"
       ? selectAutomaticBackendKind(runtime, compilerOptions)
       : backend;
+  const coreModules = compilerOptions.coreModules;
 
   switch (selected) {
     case "worker":
@@ -79,17 +80,13 @@ export const createRuntimeBackend = (
       }
       return new WorkerService(options.fileLoaderManager, {
         createWorker: () => runtime.createWorker(compilerOptions),
-        getCoreModule: compilerOptions.getCoreModule,
+        coreModules,
         logger: options.logger,
       });
     case "jspi":
-      if (!compilerOptions.engine) {
-        throw new Error("JSPI backend requires engine");
-      }
       return new DirectService(
         options.fileLoaderManager,
-        compilerOptions.engine,
-        compilerOptions.getCoreModule,
+        coreModules,
       );
     case "none":
       throw new Error(

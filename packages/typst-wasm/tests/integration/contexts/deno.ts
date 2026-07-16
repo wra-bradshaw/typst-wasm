@@ -5,12 +5,13 @@ import {
   selectAutomaticBackendKind,
   supportsJspiBackend,
   supportsWorkerBackend,
-  type TypstCompilerOptions,
   type WorkerHost,
 } from "typst-wasm/browser";
-import * as jspiEngine from "typst-wasm/engine";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
-import type { IntegrationBackend } from "../spec/types.ts";
+import type {
+  IntegrationBackend,
+  IntegrationCompilerOptions,
+} from "../spec/types.ts";
 import type { IntegrationContext } from "../spec/types.ts";
 
 const asset = (specifier: string) => new URL(import.meta.resolve(specifier));
@@ -42,31 +43,27 @@ export const makeDenoContext = async (
   const getCoreModule = async (name: string) =>
     WebAssembly.compile(
       await (
-        await fetch(asset(`typst-wasm/engine/worker/${name}`))
+        await fetch(asset(`typst-wasm/engine/${name}`))
       ).arrayBuffer(),
     );
   const worker = () => denoWorker(asset("typst-wasm/worker/web-worker"));
-  const createCompiler = (options: TypstCompilerOptions = {}) =>
+  const createCompiler = (options: IntegrationCompilerOptions = {}) =>
     createTypstCompiler({
       ...options,
       logger: options.logger,
       backend: options.backend ?? backend,
-      engine:
-        options.engine ??
-        (options.backend === "jspi" || backend === "jspi"
-          ? jspiEngine
-          : undefined),
       getCoreModule,
       worker: options.worker ?? worker,
       fetch: options.fetch ?? fixture.fetch,
       packageCache: options.packageCache ?? fixture.packageCache,
       packageBaseUrl: options.packageBaseUrl ?? "https://fixture.test",
     });
-  const selectBackend = (options: TypstCompilerOptions = {}) => {
+  const selectBackend = (options: IntegrationCompilerOptions = {}) => {
     if (options.backend === "worker")
       return supportsWorkerBackend({
         ...options,
         worker: options.worker ?? worker,
+        getCoreModule,
       })
         ? "worker"
         : "none";
@@ -75,6 +72,7 @@ export const makeDenoContext = async (
     return selectAutomaticBackendKind({
       ...options,
       worker: options.worker ?? worker,
+      getCoreModule,
     });
   };
   return {

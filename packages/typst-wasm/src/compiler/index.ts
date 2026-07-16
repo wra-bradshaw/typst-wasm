@@ -181,6 +181,9 @@ export const createTypstCompilerWithRuntime = async (
   options: TypstCompilerOptions,
   runtime: TypstRuntime,
 ): Promise<TypstCompiler> => {
+  if (!options.coreModules) {
+    throw new Error("typst-wasm requires coreModules");
+  }
   const logger = resolveLogger(options.logger, options.logLevel);
   const packageManager = new PackageManager({
     fetch: options.fetch,

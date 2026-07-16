@@ -86,7 +86,6 @@ const fetchErrorForCode = (code: SharedMemoryCommunicationError): never => {
 export const installTypstWorkerRuntime = (
   port: WorkerPort,
   loadEngine: () => Promise<EngineModule>,
-  requireCoreModules = false,
 ): void => {
   let compiler: EngineCompiler | null = null;
   let sharedMemoryCommunication: SharedMemoryCommunication | null = null;
@@ -187,17 +186,15 @@ export const installTypstWorkerRuntime = (
         try {
           const engine = await loadEngine();
           const coreModules = request.payload.coreModules;
-          if (requireCoreModules && !coreModules) {
+          if (!coreModules) {
             throw new Error("Worker requires engine core modules");
           }
           const root = await engine.instantiate(
-            coreModules
-              ? (name) => {
-                  const module = coreModules[name];
-                  if (!module) throw new Error(`Unknown core module: ${name}`);
-                  return module;
-                }
-              : undefined,
+            (name) => {
+              const module = coreModules[name];
+              if (!module) throw new Error(`Unknown core module: ${name}`);
+              return module;
+            },
             {
               "typst:engine/host": {
                 fetch: hostFetch,

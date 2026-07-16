@@ -16,7 +16,11 @@ const makeRuntime = (worker: boolean, jspi: boolean): TypstRuntime => ({
 });
 
 const options = {
-  engine: { instantiate: () => ({ api: { Compiler: class {} } }) },
+  coreModules: {
+    "engine.core.wasm": {} as WebAssembly.Module,
+    "engine.core2.wasm": {} as WebAssembly.Module,
+    "engine.core3.wasm": {} as WebAssembly.Module,
+  },
 };
 const compilerOptions = options as unknown as TypstCompilerOptions;
 
@@ -55,16 +59,5 @@ describe("compiler backend selection", () => {
         compilerOptions,
       ),
     ).toThrow("Worker backend requires worker");
-  });
-
-  it("requires an engine when the JSPI backend is requested", () => {
-    expect(() =>
-      createRuntimeBackend(
-        "jspi",
-        { fileLoaderManager: {} as never },
-        makeRuntime(false, true),
-        {} as TypstCompilerOptions,
-      ),
-    ).toThrow("JSPI backend requires engine");
   });
 });

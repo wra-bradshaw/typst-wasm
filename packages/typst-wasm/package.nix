@@ -85,9 +85,16 @@ pkgs.stdenvNoCC.mkDerivation {
     export COMPONENT_PATH="${wasmArtifacts}/component.wasm"
     pnpm --dir ${packageDir} transpile:engine:worker
     pnpm --dir ${packageDir} transpile:engine:jspi
+    for name in engine.core.wasm engine.core2.wasm engine.core3.wasm; do
+      cmp "packages/typst-wasm/src/engine/generated/jspi/$name" \
+        "packages/typst-wasm/src/engine/generated/worker/$name"
+    done
     pnpm --dir ${packageDir} exec tsdown
     mkdir -p packages/typst-wasm/dist/engine
     cp -R packages/typst-wasm/src/engine/generated/. packages/typst-wasm/dist/engine/
+    cp packages/typst-wasm/src/engine/generated/jspi/engine.core*.wasm packages/typst-wasm/dist/engine/
+    rm -f packages/typst-wasm/dist/engine/jspi/engine.core*.wasm
+    rm -f packages/typst-wasm/dist/engine/worker/engine.core*.wasm
     runHook postBuild
   '';
 

@@ -6,16 +6,20 @@ import {
   CompilerNotInitializedError,
   WorkerError,
 } from "../errors";
+import * as jspiEngineModule from "typst-wasm/engine";
 import type { FileLoaderManager } from "../files/loaders";
 import type { FontInput } from "../compiler/types";
+import { getCoreModule, resolveCoreModules } from "../engine/core-modules";
 import type {
+  CoreModules,
   EngineCompileOptions,
   EngineCompileSuccess,
   EngineCompiler,
-  EngineCoreModuleLoader,
   EngineHost,
   EngineModule,
 } from "../engine/types";
+
+const jspiEngine: EngineModule = jspiEngineModule;
 
 const toFetchError = (error: unknown): never => {
   if (error instanceof FileNotFoundError) throw { tag: "not-found" };
@@ -38,8 +42,7 @@ export class DirectService {
 
   constructor(
     private readonly fileLoaderManager: FileLoaderManager,
-    private readonly engine: EngineModule,
-    private readonly getCoreModule?: EngineCoreModuleLoader,
+    private readonly coreModules: CoreModules,
   ) {}
 
   async init(): Promise<void> {
@@ -129,7 +132,8 @@ export class DirectService {
       today: () => undefined,
     };
 
-    const root = await this.engine.instantiate(this.getCoreModule, {
+    const coreModules = await resolveCoreModules(this.coreModules);
+    const root = await jspiEngine.instantiate(getCoreModule(coreModules), {
       "typst:engine/host": host,
     });
     this.compiler = new root.api.Compiler();

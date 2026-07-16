@@ -9,6 +9,10 @@ export type IntegrationRuntime =
   | "webkit";
 export type IntegrationBackend = "worker" | "jspi";
 export type IntegrationCell = `${IntegrationRuntime}:${IntegrationBackend}`;
+export type IntegrationCompilerOptions = Omit<
+  TypstCompilerOptions,
+  "getCoreModule"
+> & { getCoreModule?: TypstCompilerOptions["getCoreModule"] };
 
 export type IntegrationError = {
   name: string;
@@ -34,14 +38,16 @@ export type IntegrationContext = {
   selectedBackend: IntegrationBackend;
   /** Observe backend selection without constructing a compiler. */
   selectBackend: (
-    options?: TypstCompilerOptions,
+    options?: IntegrationCompilerOptions,
   ) => IntegrationBackend | "none";
   /** Verify an explicitly unavailable backend rejects instead of falling back. */
   expectUnsupportedBackend: () => Promise<void>;
-  createCompiler: (options?: TypstCompilerOptions) => Promise<TypstCompiler>;
+  createCompiler: (
+    options?: IntegrationCompilerOptions,
+  ) => Promise<TypstCompiler>;
   withCompiler: <T>(
     run: (compiler: TypstCompiler) => Promise<T>,
-    options?: TypstCompilerOptions,
+    options?: IntegrationCompilerOptions,
   ) => Promise<T>;
   fetch: typeof fetch;
   fonts: readonly Uint8Array[];

@@ -8,10 +8,11 @@ import type { WorkerHost } from "../worker/host";
 import type { TypstWorkerProtocol } from "../worker/protocol";
 import { makeRpcClient, type RpcClient } from "../worker/rpc";
 import { makeWorkerTransport, type WorkerTransport } from "../worker/transport";
+import { resolveCoreModules } from "../engine/core-modules";
 import type {
   EngineCompileOptions,
   EngineCompileSuccess,
-  EngineCoreModuleLoader,
+  CoreModules,
   EngineFetchRequest,
 } from "../engine/types";
 
@@ -19,7 +20,7 @@ export type TypstWorkerFactory = () => WorkerHost;
 
 export interface WorkerServiceInternals {
   createWorker?: TypstWorkerFactory;
-  getCoreModule?: EngineCoreModuleLoader;
+  coreModules: CoreModules;
   logger?: ResolvedLogger;
 }
 
@@ -32,7 +33,7 @@ export class WorkerService {
 
   constructor(
     fileLoaderManager: FileLoaderManager,
-    internals: WorkerServiceInternals = {},
+    internals: WorkerServiceInternals,
   ) {
     if (!internals.createWorker) {
       throw new Error("WorkerService requires a worker factory");
@@ -70,22 +71,9 @@ export class WorkerService {
     );
 
     this.initWorker = async () => {
-      const coreModuleNames = [
-        "engine.core.wasm",
-        "engine.core2.wasm",
-        "engine.core3.wasm",
-      ];
-      const getCoreModule = internals.getCoreModule;
-      const coreModules = getCoreModule
-        ? Object.fromEntries(
-            await Promise.all(
-              coreModuleNames.map(
-                async (name) => [name, await getCoreModule(name)] as const,
-              ),
-            ),
-          )
-        : undefined;
+      const coreModules = await resolveCoreModules(internals.coreModules);
 
+      this.assertNotDisposed();
       await this.rpcClient.call("init", {
         sharedMemoryCommunication: fetchBridge.sharedMemoryCommunication,
         coreModules,

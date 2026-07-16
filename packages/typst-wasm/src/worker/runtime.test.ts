@@ -52,6 +52,12 @@ const engine = (compiler: EngineCompiler): EngineModule => ({
   }),
 });
 
+const coreModules = {
+  "engine.core.wasm": {} as WebAssembly.Module,
+  "engine.core2.wasm": {} as WebAssembly.Module,
+  "engine.core3.wasm": {} as WebAssembly.Module,
+};
+
 const request = (kind: string, requestId: number, payload?: unknown) => ({
   kind,
   requestId,
@@ -68,6 +74,26 @@ const response = async (
 };
 
 describe("installTypstWorkerRuntime", () => {
+  it("requires core modules when configured to do so", async () => {
+    const port = makePort();
+    installTypstWorkerRuntime(port, async () => engine(compilerWithSpies()));
+
+    expect(
+      await response(
+        port,
+        request("init", 1, {
+          sharedMemoryCommunication: new SharedMemoryCommunication(),
+        }),
+      ),
+    ).toMatchObject({
+      requestId: 1,
+      error: {
+        code: "INIT_FAILED",
+        cause: { message: "Worker requires engine core modules" },
+      },
+    });
+  });
+
   it("reports commands before initialization and ignores unknown messages", async () => {
     const port = makePort();
     installTypstWorkerRuntime(port, async () => engine(compilerWithSpies()));
@@ -109,7 +135,10 @@ describe("installTypstWorkerRuntime", () => {
     expect(
       await response(
         port,
-        request("init", 10, { sharedMemoryCommunication: communication }),
+        request("init", 10, {
+          sharedMemoryCommunication: communication,
+          coreModules,
+        }),
       ),
     ).toEqual({ requestId: 10, result: undefined });
 
@@ -175,6 +204,7 @@ describe("installTypstWorkerRuntime", () => {
         port,
         request("init", 20, {
           sharedMemoryCommunication: new SharedMemoryCommunication(),
+          coreModules,
         }),
       );
       expect(result).toMatchObject({
@@ -195,6 +225,7 @@ describe("installTypstWorkerRuntime", () => {
       port,
       request("init", 30, {
         sharedMemoryCommunication: new SharedMemoryCommunication(),
+        coreModules,
       }),
     );
     expect(await response(port, request("clear_files", 31))).toEqual({

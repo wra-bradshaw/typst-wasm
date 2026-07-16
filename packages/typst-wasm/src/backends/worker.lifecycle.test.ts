@@ -10,10 +10,17 @@ const workerState: FakeWorkerState = {
   terminateCount: 0,
 };
 
-const makeService = async () => {
+const makeService = async (
+  coreModules = {
+    "engine.core.wasm": {} as WebAssembly.Module,
+    "engine.core2.wasm": {} as WebAssembly.Module,
+    "engine.core3.wasm": {} as WebAssembly.Module,
+  },
+) => {
   const { WorkerService } = await import("./worker");
   return new WorkerService(new FileLoaderManager([]), {
     createWorker: makeFakeWorkerFactory(workerState),
+    coreModules,
   });
 };
 
@@ -39,6 +46,29 @@ describe("worker service lifecycle", () => {
     };
     expect(initMessage.kind).toBe("init");
     expect(initMessage.payload).toHaveProperty("sharedMemoryCommunication");
+    await workerService.dispose();
+  });
+
+  it("loads and sends all core modules during initialization", async () => {
+    const modules = {
+      "engine.core.wasm": {} as WebAssembly.Module,
+      "engine.core2.wasm": Promise.resolve({} as WebAssembly.Module),
+      "engine.core3.wasm": {} as WebAssembly.Module,
+    };
+    const workerService = await makeService(modules);
+
+    await workerService.init();
+
+    expect(workerState.initMessages[0]).toMatchObject({
+      kind: "init",
+      payload: {
+        coreModules: {
+          "engine.core.wasm": modules["engine.core.wasm"],
+          "engine.core2.wasm": await modules["engine.core2.wasm"],
+          "engine.core3.wasm": modules["engine.core3.wasm"],
+        },
+      },
+    });
     await workerService.dispose();
   });
 
@@ -117,6 +147,7 @@ describe("worker service lifecycle", () => {
     const workerService = await makeService();
     workerState.autoRespond = false;
     const initialization = workerService.init();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
     workerState.emitError?.(new Error("worker crashed"));
     await expect(initialization).rejects.toThrow("Worker command failed: init");
@@ -128,9 +159,7 @@ describe("worker service lifecycle", () => {
     workerState.autoRespond = false;
     const initialization = workerService.init();
     await workerService.dispose();
-    await expect(initialization).rejects.toMatchObject({
-      cause: expect.objectContaining({ message: "Compiler has been disposed" }),
-    });
+    await expect(initialization).rejects.toThrow("Compiler has been disposed");
 
     const second = await makeService();
     workerState.autoRespond = true;

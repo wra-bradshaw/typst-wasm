@@ -64,6 +64,15 @@ export interface EngineRoot {
   };
 }
 
+export type CoreModuleName =
+  | "engine.core.wasm"
+  | "engine.core2.wasm"
+  | "engine.core3.wasm";
+
+export type CoreModules = Readonly<
+  Record<CoreModuleName, WebAssembly.Module | Promise<WebAssembly.Module>>
+>;
+
 export type EngineCoreModuleLoader = (
   name: string,
 ) => WebAssembly.Module | Promise<WebAssembly.Module>;

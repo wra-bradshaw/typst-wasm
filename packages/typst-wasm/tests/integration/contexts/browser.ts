@@ -5,9 +5,12 @@ import {
   supportsJspiBackend,
   supportsWorkerBackend,
 } from "typst-wasm/browser";
-import * as jspiEngine from "typst-wasm/engine";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
-import type { IntegrationBackend, IntegrationRuntime } from "../spec/types.ts";
+import type {
+  IntegrationBackend,
+  IntegrationCompilerOptions,
+  IntegrationRuntime,
+} from "../spec/types.ts";
 import type { IntegrationContext } from "../spec/types.ts";
 
 export type BrowserAssets = {
@@ -38,17 +41,12 @@ export const makeBrowserContext = async (
   const worker = () =>
     createWebWorker(assets?.worker ?? asset("worker/web-worker.js"));
   const createCompiler = (
-    options: Parameters<typeof createTypstCompiler>[0] = {},
+    options: IntegrationCompilerOptions = {},
   ) =>
     createTypstCompiler({
       ...options,
       logger: options.logger,
       backend: options.backend ?? backend,
-      engine:
-        options.engine ??
-        (options.backend === "jspi" || backend === "jspi"
-          ? jspiEngine
-          : undefined),
       getCoreModule,
       worker: options.worker ?? worker,
       fetch: options.fetch ?? fixture.fetch,
@@ -56,12 +54,13 @@ export const makeBrowserContext = async (
       packageBaseUrl: options.packageBaseUrl ?? "https://fixture.test",
     });
   const selectBackend = (
-    options: Parameters<typeof createTypstCompiler>[0] = {},
+    options: IntegrationCompilerOptions = {},
   ) =>
     options.backend === "worker"
       ? supportsWorkerBackend({
           ...options,
           worker: options.worker ?? worker,
+          getCoreModule,
         })
         ? "worker"
         : "none"
@@ -72,6 +71,7 @@ export const makeBrowserContext = async (
         : selectAutomaticBackendKind({
             ...options,
             worker: options.worker ?? worker,
+            getCoreModule,
           });
   return {
     runtime,

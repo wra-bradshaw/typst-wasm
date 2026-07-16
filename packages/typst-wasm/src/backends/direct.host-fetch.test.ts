@@ -1,7 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { FileLoaderManager } from "../files/loaders";
 import type { TypstFileLoader } from "../compiler/types";
 import type { EngineImports, EngineModule } from "../engine/types";
+
+let mockEngine = {} as EngineModule;
+vi.mock("typst-wasm/engine", () => ({
+  instantiate: (...args: any[]) =>
+    (mockEngine.instantiate as (...args: any[]) => unknown)(...args),
+}));
 
 const loader: TypstFileLoader = async (request) =>
   request.path === "shared.typ"
@@ -31,13 +37,13 @@ describe("DirectService host fetch routing", () => {
         },
       }),
     } as unknown as EngineModule;
+    mockEngine = engine;
     const { DirectService } = await import("./direct");
-    const getCoreModule = () => new WebAssembly.Module(new Uint8Array());
-    const service = new DirectService(
-      new FileLoaderManager([loader]),
-      engine,
-      getCoreModule,
-    );
+    const service = new DirectService(new FileLoaderManager([loader]), {
+      "engine.core.wasm": {} as WebAssembly.Module,
+      "engine.core2.wasm": Promise.resolve({} as WebAssembly.Module),
+      "engine.core3.wasm": {} as WebAssembly.Module,
+    });
 
     await service.init();
     await service.compile({ format: "html" });
@@ -47,26 +53,30 @@ describe("DirectService host fetch routing", () => {
     await service.dispose();
   });
 
-  it("forwards getCoreModule to the JCO engine unchanged", async () => {
-    const getCoreModule = (name: string) => {
-      throw new Error(`unexpected core module: ${name}`);
-    };
-    let received: unknown;
+  it("passes resolved core modules to the engine loader", async () => {
+    let received: ((name: string) => WebAssembly.Module) | undefined;
     const engine = {
-      instantiate: async (loader: unknown) => {
+      instantiate: async (loader: (name: string) => WebAssembly.Module) => {
         received = loader;
         return { api: { Compiler: class {} } };
       },
     } as unknown as EngineModule;
+    mockEngine = engine;
     const { DirectService } = await import("./direct");
-    const service = new DirectService(
-      new FileLoaderManager([]),
-      engine,
-      getCoreModule,
-    );
+    const modules = {
+      "engine.core.wasm": {} as WebAssembly.Module,
+      "engine.core2.wasm": Promise.resolve({} as WebAssembly.Module),
+      "engine.core3.wasm": {} as WebAssembly.Module,
+    };
+    const service = new DirectService(new FileLoaderManager([]), modules);
 
     await service.init();
-    expect(received).toBe(getCoreModule);
+    expect(received?.("engine.core2.wasm")).toBe(
+      await modules["engine.core2.wasm"],
+    );
+    await expect(
+      Promise.resolve().then(() => received?.("unknown")),
+    ).rejects.toThrow("Unknown core module: unknown");
     await service.dispose();
   });
 });

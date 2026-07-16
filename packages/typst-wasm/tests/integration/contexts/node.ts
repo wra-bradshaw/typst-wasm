@@ -6,9 +6,12 @@ import {
   supportsJspiBackend,
   supportsWorkerBackend,
 } from "typst-wasm/node";
-import * as jspiEngine from "typst-wasm/engine";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
-import type { IntegrationBackend, IntegrationRuntime } from "../spec/types.ts";
+import type {
+  IntegrationBackend,
+  IntegrationCompilerOptions,
+  IntegrationRuntime,
+} from "../spec/types.ts";
 import type { IntegrationContext } from "../spec/types.ts";
 
 const readAsset = async (specifier: string) =>
@@ -23,26 +26,19 @@ export const makeNodeContext = async (
     fontFilenames.map((name) => readAsset(`@typst-wasm/fonts/${name}`)),
   );
   const getCoreModule = async (name: string) =>
-    WebAssembly.compile(await readAsset(`typst-wasm/engine/worker/${name}`));
+    WebAssembly.compile(await readAsset(`typst-wasm/engine/${name}`));
   const defaultWorker = () =>
     createWorkerThread(
       new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
     );
 
   const createCompiler = (
-    options: Parameters<typeof createTypstCompiler>[0] = {},
+    options: IntegrationCompilerOptions = {},
   ) =>
     createTypstCompiler({
       ...options,
       logger: options.logger,
       backend: options.backend ?? backend,
-      engine:
-        options.engine ??
-        (options.backend === "jspi" ||
-        (options.backend === "auto" && backend === "jspi") ||
-        (options.backend === undefined && backend === "jspi")
-          ? jspiEngine
-          : undefined),
       getCoreModule,
       fetch: options.fetch ?? packageFixture.fetch,
       packageCache: options.packageCache ?? packageFixture.packageCache,
@@ -53,14 +49,18 @@ export const makeNodeContext = async (
         : {}),
     });
   const selectBackend = (
-    options: Parameters<typeof createTypstCompiler>[0] = {},
+    options: IntegrationCompilerOptions = {},
   ) => {
     const effective =
       options.backend === "worker" ||
       (options.backend === undefined && backend === "worker") ||
       (options.backend === "auto" && backend === "worker")
-        ? { ...options, worker: options.worker ?? defaultWorker }
-        : options;
+        ? {
+            ...options,
+            worker: options.worker ?? defaultWorker,
+            getCoreModule,
+          }
+        : { ...options, getCoreModule };
     if (effective.backend === "worker")
       return supportsWorkerBackend(effective) ? "worker" : "none";
     if (effective.backend === "jspi")

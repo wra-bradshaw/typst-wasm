@@ -1,12 +1,19 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "tsdown";
 import workerPlugins from "tsdown-plugin-worker";
 
-const external = [
-  "typst-wasm/engine",
-  "typst-wasm/engine/worker",
-  "node:fs/promises",
-  "node:worker_threads",
-];
+const packageRoot = dirname(fileURLToPath(import.meta.url));
+const generatedJspi = resolve(
+  packageRoot,
+  "src/engine/generated/jspi/engine.js",
+);
+const generatedWorker = resolve(
+  packageRoot,
+  "src/engine/generated/worker/engine.js",
+);
+
+const external = ["node:fs/promises", "node:worker_threads"];
 
 const common = {
   platform: "neutral" as const,
@@ -36,6 +43,16 @@ export default defineConfig([
       "index.browser": "./src/index.browser.ts",
       "index.workerd": "./src/index.workerd.ts",
     },
+    noExternal: ["typst-wasm/engine"],
+    inputOptions: {
+      resolve: {
+        alias: {
+          "typst-wasm/engine": generatedJspi,
+        },
+        mainFields: ["module", "main"],
+      },
+    },
+    clean: true,
     plugins: [
       workerPlugins({
         format: "es",
@@ -44,12 +61,19 @@ export default defineConfig([
         },
       }),
     ],
-    clean: false,
   },
   {
     ...common,
     external: ["node:worker_threads", "node:fs/promises"],
     noExternal: ["typst-wasm/engine/worker"],
+    inputOptions: {
+      resolve: {
+        alias: {
+          "typst-wasm/engine/worker": generatedWorker,
+        },
+        mainFields: ["module", "main"],
+      },
+    },
     entry: {
       "worker/worker-thread": "./src/worker/node.ts",
     },
@@ -57,7 +81,16 @@ export default defineConfig([
   },
   {
     ...common,
-    external: ["typst-wasm/engine/worker"],
+    external: ["node:fs/promises"],
+    noExternal: ["typst-wasm/engine/worker"],
+    inputOptions: {
+      resolve: {
+        alias: {
+          "typst-wasm/engine/worker": generatedWorker,
+        },
+        mainFields: ["module", "main"],
+      },
+    },
     entry: {
       "worker/web-worker": "./src/worker/browser.ts",
     },

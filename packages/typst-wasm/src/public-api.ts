@@ -23,7 +23,7 @@ export type {
   TypstLogLevel,
   TypstLogger,
 } from "./compiler/types";
-export type { EngineCoreModuleLoader, EngineModule } from "./engine/types";
+export type { CoreModuleName, CoreModules } from "./engine/types";
 export type { WorkerHost } from "./worker/host";
 export type { PackageCache } from "./files";
 export {

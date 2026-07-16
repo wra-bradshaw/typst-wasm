@@ -44,7 +44,26 @@ try {
   for (const [relativePath, content] of Object.entries(files)) {
     const destination = join(outDir, relativePath);
     await mkdir(dirname(destination), { recursive: true });
-    await writeFile(destination, content);
+
+    let output: string | Uint8Array = content;
+    if (relativePath === "engine.js") {
+      let text =
+        typeof content === "string"
+          ? content
+          : new TextDecoder().decode(content as Uint8Array);
+      const fallback =
+        /if \(!getCoreModule\)[^\n]*fetchCompile[^\n]*/;
+      if (!fallback.test(text)) {
+        throw new Error("JCO engine fallback loader changed unexpectedly");
+      }
+      text = text.replace(
+        fallback,
+        'if (!getCoreModule) throw new TypeError("getCoreModule is required");',
+      );
+      output = text;
+    }
+
+    await writeFile(destination, output);
   }
   console.log(`${backend} transpile complete:`, Object.keys(files).join(", "));
 } catch (error) {

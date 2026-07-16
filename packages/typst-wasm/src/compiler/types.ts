@@ -2,11 +2,9 @@ import type { PackageCache } from "../files";
 import type {
   CompileFormat,
   Diagnostic,
-  EngineCoreModuleLoader,
-  EngineModule,
+  CoreModules,
   FetchedFile,
   FetchRequest,
-  FileKind,
   LoadedFile,
   PdfStandard,
 } from "../engine/types";
@@ -122,10 +120,8 @@ export interface TypstCompilerOptions {
   logger?: TypstLogger;
   /** Backend to use; `auto` selects the best available backend. */
   backend?: "auto" | "worker" | "jspi";
-  /** JCO-generated engine module used by the JSPI backend. */
-  engine?: EngineModule;
-  /** Overrides the core WebAssembly module lookup. */
-  getCoreModule?: EngineCoreModuleLoader;
+  /** Core WebAssembly modules required by the Typst engine. */
+  coreModules: CoreModules;
   /** Creates the host used by the worker backend. */
   worker?: () => WorkerHost;
   /** Custom loaders tried before the built-in package and URL loaders. */

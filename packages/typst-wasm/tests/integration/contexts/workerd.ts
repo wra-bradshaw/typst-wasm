@@ -4,9 +4,11 @@ import {
   supportsJspiBackend,
   supportsWorkerBackend,
 } from "typst-wasm/workerd";
-import * as jspiEngine from "typst-wasm/engine";
 import { fontFilenames, makePackageFetch } from "../spec/fixtures.ts";
-import type { IntegrationContext } from "../spec/types.ts";
+import type {
+  IntegrationCompilerOptions,
+  IntegrationContext,
+} from "../spec/types.ts";
 
 export type WorkerdAssets = {
   coreModules: Readonly<Record<string, WebAssembly.Module>>;
@@ -24,30 +26,29 @@ export const makeWorkerdContext = async (
     return module;
   };
   const createCompiler = (
-    options: Parameters<typeof createTypstCompiler>[0] = {},
+    options: IntegrationCompilerOptions = {},
   ) =>
     createTypstCompiler({
       ...options,
       logger: options.logger,
       backend: options.backend ?? "jspi",
-      engine: options.engine ?? jspiEngine,
       getCoreModule,
       fetch: options.fetch ?? fixture.fetch,
       packageCache: options.packageCache ?? fixture.packageCache,
       packageBaseUrl: options.packageBaseUrl ?? "https://fixture.test",
     });
   const selectBackend = (
-    options: Parameters<typeof createTypstCompiler>[0] = {},
+    options: IntegrationCompilerOptions = {},
   ) =>
     options.backend === "worker"
-      ? supportsWorkerBackend(options)
+      ? supportsWorkerBackend({ ...options, getCoreModule })
         ? "worker"
         : "none"
       : options.backend === "jspi"
         ? supportsJspiBackend()
           ? "jspi"
           : "none"
-        : selectAutomaticBackendKind(options);
+        : selectAutomaticBackendKind({ ...options, getCoreModule });
   return {
     runtime: "workerd",
     backend: "jspi",
