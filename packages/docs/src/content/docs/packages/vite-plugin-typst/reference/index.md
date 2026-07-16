@@ -1,8 +1,8 @@
 ---
-title: '@typst-wasm/vite-plugin-typst API reference'
+title: "@typst-wasm/vite-plugin-typst API reference"
 description: API reference for the Vite plugin.
 ---
 
 `@typst-wasm/vite-plugin-typst` integrates Typst compilation into Vite projects.
 
-See the [generated API reference](./api/readme/) for the plugin's options, interfaces, and functions.
+See the [generated API reference](/typst-wasm/packages/vite-plugin-typst/reference/api/readme/) for the plugin's options, interfaces, and functions.

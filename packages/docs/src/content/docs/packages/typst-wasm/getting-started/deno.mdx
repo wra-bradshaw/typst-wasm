@@ -1,0 +1,111 @@
+---
+title: Deno
+description: Compile Typst documents in Deno with typst-wasm.
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+Deno uses the browser entry point, but it does not use Vite's `?url` imports. Resolve package assets with `import.meta.resolve`, fetch them, and adapt Deno's `Worker` to the `WorkerHost` interface.
+
+<Steps>
+
+1.  **Install the package**
+
+          <Tabs syncKey="package-manager">
+
+    <TabItem label="Deno">
+
+    ```sh
+    deno add npm:typst-wasm npm:@typst-wasm/fonts
+    ```
+
+          </TabItem>
+
+    <TabItem label="npm">
+
+    ```sh
+    npm install typst-wasm @typst-wasm/fonts
+    ```
+
+          </TabItem>
+
+    </Tabs>
+
+2.  **Adapt a Deno worker**
+
+    ```ts
+    import type { WorkerHost } from "npm:typst-wasm";
+
+    const createDenoWorker = (url: string | URL): WorkerHost => {
+      const worker = new Worker(url, { type: "module" });
+      return {
+        listen(onMessage, onError) {
+          worker.onmessage = (event) => onMessage(event.data);
+          worker.onerror = (event) => onError(event.error ?? event.message);
+        },
+        postMessage: (data) => worker.postMessage(data),
+        terminate: () => worker.terminate(),
+      };
+    };
+    ```
+
+3.  **Resolve assets and create the compiler**
+
+    ```ts
+    import {
+      createTypstCompiler,
+      type TypstCompilerOptions,
+    } from "npm:typst-wasm/browser";
+    const asset = (specifier: string) =>
+      new URL(import.meta.resolve(specifier));
+
+    const compiler = await createTypstCompiler({
+      backend: "auto",
+      coreModules: {
+        "engine.core.wasm": WebAssembly.compileStreaming(
+          fetch(asset("typst-wasm/engine/engine.core.wasm")),
+        ),
+        "engine.core2.wasm": WebAssembly.compileStreaming(
+          fetch(asset("typst-wasm/engine/engine.core2.wasm")),
+        ),
+        "engine.core3.wasm": WebAssembly.compileStreaming(
+          fetch(asset("typst-wasm/engine/engine.core3.wasm")),
+        ),
+      },
+      worker: () => createDenoWorker(asset("typst-wasm/worker/web-worker")),
+    });
+    ```
+
+4.  **Add a font and compile**
+
+    ```ts
+    try {
+      const font = await fetch(
+        asset("@typst-wasm/fonts/NewCMMath-Regular.otf"),
+      );
+      await compiler.addFonts(new Uint8Array(await font.arrayBuffer()));
+      await compiler.addSource("main.typ", "= Hello from Typst");
+
+      const result = await compiler.compile({
+        main: "main.typ",
+        format: "html",
+      });
+      console.log(result.output);
+    } finally {
+      await compiler.dispose();
+    }
+    ```
+
+5.  **Grant the required permissions**
+
+    ```sh
+    deno run --allow-read --allow-net src/main.ts
+    ```
+
+</Steps>
+
+<Aside type="note" title="Deno entry point">
+  There is no separate `typst-wasm/deno` export. Deno uses `typst-wasm/browser`
+  because its worker API is compatible with the browser runtime after the
+  adapter above.
+</Aside>

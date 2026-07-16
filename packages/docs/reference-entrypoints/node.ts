@@ -1,6 +1,2 @@
-/**
- * Node.js runtime APIs for `typst-wasm/node`.
- *
- * @module Node.js
- */
+/** Node.js runtime APIs for `typst-wasm/node`. */
 export * from "typst-wasm/node";

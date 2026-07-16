@@ -1,6 +1,8 @@
 ---
 title: Use typst-wasm in the browser and Vite
-description: "TODO: Document browser and Vite integration."
+description: Legacy link to the browser getting-started guide.
+sidebar:
+  hidden: true
 ---
 
-<!-- TODO: Add task-oriented steps and link to the API reference. -->
+The browser and Vite setup has moved to [Browser with Vite](../../getting-started/browser-vite/). For a bundler-neutral setup, see [Use the browser without Vite](./browser-without-vite/).

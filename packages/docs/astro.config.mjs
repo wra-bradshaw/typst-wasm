@@ -3,8 +3,8 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import { createStarlightTypeDocPlugin } from "starlight-typedoc";
 
-const [typstWasmTypeDoc] = createStarlightTypeDocPlugin();
-const [viteTypeDoc] = createStarlightTypeDocPlugin();
+const [typstWasmTypeDoc, typstWasmApiSidebar] = createStarlightTypeDocPlugin();
+const [viteTypeDoc, viteApiSidebar] = createStarlightTypeDocPlugin();
 
 // https://astro.build/config
 export default defineConfig({
@@ -23,44 +23,21 @@ export default defineConfig({
       plugins: [
         typstWasmTypeDoc({
           entryPoints: [
-            "./reference-entrypoints/shared-classes.ts",
-            "./reference-entrypoints/shared-interfaces.ts",
-            "./reference-entrypoints/shared-type-aliases.ts",
-            "./reference-entrypoints/browser-functions.ts",
-            "./reference-entrypoints/node-functions.ts",
-            "./reference-entrypoints/workerd-functions.ts",
+            "./reference-entrypoints/node.ts",
+            "./reference-entrypoints/browser.ts",
+            "./reference-entrypoints/workerd.ts",
           ],
           tsconfig: "./tsconfig.typedoc.json",
           output: "packages/typst-wasm/reference/api",
           sidebar: { label: "API reference", collapsed: true },
-          typeDoc: {
-            entryPointStrategy: "resolve",
-            router: "module",
-            exclude: ["**/*.test.ts", "**/internal/**"],
-            readme: "none",
-            categorizeByGroup: false,
-            excludeReferences: true,
-            hideGenerator: true,
-          },
+          typeDoc: { disableSources: true },
         }),
         viteTypeDoc({
-          entryPoints: [
-            "./reference-entrypoints/vite-interfaces.ts",
-            "./reference-entrypoints/vite-functions.ts",
-          ],
+          entryPoints: ["./reference-entrypoints/vite-plugin.ts"],
           tsconfig: "./tsconfig.typedoc.json",
           output: "packages/vite-plugin-typst/reference/api",
           sidebar: { label: "API reference", collapsed: true },
-          typeDoc: {
-            entryPointStrategy: "resolve",
-            router: "module",
-            exclude: ["**/*.test.ts", "**/internal/**"],
-            readme: "none",
-            categorizeByGroup: false,
-            excludeExternals: true,
-            externalPattern: ["**/packages/typst-wasm/**"],
-            hideGenerator: true,
-          },
+          typeDoc: { disableSources: true },
         }),
       ],
       sidebar: [
@@ -70,19 +47,50 @@ export default defineConfig({
           items: [
             { label: "Overview", link: "/packages/typst-wasm/" },
             {
+              label: "Getting started",
+              items: [
+                {
+                  autogenerate: {
+                    directory: "packages/typst-wasm/getting-started",
+                  },
+                },
+              ],
+            },
+            {
+              label: "Deployment",
+              items: [
+                {
+                  autogenerate: {
+                    directory: "packages/typst-wasm/deployment",
+                  },
+                },
+              ],
+            },
+            {
               label: "Tutorials",
-              items: [{ autogenerate: { directory: "packages/typst-wasm/tutorials" } }],
+              items: [
+                {
+                  autogenerate: { directory: "packages/typst-wasm/tutorials" },
+                },
+              ],
             },
             {
               label: "How-to guides",
-              items: [{ autogenerate: { directory: "packages/typst-wasm/how-to" } }],
+              items: [
+                { autogenerate: { directory: "packages/typst-wasm/how-to" } },
+              ],
             },
             {
               label: "Explanation",
-              items: [{ autogenerate: { directory: "packages/typst-wasm/explanation" } }],
+              items: [
+                {
+                  autogenerate: {
+                    directory: "packages/typst-wasm/explanation",
+                  },
+                },
+              ],
             },
-            { label: "Reference", link: "/packages/typst-wasm/reference/" },
-            { label: "API reference", link: "/packages/typst-wasm/reference/api/readme/" },
+            typstWasmApiSidebar,
           ],
         },
         {
@@ -91,15 +99,22 @@ export default defineConfig({
             { label: "Overview", link: "/packages/vite-plugin-typst/" },
             {
               label: "How-to guides",
-              items: [{ autogenerate: { directory: "packages/vite-plugin-typst/how-to" } }],
+              items: [
+                {
+                  autogenerate: {
+                    directory: "packages/vite-plugin-typst/how-to",
+                  },
+                },
+              ],
             },
-            { label: "Reference", link: "/packages/vite-plugin-typst/reference/" },
-            { label: "API reference", link: "/packages/vite-plugin-typst/reference/api/readme/" },
+            viteApiSidebar,
           ],
         },
         {
           label: "Supporting packages",
-          items: [{ label: "@typst-wasm/fonts", link: "/packages/supporting/fonts/" }],
+          items: [
+            { label: "@typst-wasm/fonts", link: "/packages/supporting/fonts/" },
+          ],
         },
       ],
     }),

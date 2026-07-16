@@ -1,5 +1,5 @@
 ---
-title: '@typst-wasm/vite-plugin-typst'
+title: "@typst-wasm/vite-plugin-typst"
 description: Compile Typst documents to HTML modules with Vite.
 ---
 
@@ -16,12 +16,34 @@ npm install @typst-wasm/vite-plugin-typst typst-wasm
 Register the plugin in `vite.config.ts`:
 
 ```ts
+import { readFile } from "node:fs/promises";
+import { createWorkerThread } from "typst-wasm/node";
 import typst from "@typst-wasm/vite-plugin-typst";
 
 export default {
   plugins: [
     typst({
-      /* configure a worker or JSPI backend for your environment */
+      coreModules: {
+        "engine.core.wasm": WebAssembly.compile(
+          await readFile(
+            new URL(import.meta.resolve("typst-wasm/engine/engine.core.wasm")),
+          ),
+        ),
+        "engine.core2.wasm": WebAssembly.compile(
+          await readFile(
+            new URL(import.meta.resolve("typst-wasm/engine/engine.core2.wasm")),
+          ),
+        ),
+        "engine.core3.wasm": WebAssembly.compile(
+          await readFile(
+            new URL(import.meta.resolve("typst-wasm/engine/engine.core3.wasm")),
+          ),
+        ),
+      },
+      worker: () =>
+        createWorkerThread(
+          new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
+        ),
     }),
   ],
 };
@@ -36,4 +58,4 @@ import document from "./post.typ?typst=html";
 const html = document.html;
 ```
 
-The plugin currently supports HTML output only. See the [Vite plugin guide](./how-to/use-the-vite-plugin/) and [API reference](./reference/api/readme/).
+The plugin currently supports HTML output only. See the [Vite plugin guide](./how-to/use-the-vite-plugin/) and [API reference](/typst-wasm/packages/vite-plugin-typst/reference/api/readme/).

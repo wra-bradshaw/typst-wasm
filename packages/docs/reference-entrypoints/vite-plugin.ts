@@ -1,2 +1,3 @@
-/** Documentation entry point for the Vite plugin. */
-export * from '@typst-wasm/vite-plugin-typst';
+/** Public API for `@typst-wasm/vite-plugin-typst`. */
+export { default } from "@typst-wasm/vite-plugin-typst";
+export * from "@typst-wasm/vite-plugin-typst";

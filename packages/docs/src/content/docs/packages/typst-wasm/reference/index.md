@@ -9,13 +9,13 @@ description: Typst compiler APIs for browser, server, and Cloudflare Worker runt
 
 Prefer an explicit runtime subpath in application code:
 
-| Runtime | Import |
-| --- | --- |
-| Browser | `typst-wasm/browser` |
-| Node.js or Bun | `typst-wasm/node` |
+| Runtime            | Import               |
+| ------------------ | -------------------- |
+| Browser            | `typst-wasm/browser` |
+| Node.js or Bun     | `typst-wasm/node`    |
 | Cloudflare Workers | `typst-wasm/workerd` |
 
-See the [API reference](./api/readme/) for shared and runtime-specific compiler APIs.
+See the [API reference](/typst-wasm/packages/typst-wasm/reference/api/readme/) for shared and runtime-specific compiler APIs.
 
 ## Guides
 

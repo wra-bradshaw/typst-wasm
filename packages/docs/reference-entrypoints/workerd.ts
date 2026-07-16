@@ -1,6 +1,2 @@
-/**
- * Cloudflare Workers runtime APIs for `typst-wasm/workerd`.
- *
- * @module Cloudflare Workers
- */
+/** Cloudflare Workers runtime APIs for `typst-wasm/workerd`. */
 export * from "typst-wasm/workerd";

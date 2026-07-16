@@ -1,0 +1,39 @@
+---
+title: Browser deployment requirements
+description: Configure browser headers and assets for typst-wasm.
+---
+
+import { Aside, Steps } from "@astrojs/starlight/components";
+
+The browser worker backend uses `SharedArrayBuffer` and `Atomics.wait`. A production browser page must be cross-origin isolated for that backend to work.
+
+<Steps>
+
+1. **Send the isolation headers**
+
+   ```http
+   Cross-Origin-Opener-Policy: same-origin
+   Cross-Origin-Embedder-Policy: require-corp
+   ```
+
+2. **Serve WASM with the correct content type**
+
+   Serve `.wasm` files as `application/wasm`. Keep engine, worker, font, and package assets on your own origin where possible.
+
+3. **Verify the deployment**
+
+   ```ts
+   console.log(crossOriginIsolated);
+   ```
+
+   A `false` value means the worker backend cannot be used. `backend: "auto"` may still select JSPI when the browser supports it; otherwise compilation fails with no compatible backend.
+
+</Steps>
+
+<Aside type="caution" title="COEP affects other resources">
+  `require-corp` can block third-party images, scripts, fonts, and embeds that
+  do not opt in with CORS or CORP headers. Prefer same-origin assets or
+  configure those resources explicitly.
+</Aside>
+
+These headers are not required for Cloudflare Workers server-side compilation: workerd uses JSPI and has no worker backend.

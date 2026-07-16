@@ -1,0 +1,121 @@
+---
+title: Cloudflare Workers
+description: Deploy typst-wasm in the Cloudflare Workers runtime.
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+Cloudflare Workers uses the `workerd` runtime. This is different from deploying a browser application to static hosting: use `typst-wasm/workerd`, JSPI, and precompiled core modules. The Worker backend and browser isolation headers are not needed for server-side compilation.
+
+<Steps>
+
+1.  **Install the Workers tooling**
+
+          <Tabs syncKey="package-manager">
+
+    <TabItem label="npm">
+
+    ```sh
+    npm install typst-wasm @typst-wasm/fonts
+    npm install --save-dev vite wrangler @cloudflare/vite-plugin
+    ```
+
+          </TabItem>
+
+    <TabItem label="pnpm">
+
+    ```sh
+    pnpm add typst-wasm @typst-wasm/fonts
+    pnpm add -D vite wrangler @cloudflare/vite-plugin
+    ```
+
+          </TabItem>
+
+    </Tabs>
+
+2.  **Configure the Cloudflare Vite plugin**
+
+    ```ts
+    import { cloudflare } from "@cloudflare/vite-plugin";
+    import { defineConfig } from "vite";
+
+    export default defineConfig({
+      plugins: [cloudflare({ viteEnvironment: { name: "ssr" } })],
+    });
+    ```
+
+    The Cloudflare Vite plugin handles the standard `.wasm` imports used by the Workers entry point.
+
+3.  **Configure Wrangler**
+
+    Create `wrangler.jsonc`:
+
+    ```jsonc
+    {
+      "$schema": "node_modules/wrangler/config-schema.json",
+      "name": "my-typst-worker",
+      "compatibility_date": "2026-07-02",
+      "main": "src/index.ts",
+    }
+    ```
+
+    Add `"nodejs_compat"` only if another dependency requires Node compatibility. It is not a `typst-wasm` requirement.
+
+4.  **Bundle the JSPI core modules**
+
+    ```ts
+    import { createTypstCompiler } from "typst-wasm/workerd";
+    import core from "typst-wasm/engine/engine.core.wasm";
+    import core2 from "typst-wasm/engine/engine.core2.wasm";
+    import core3 from "typst-wasm/engine/engine.core3.wasm";
+    ```
+
+5.  **Create the Worker handler**
+
+    ```ts
+    export default {
+      async fetch() {
+        const compiler = await createTypstCompiler({
+          backend: "jspi",
+          coreModules: {
+            "engine.core.wasm": core,
+            "engine.core2.wasm": core2,
+            "engine.core3.wasm": core3,
+          },
+        });
+
+        try {
+          await compiler.addSource("main.typ", "= Hello from Typst");
+          const result = await compiler.compile({
+            main: "main.typ",
+            format: "html",
+          });
+
+          return new Response(result.output, {
+            headers: { "content-type": "text/html; charset=utf-8" },
+          });
+        } finally {
+          await compiler.dispose();
+        }
+      },
+    };
+    ```
+
+6.  **Develop and deploy**
+
+    ```sh
+    npx vite dev
+    npx vite build
+    npx wrangler deploy
+    ```
+
+</Steps>
+
+<Aside type="caution" title="Do not use the browser setup here">
+  Do not import `typst-wasm/browser`, create a Web Worker, or rely on
+  `SharedArrayBuffer` headers in a server-side Worker. Those are browser-runtime
+  concerns. For a browser compiler hosted by a separate frontend, follow the
+  [browser deployment requirements](../browser-requirements/).
+</Aside>
+
+If you need fonts, load font bytes from a Worker-compatible asset or binding and pass them to `compiler.addFonts()`. Do not assume a Node filesystem exists in Workers.

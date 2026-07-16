@@ -1,0 +1,42 @@
+---
+title: Choose your setup
+description: Choose the typst-wasm getting-started guide for your runtime.
+---
+
+import { Aside, CardGrid, LinkCard } from "@astrojs/starlight/components";
+
+`typst-wasm` has runtime-specific entry points. Choose the guide that matches where compilation will run.
+
+<CardGrid>
+  <LinkCard
+    title="Browser with Vite"
+    href="/typst-wasm/packages/typst-wasm/getting-started/browser-vite/"
+    description="Compile documents in a browser and let Vite bundle the worker, WASM, and font assets."
+  />
+  <LinkCard
+    title="Node.js (and Bun)"
+    href="/typst-wasm/packages/typst-wasm/getting-started/node/"
+    description="Compile documents in a server-side Node.js or Bun process."
+  />
+  <LinkCard
+    title="Deno"
+    href="/typst-wasm/packages/typst-wasm/getting-started/deno/"
+    description="Use the browser entry point with Deno's Worker and asset APIs."
+  />
+  <LinkCard
+    title="Cloudflare Workers"
+    href="/typst-wasm/packages/typst-wasm/getting-started/cloudflare-workers/"
+    description="Compile in workerd using JSPI and precompiled core modules."
+  />
+</CardGrid>
+
+<Aside type="tip" title="Using another framework?">
+  React, Vue, Svelte, and similar frameworks use the browser/Vite or Node.js
+  guide. The framework does not change the typst-wasm runtime.
+</Aside>
+
+## Runtime and deployment are separate
+
+The runtime determines which import and compiler backend to use. Your hosting provider determines how those assets and headers are deployed. See the [deployment guides](../deployment/) after completing a runtime guide.
+
+For browser compilation without Vite, see [Use the browser without Vite](../how-to/browser-without-vite/).

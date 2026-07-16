@@ -1,0 +1,62 @@
+---
+title: Vercel
+description: Deploy browser and server-rendered typst-wasm applications to Vercel.
+---
+
+Vercel supports two different typst-wasm deployment paths. Choose based on where compilation runs.
+
+## Browser compilation
+
+For a client-side Vite application, configure the same isolation headers required by any browser worker deployment. In `vercel.json`:
+
+```json
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
+      ]
+    }
+  ]
+}
+```
+
+Also verify that Vercel serves `.wasm` files as `application/wasm` and that all worker, font, and engine assets are present in the build output. See [Browser deployment requirements](../browser-requirements/).
+
+## Server-side rendering
+
+For SSR, compile in a Node-compatible route or loader and import `typst-wasm/node`. Configure the worker module explicitly with `createWorkerThread`; Vercel does not infer worker files from bundled output.
+
+```ts
+import { readFile } from "node:fs/promises";
+import { createTypstCompiler, createWorkerThread } from "typst-wasm/node";
+
+const compiler = await createTypstCompiler({
+  backend: "auto",
+  coreModules: {
+    "engine.core.wasm": WebAssembly.compile(
+      await readFile(
+        new URL(import.meta.resolve("typst-wasm/engine/engine.core.wasm")),
+      ),
+    ),
+    "engine.core2.wasm": WebAssembly.compile(
+      await readFile(
+        new URL(import.meta.resolve("typst-wasm/engine/engine.core2.wasm")),
+      ),
+    ),
+    "engine.core3.wasm": WebAssembly.compile(
+      await readFile(
+        new URL(import.meta.resolve("typst-wasm/engine/engine.core3.wasm")),
+      ),
+    ),
+  },
+  worker: () =>
+    createWorkerThread(
+      new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
+    ),
+});
+```
+
+Dispose the compiler after the request or manage a carefully bounded application-level cache. Do not use the `workerd` entry point or assume Vercel Edge provides the same runtime guarantees as Cloudflare Workers.

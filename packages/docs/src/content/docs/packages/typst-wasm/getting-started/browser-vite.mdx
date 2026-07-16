@@ -1,0 +1,115 @@
+---
+title: Browser with Vite
+description: Compile Typst documents in a browser using Vite and typst-wasm.
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+This guide runs the compiler in a browser worker. Vite turns the worker, engine, and font imports into URLs that can be fetched at runtime.
+
+<Aside type="caution" title="This is not the Vite Typst plugin">
+  This guide uses Vite to bundle `typst-wasm` at runtime. If you want to import
+  `.typ` files and compile them during the Vite build, use the
+  [`@typst-wasm/vite-plugin-typst`
+  guide](/typst-wasm/packages/vite-plugin-typst/how-to/use-the-vite-plugin/).
+</Aside>
+
+<Steps>
+
+1.  **Install the packages**
+
+          <Tabs syncKey="package-manager">
+
+    <TabItem label="npm">
+
+    ```sh
+    npm install typst-wasm @typst-wasm/fonts
+    ```
+
+          </TabItem>
+
+    <TabItem label="pnpm">
+
+    ```sh
+    pnpm add typst-wasm @typst-wasm/fonts
+    ```
+
+          </TabItem>
+
+    <TabItem label="Yarn">
+
+    ```sh
+    yarn add typst-wasm @typst-wasm/fonts
+    ```
+
+          </TabItem>
+
+    <TabItem label="Bun">
+
+    ```sh
+    bun add typst-wasm @typst-wasm/fonts
+    ```
+
+          </TabItem>
+
+    </Tabs>
+
+2.  **Create the compiler module**
+
+    Create `src/typst.ts`:
+
+    ```ts
+    import { createTypstCompiler, createWebWorker } from "typst-wasm/browser";
+    import workerUrl from "typst-wasm/worker/web-worker?worker&url";
+    import coreUrl from "typst-wasm/engine/engine.core.wasm?url";
+    import core2Url from "typst-wasm/engine/engine.core2.wasm?url";
+    import core3Url from "typst-wasm/engine/engine.core3.wasm?url";
+    import regularFontUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
+    import textFontUrl from "@typst-wasm/fonts/LibertinusSerif-Regular.otf?url";
+
+    export const compiler = await createTypstCompiler({
+      backend: "auto",
+      worker: () => createWebWorker(workerUrl),
+      coreModules: {
+        "engine.core.wasm": WebAssembly.compileStreaming(fetch(coreUrl)),
+        "engine.core2.wasm": WebAssembly.compileStreaming(fetch(core2Url)),
+        "engine.core3.wasm": WebAssembly.compileStreaming(fetch(core3Url)),
+      },
+    });
+
+    await compiler.addFonts(
+      ...[regularFontUrl, textFontUrl].map(
+        async (url) => new Uint8Array(await (await fetch(url)).arrayBuffer()),
+      ),
+    );
+    ```
+
+3.  **Compile a document**
+
+    ```ts
+    import { compiler } from "./typst";
+
+    await compiler.addSource("main.typ", "= Hello from Typst");
+    const result = await compiler.compile({
+      main: "main.typ",
+      format: "html",
+    });
+
+    document.querySelector("#output")!.innerHTML = result.output;
+    ```
+
+    The compiler also supports `pdf`, `png`, `svg`, and `bundle` output. Browser applications commonly use HTML or SVG.
+
+4.  **Dispose the compiler when the page is finished**
+
+    ```ts
+    await compiler.dispose();
+    ```
+
+</Steps>
+
+## Deploying the browser application
+
+The worker backend needs cross-origin isolation. Add the required headers at your host, then verify `crossOriginIsolated` in the browser. See [Browser deployment requirements](../../deployment/browser-requirements/).
+
+Vite's `?worker&url` and `?url` imports are important: do not hard-code paths into `node_modules` in production.

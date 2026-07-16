@@ -1,0 +1,28 @@
+---
+title: Deployment
+description: Deploy typst-wasm browser and server applications.
+---
+
+import { CardGrid, LinkCard } from "@astrojs/starlight/components";
+
+Deployment depends on where compilation runs:
+
+<CardGrid>
+  <LinkCard
+    title="Browser requirements"
+    href="/typst-wasm/packages/typst-wasm/deployment/browser-requirements/"
+    description="Configure cross-origin isolation and WASM asset headers for browser workers."
+  />
+  <LinkCard
+    title="Cloudflare Workers"
+    href="/typst-wasm/packages/typst-wasm/deployment/cloudflare-workers/"
+    description="Deploy server-side compilation with the workerd runtime and Wrangler."
+  />
+  <LinkCard
+    title="Vercel"
+    href="/typst-wasm/packages/typst-wasm/deployment/vercel/"
+    description="Deploy browser applications or Node-compatible SSR routes on Vercel."
+  />
+</CardGrid>
+
+Start with the [Cloudflare Workers getting-started guide](../getting-started/cloudflare-workers/), then use the [deployment guide](./cloudflare-workers/) for Wrangler and Cloudflare Vite configuration.

@@ -1,6 +1,8 @@
 ---
 title: Use typst-wasm with Node.js
-description: "TODO: Document Node.js integration."
+description: Legacy link to the Node.js getting-started guide.
+sidebar:
+  hidden: true
 ---
 
-<!-- TODO: Add task-oriented steps and link to the API reference. -->
+The Node.js setup has moved to [Node.js and Bun](../../getting-started/node/).

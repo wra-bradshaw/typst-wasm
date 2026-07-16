@@ -1,0 +1,82 @@
+---
+title: Cloudflare Workers
+description: Compile Typst documents in the Cloudflare Workers runtime.
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+Cloudflare Workers runs on `workerd`, not Node.js. Use the `workerd` entry point and JSPI. The worker backend is unavailable in this runtime, so do not create a Web Worker or configure browser isolation headers.
+
+<Steps>
+
+1.  **Install the packages**
+
+          <Tabs syncKey="package-manager">
+
+    <TabItem label="npm">
+
+    ```sh
+    npm install typst-wasm @typst-wasm/fonts
+    ```
+
+          </TabItem>
+
+    <TabItem label="pnpm">
+
+    ```sh
+    pnpm add typst-wasm @typst-wasm/fonts
+    ```
+
+          </TabItem>
+
+    </Tabs>
+
+2.  **Import the workerd engine and core modules**
+
+    ```ts
+    import { createTypstCompiler } from "typst-wasm/workerd";
+    import core from "typst-wasm/engine/engine.core.wasm";
+    import core2 from "typst-wasm/engine/engine.core2.wasm";
+    import core3 from "typst-wasm/engine/engine.core3.wasm";
+    ```
+
+3.  **Compile inside the request handler**
+
+    ```ts
+    export default {
+      async fetch() {
+        const compiler = await createTypstCompiler({
+          backend: "jspi",
+          coreModules: {
+            "engine.core.wasm": core,
+            "engine.core2.wasm": core2,
+            "engine.core3.wasm": core3,
+          },
+        });
+        try {
+          await compiler.addSource("main.typ", "= Hello from Typst");
+          const result = await compiler.compile({
+            main: "main.typ",
+            format: "html",
+          });
+
+          return new Response(result.output, {
+            headers: { "content-type": "text/html; charset=utf-8" },
+          });
+        } finally {
+          await compiler.dispose();
+        }
+      },
+    };
+    ```
+
+</Steps>
+
+<Aside type="caution" title="Use a Workers-compatible build">
+  The example assumes a Vite-based Cloudflare Workers build that supports
+  standard `.wasm` imports. Do not bundle this code with a Node-only adapter,
+  and do not use the Vercel Edge runtime as a substitute for workerd without
+  testing it separately.
+</Aside>
+
+For Wrangler configuration and deployment, continue with the [Cloudflare Workers deployment guide](../../deployment/cloudflare-workers/).
