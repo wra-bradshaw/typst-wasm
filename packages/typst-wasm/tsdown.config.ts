@@ -42,11 +42,11 @@ export default defineConfig([
       "worker/node": "./src/worker/host-node.ts",
       "worker/browser": "./src/worker/host-browser.ts",
     },
-    noExternal: ["typst-wasm/engine"],
+    noExternal: ["typst-wasm-internal/engine"],
     inputOptions: {
       resolve: {
         alias: {
-          "typst-wasm/engine": generatedJspi,
+          "typst-wasm-internal/engine": generatedJspi,
         },
         mainFields: ["module", "main"],
       },
@@ -64,11 +64,11 @@ export default defineConfig([
   {
     ...common,
     external: ["node:worker_threads", "node:fs/promises"],
-    noExternal: ["typst-wasm/engine/worker"],
+    noExternal: ["typst-wasm-internal/engine/worker"],
     inputOptions: {
       resolve: {
         alias: {
-          "typst-wasm/engine/worker": generatedWorker,
+          "typst-wasm-internal/engine/worker": generatedWorker,
         },
         mainFields: ["module", "main"],
       },
@@ -81,11 +81,11 @@ export default defineConfig([
   {
     ...common,
     external: ["node:fs/promises"],
-    noExternal: ["typst-wasm/engine/worker"],
+    noExternal: ["typst-wasm-internal/engine/worker"],
     inputOptions: {
       resolve: {
         alias: {
-          "typst-wasm/engine/worker": generatedWorker,
+          "typst-wasm-internal/engine/worker": generatedWorker,
         },
         mainFields: ["module", "main"],
       },

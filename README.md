@@ -1,6 +1,6 @@
 # typst-wasm
 
-`typst-wasm` is the compiler API and publishes JCO's generated engine modules and core WASM assets.
+`typst-wasm` is the compiler API and publishes the core WASM assets required by its runtime.
 
 ## Browser / Vite Usage
 

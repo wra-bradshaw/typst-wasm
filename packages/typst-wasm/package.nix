@@ -91,10 +91,7 @@ pkgs.stdenvNoCC.mkDerivation {
     done
     pnpm --dir ${packageDir} exec tsdown
     mkdir -p packages/typst-wasm/dist/engine
-    cp -R packages/typst-wasm/src/engine/generated/. packages/typst-wasm/dist/engine/
     cp packages/typst-wasm/src/engine/generated/jspi/engine.core*.wasm packages/typst-wasm/dist/engine/
-    rm -f packages/typst-wasm/dist/engine/jspi/engine.core*.wasm
-    rm -f packages/typst-wasm/dist/engine/worker/engine.core*.wasm
     runHook postBuild
   '';
 

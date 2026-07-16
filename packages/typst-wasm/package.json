@@ -27,18 +27,9 @@
       "types": "./dist/worker/web-worker.d.ts",
       "default": "./dist/worker/web-worker.js"
     },
-    "./engine": {
-      "types": "./dist/engine/jspi/engine.d.ts",
-      "default": "./dist/engine/jspi/engine.js"
-    },
-    "./engine/types": "./dist/engine/jspi/interfaces/typst-engine-types.d.ts",
     "./engine/engine.core.wasm": "./dist/engine/engine.core.wasm",
     "./engine/engine.core2.wasm": "./dist/engine/engine.core2.wasm",
-    "./engine/engine.core3.wasm": "./dist/engine/engine.core3.wasm",
-    "./engine/worker": {
-      "types": "./dist/engine/worker/engine.d.ts",
-      "default": "./dist/engine/worker/engine.js"
-    }
+    "./engine/engine.core3.wasm": "./dist/engine/engine.core3.wasm"
   },
   "files": [
     "dist"

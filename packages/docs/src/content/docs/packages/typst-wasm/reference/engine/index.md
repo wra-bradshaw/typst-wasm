@@ -1,6 +1,9 @@
 ---
-title: "typst-wasm/engine"
-description: "TODO: Reference the generated engine modules and core WASM assets."
+title: "Engine core WASM assets"
+description: "Core WASM assets used by typst-wasm."
 ---
 
-<!-- TODO: Document package exports, JSPI, worker modules, and core WASM assets. -->
+The `typst-wasm/engine/engine.core*.wasm` exports provide the core WebAssembly
+assets required when configuring `coreModules`. The generated engine modules
+are bundled into the public compiler and worker entrypoints and are not
+separately exported.

@@ -85,7 +85,7 @@ Update `packages/typst-wasm/package.json`:
 - Add:
   - `./worker/node`
   - `./worker/browser`
-- Retain engine and WASM asset exports.
+- Retain core WASM asset exports; bundle generated engine modules internally.
 
 ## 5. Update the build
 
@@ -124,7 +124,7 @@ Remove the runtime-entrypoint documentation and replace it with:
 - `typst-wasm` — compiler API
 - `typst-wasm/worker/node` — Node/Bun host adapter
 - `typst-wasm/worker/browser` — browser host adapter
-- worker executable and engine asset documentation
+- worker executable and core WASM asset documentation
 
 Update README, package docs, deployment guides, and reference entrypoints.
 

@@ -8,7 +8,7 @@ import type {
   FileKind,
   LoadedFile,
   PdfStandard,
-} from "typst-wasm/engine/types";
+} from "typst-wasm-internal/engine/types";
 
 export type {
   CompileFormat,

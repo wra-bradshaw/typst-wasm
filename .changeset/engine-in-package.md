@@ -6,4 +6,4 @@
 "@typst-wasm/example-typst-playground-vercel": patch
 ---
 
-Publish the generated engine modules and core WASM assets from `typst-wasm/engine` and `typst-wasm/engine/worker`. The separate `@typst-wasm/engine-wasm` package is no longer published; update engine imports to the new `typst-wasm` subpaths.
+Publish the core WASM assets from `typst-wasm/engine`. The generated engine modules are bundled into the compiler and worker entrypoints rather than exposed as package exports. The separate `@typst-wasm/engine-wasm` package is no longer published.
