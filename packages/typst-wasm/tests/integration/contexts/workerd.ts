@@ -20,35 +20,37 @@ export const makeWorkerdContext = async (
 ): Promise<IntegrationContext> => {
   const fixture = makePackageFetch();
   const fonts = fontFilenames.map((_, index) => assets.fonts[index]);
-  const getCoreModule = async (name: string) => {
-    const module = assets.coreModules[name];
-    if (!module) throw new Error(`missing Workerd core module: ${name}`);
-    return module;
+  const coreModules = {
+    "engine.core.wasm": assets.coreModules["engine.core.wasm"],
+    "engine.core2.wasm": assets.coreModules["engine.core2.wasm"],
+    "engine.core3.wasm": assets.coreModules["engine.core3.wasm"],
   };
-  const createCompiler = (
-    options: IntegrationCompilerOptions = {},
-  ) =>
+  const createCompiler = (options: IntegrationCompilerOptions = {}) =>
     createTypstCompiler({
       ...options,
       logger: options.logger,
       backend: options.backend ?? "jspi",
-      getCoreModule,
+      coreModules: options.coreModules ?? coreModules,
       fetch: options.fetch ?? fixture.fetch,
       packageCache: options.packageCache ?? fixture.packageCache,
       packageBaseUrl: options.packageBaseUrl ?? "https://fixture.test",
     });
-  const selectBackend = (
-    options: IntegrationCompilerOptions = {},
-  ) =>
+  const selectBackend = (options: IntegrationCompilerOptions = {}) =>
     options.backend === "worker"
-      ? supportsWorkerBackend({ ...options, getCoreModule })
+      ? supportsWorkerBackend({
+          ...options,
+          coreModules: options.coreModules ?? coreModules,
+        })
         ? "worker"
         : "none"
       : options.backend === "jspi"
         ? supportsJspiBackend()
           ? "jspi"
           : "none"
-        : selectAutomaticBackendKind({ ...options, getCoreModule });
+        : selectAutomaticBackendKind({
+            ...options,
+            coreModules: options.coreModules ?? coreModules,
+          });
   return {
     runtime: "workerd",
     backend: "jspi",

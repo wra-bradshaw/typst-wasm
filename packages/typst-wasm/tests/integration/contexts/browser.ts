@@ -34,33 +34,42 @@ export const makeBrowserContext = async (
       fetchBytes,
     ),
   );
-  const getCoreModule = async (name: string) =>
-    WebAssembly.compile(
-      await fetchBytes(assets?.cores[name] ?? asset(`wasm/${name}`)),
-    );
+  const coreModules = {
+    "engine.core.wasm": WebAssembly.compile(
+      await fetchBytes(
+        assets?.cores["engine.core.wasm"] ?? asset("wasm/engine.core.wasm"),
+      ),
+    ),
+    "engine.core2.wasm": WebAssembly.compile(
+      await fetchBytes(
+        assets?.cores["engine.core2.wasm"] ?? asset("wasm/engine.core2.wasm"),
+      ),
+    ),
+    "engine.core3.wasm": WebAssembly.compile(
+      await fetchBytes(
+        assets?.cores["engine.core3.wasm"] ?? asset("wasm/engine.core3.wasm"),
+      ),
+    ),
+  };
   const worker = () =>
     createWebWorker(assets?.worker ?? asset("worker/web-worker.js"));
-  const createCompiler = (
-    options: IntegrationCompilerOptions = {},
-  ) =>
+  const createCompiler = (options: IntegrationCompilerOptions = {}) =>
     createTypstCompiler({
       ...options,
       logger: options.logger,
       backend: options.backend ?? backend,
-      getCoreModule,
+      coreModules: options.coreModules ?? coreModules,
       worker: options.worker ?? worker,
       fetch: options.fetch ?? fixture.fetch,
       packageCache: options.packageCache ?? fixture.packageCache,
       packageBaseUrl: options.packageBaseUrl ?? "https://fixture.test",
     });
-  const selectBackend = (
-    options: IntegrationCompilerOptions = {},
-  ) =>
+  const selectBackend = (options: IntegrationCompilerOptions = {}) =>
     options.backend === "worker"
       ? supportsWorkerBackend({
           ...options,
           worker: options.worker ?? worker,
-          getCoreModule,
+          coreModules: options.coreModules ?? coreModules,
         })
         ? "worker"
         : "none"
@@ -71,7 +80,7 @@ export const makeBrowserContext = async (
         : selectAutomaticBackendKind({
             ...options,
             worker: options.worker ?? worker,
-            getCoreModule,
+            coreModules: options.coreModules ?? coreModules,
           });
   return {
     runtime,

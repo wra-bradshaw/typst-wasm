@@ -40,19 +40,24 @@ export const makeDenoContext = async (
         ),
     ),
   );
-  const getCoreModule = async (name: string) =>
-    WebAssembly.compile(
-      await (
-        await fetch(asset(`typst-wasm/engine/${name}`))
-      ).arrayBuffer(),
-    );
+  const coreModules = {
+    "engine.core.wasm": WebAssembly.compileStreaming(
+      fetch(asset("typst-wasm/engine/engine.core.wasm")),
+    ),
+    "engine.core2.wasm": WebAssembly.compileStreaming(
+      fetch(asset("typst-wasm/engine/engine.core2.wasm")),
+    ),
+    "engine.core3.wasm": WebAssembly.compileStreaming(
+      fetch(asset("typst-wasm/engine/engine.core3.wasm")),
+    ),
+  };
   const worker = () => denoWorker(asset("typst-wasm/worker/web-worker"));
   const createCompiler = (options: IntegrationCompilerOptions = {}) =>
     createTypstCompiler({
       ...options,
       logger: options.logger,
       backend: options.backend ?? backend,
-      getCoreModule,
+      coreModules: options.coreModules ?? coreModules,
       worker: options.worker ?? worker,
       fetch: options.fetch ?? fixture.fetch,
       packageCache: options.packageCache ?? fixture.packageCache,
@@ -63,7 +68,7 @@ export const makeDenoContext = async (
       return supportsWorkerBackend({
         ...options,
         worker: options.worker ?? worker,
-        getCoreModule,
+        coreModules: options.coreModules ?? coreModules,
       })
         ? "worker"
         : "none";
@@ -72,7 +77,7 @@ export const makeDenoContext = async (
     return selectAutomaticBackendKind({
       ...options,
       worker: options.worker ?? worker,
-      getCoreModule,
+      coreModules: options.coreModules ?? coreModules,
     });
   };
   return {

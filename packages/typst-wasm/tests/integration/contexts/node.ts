@@ -25,21 +25,28 @@ export const makeNodeContext = async (
   const fonts = await Promise.all(
     fontFilenames.map((name) => readAsset(`@typst-wasm/fonts/${name}`)),
   );
-  const getCoreModule = async (name: string) =>
-    WebAssembly.compile(await readAsset(`typst-wasm/engine/${name}`));
+  const coreModules = {
+    "engine.core.wasm": WebAssembly.compile(
+      await readAsset("typst-wasm/engine/engine.core.wasm"),
+    ),
+    "engine.core2.wasm": WebAssembly.compile(
+      await readAsset("typst-wasm/engine/engine.core2.wasm"),
+    ),
+    "engine.core3.wasm": WebAssembly.compile(
+      await readAsset("typst-wasm/engine/engine.core3.wasm"),
+    ),
+  };
   const defaultWorker = () =>
     createWorkerThread(
       new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
     );
 
-  const createCompiler = (
-    options: IntegrationCompilerOptions = {},
-  ) =>
+  const createCompiler = (options: IntegrationCompilerOptions = {}) =>
     createTypstCompiler({
       ...options,
       logger: options.logger,
       backend: options.backend ?? backend,
-      getCoreModule,
+      coreModules: options.coreModules ?? coreModules,
       fetch: options.fetch ?? packageFixture.fetch,
       packageCache: options.packageCache ?? packageFixture.packageCache,
       packageBaseUrl: options.packageBaseUrl ?? "https://fixture.test",
@@ -48,9 +55,7 @@ export const makeNodeContext = async (
         ? { worker: defaultWorker }
         : {}),
     });
-  const selectBackend = (
-    options: IntegrationCompilerOptions = {},
-  ) => {
+  const selectBackend = (options: IntegrationCompilerOptions = {}) => {
     const effective =
       options.backend === "worker" ||
       (options.backend === undefined && backend === "worker") ||
@@ -58,9 +63,9 @@ export const makeNodeContext = async (
         ? {
             ...options,
             worker: options.worker ?? defaultWorker,
-            getCoreModule,
+            coreModules: options.coreModules ?? coreModules,
           }
-        : { ...options, getCoreModule };
+        : { ...options, coreModules: options.coreModules ?? coreModules };
     if (effective.backend === "worker")
       return supportsWorkerBackend(effective) ? "worker" : "none";
     if (effective.backend === "jspi")

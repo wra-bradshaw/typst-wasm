@@ -11,8 +11,8 @@ export type IntegrationBackend = "worker" | "jspi";
 export type IntegrationCell = `${IntegrationRuntime}:${IntegrationBackend}`;
 export type IntegrationCompilerOptions = Omit<
   TypstCompilerOptions,
-  "getCoreModule"
-> & { getCoreModule?: TypstCompilerOptions["getCoreModule"] };
+  "coreModules"
+> & { coreModules?: TypstCompilerOptions["coreModules"] };
 
 export type IntegrationError = {
   name: string;
