@@ -1,21 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import {
   compileTypst,
   formatCompileError,
-  type CompileView,
   type PlaygroundFormat,
-} from "../browser-compiler";
+  type PlaygroundResult,
+} from "../compiler";
 import useAbortableCallback from "../lib/useAbortableCallback";
 import { sampleSource } from "../sample";
 
 const formats: PlaygroundFormat[] = ["html", "pdf", "png", "svg"];
 
-const getInitialPreview = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { compileTypst } = await import("../lib/compile.server");
-    // SSR always starts with HTML so the initial document is rendered on the server.
+// docs:start ssr-route
+export const Route = createFileRoute("/")({
+  loader: async () => {
+    // SSR starts with HTML, so the initial document is rendered on the server.
     const result = await compileTypst(sampleSource, "html");
     if (result.format !== "html") throw new Error("Expected HTML SSR output");
     return {
@@ -24,14 +23,15 @@ const getInitialPreview = createServerFn({ method: "GET" }).handler(
       diagnostics: result.diagnostics,
     };
   },
-);
-
-export const Route = createFileRoute("/")({
-  loader: () => getInitialPreview(),
   component: Playground,
 });
+// docs:end ssr-route
 
-function OutputPreview({ result }: { result: CompileView }) {
+function OutputPreview({
+  result,
+}: {
+  result: PlaygroundResult;
+}) {
   const [url, setUrl] = useState<string | string[] | null>(null);
 
   useEffect(() => {
@@ -104,8 +104,9 @@ function OutputPreview({ result }: { result: CompileView }) {
 }
 
 function Playground() {
-  const initial = Route.useLoaderData() as CompileView;
-  const [result, setResult] = useState<CompileView>(initial);
+  const initial = Route.useLoaderData();
+  const [result, setResult] =
+    useState<PlaygroundResult>(initial);
   const [source, setSource] = useState(sampleSource);
   const [format, setFormat] = useState<PlaygroundFormat>("html");
   const [error, setError] = useState<string | null>(null);
