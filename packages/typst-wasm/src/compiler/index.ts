@@ -1,7 +1,4 @@
-import {
-  createRuntimeBackend,
-  type BackendService,
-} from "../backends/index";
+import { createRuntimeBackend, type BackendService } from "../backends/index";
 import { CompileError } from "../errors";
 import { FileLoaderManager, makeFetchFileLoader } from "../files/loaders";
 import { makePackageFileLoader, PackageManager } from "../files/packages";

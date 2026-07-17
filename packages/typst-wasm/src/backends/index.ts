@@ -1,6 +1,9 @@
 import type { FontInput, TypstCompilerOptions } from "../compiler/types";
 import type { FileLoaderManager } from "../files/loaders";
-import type { EngineCompileOptions, EngineCompileSuccess } from "../engine/types";
+import type {
+  EngineCompileOptions,
+  EngineCompileSuccess,
+} from "../engine/types";
 import { supportsJspiBackend, supportsWorkerBackend } from "./capabilities";
 import type { ResolvedLogger } from "../logging";
 import { JspiService } from "./jspi";
@@ -43,9 +46,8 @@ export const createRuntimeBackend = (
   options: BackendOptions,
   compilerOptions: TypstCompilerOptions,
 ): BackendService => {
-  const selected = backend === "auto"
-    ? selectAutomaticBackendKind(compilerOptions)
-    : backend;
+  const selected =
+    backend === "auto" ? selectAutomaticBackendKind(compilerOptions) : backend;
   const coreModules = compilerOptions.coreModules;
 
   switch (selected) {
@@ -54,7 +56,9 @@ export const createRuntimeBackend = (
         throw new Error("Worker backend requires worker");
       }
       if (!supportsWorkerBackend()) {
-        throw new Error("Worker backend is unavailable: SharedArrayBuffer and growable SharedArrayBuffer support are required");
+        throw new Error(
+          "Worker backend is unavailable: SharedArrayBuffer and growable SharedArrayBuffer support are required",
+        );
       }
       return new WorkerService(options.fileLoaderManager, {
         createWorker: compilerOptions.worker,

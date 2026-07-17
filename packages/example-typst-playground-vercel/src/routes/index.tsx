@@ -25,11 +25,7 @@ export const Route = createFileRoute("/")({
   component: Playground,
 });
 
-function OutputPreview({
-  result,
-}: {
-  result: PlaygroundResult;
-}) {
+function OutputPreview({ result }: { result: PlaygroundResult }) {
   const [url, setUrl] = useState<string | string[] | null>(null);
 
   useEffect(() => {
@@ -103,8 +99,7 @@ function OutputPreview({
 
 function Playground() {
   const initial = Route.useLoaderData();
-  const [result, setResult] =
-    useState<PlaygroundResult>(initial);
+  const [result, setResult] = useState<PlaygroundResult>(initial);
   const [source, setSource] = useState(sampleSource);
   const [format, setFormat] = useState<PlaygroundFormat>("html");
   const [error, setError] = useState<string | null>(null);

@@ -34,10 +34,7 @@ const compiler = await createTypstCompiler({
 // docs:end compiler
 
 // docs:start fonts
-const fontNames = [
-  "NewCMMath-Regular.otf",
-  "LibertinusSerif-Regular.otf",
-];
+const fontNames = ["NewCMMath-Regular.otf", "LibertinusSerif-Regular.otf"];
 
 await compiler.addFonts(
   ...fontNames.map(

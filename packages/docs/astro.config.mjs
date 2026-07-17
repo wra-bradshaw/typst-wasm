@@ -77,7 +77,10 @@ export default defineConfig({
               label: "Getting started",
               link: "/packages/vite-plugin-typst/getting-started/",
             },
-            { label: "Examples", link: "/packages/vite-plugin-typst/examples/" },
+            {
+              label: "Examples",
+              link: "/packages/vite-plugin-typst/examples/",
+            },
             viteApiSidebar,
           ],
         },

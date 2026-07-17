@@ -27,7 +27,9 @@ export type EngineDiagnostic = Diagnostic;
 
 export interface EngineHost {
   fetch(request: FetchRequest): FetchedFile | Promise<FetchedFile>;
-  today(offsetSeconds?: bigint): { year: number; month: number; day: number } | undefined;
+  today(
+    offsetSeconds?: bigint,
+  ): { year: number; month: number; day: number } | undefined;
 }
 
 export interface EngineImports {

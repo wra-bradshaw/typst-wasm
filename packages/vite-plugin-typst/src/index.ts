@@ -189,8 +189,6 @@ export const typst = (options: TypstPluginOptions = {}): Plugin => {
   let config: ResolvedConfig | undefined;
   let compilerPromise: Promise<TypstCompiler> | undefined;
   let transformQueue: Promise<void> = Promise.resolve();
-  const watchedProjectFiles = new Set<string>();
-
   const disposeCompiler = async (): Promise<void> => {
     const compiler = await compilerPromise?.catch(() => undefined);
     compilerPromise = undefined;
@@ -293,6 +291,7 @@ export const typst = (options: TypstPluginOptions = {}): Plugin => {
       const compiled = await runWithCompiler((compiler) =>
         compileTypst(compiler, code, id, root),
       );
+      const watchedProjectFiles = new Set<string>();
       for (const dependency of compiled.dependencies) {
         if (dependency.kind === "project" && dependency.resolvedPath) {
           watchedProjectFiles.add(dependency.resolvedPath);

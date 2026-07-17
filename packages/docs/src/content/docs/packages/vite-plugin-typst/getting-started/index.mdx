@@ -98,11 +98,7 @@ import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 The compiled module's default export contains `html`, `metadata`, `diagnostics`, and `dependencies`. These values are also available as named exports:
 
 ```ts
-import document, {
-  diagnostics,
-  html,
-  metadata,
-} from "./post.typ?typst=html";
+import document, { diagnostics, html, metadata } from "./post.typ?typst=html";
 ```
 
 The plugin watches project files imported by a Typst document and triggers recompilation when they change. Relative asset URLs in the generated HTML are also handed to Vite for bundling.

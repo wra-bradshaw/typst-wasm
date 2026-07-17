@@ -270,6 +270,57 @@ describe("typst vite plugin compiler lifecycle", () => {
     });
   });
 
+  test("watches dependencies per transformed module", async () => {
+    const firstDependency = path.join(projectRoot, "first-dependency.typ");
+    const secondDependency = path.join(projectRoot, "second-dependency.typ");
+    const compiler = makeCompiler();
+    compiler.compile
+      .mockResolvedValueOnce({
+        format: "html",
+        output: "<p>First</p>",
+        diagnostics: [],
+        dependencies: [
+          {
+            kind: "project",
+            path: "first-dependency.typ",
+            resolvedPath: firstDependency,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        format: "html",
+        output: "<p>Second</p>",
+        diagnostics: [],
+        dependencies: [
+          {
+            kind: "project",
+            path: "second-dependency.typ",
+            resolvedPath: secondDependency,
+          },
+        ],
+      });
+    typstWasm.createTypstCompiler.mockResolvedValue(compiler);
+    const plugin = resolvePlugin(typst({ coreModules, worker }));
+    const first = makeTransformContext();
+    const second = makeTransformContext();
+
+    await transformTypst(
+      plugin,
+      first.context,
+      "= First",
+      `${path.join(projectRoot, "first.typ")}?typst=html`,
+    );
+    await transformTypst(
+      plugin,
+      second.context,
+      "= Second",
+      `${path.join(projectRoot, "second.typ")}?typst=html`,
+    );
+
+    expect(first.watchedFiles).toEqual([firstDependency]);
+    expect(second.watchedFiles).toEqual([secondDependency]);
+  });
+
   test("removes changed project files from the shared compiler cache", async () => {
     const dependencyPath = path.join(projectRoot, "shared.typ");
     const compiler = makeCompiler([

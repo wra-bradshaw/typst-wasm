@@ -90,11 +90,26 @@ const copy = async (specifier, destination) => {
 };
 
 await Promise.all([
-  copy("typst-wasm/engine/engine.core.wasm", "typst-wasm/engine/engine.core.wasm"),
-  copy("typst-wasm/engine/engine.core2.wasm", "typst-wasm/engine/engine.core2.wasm"),
-  copy("typst-wasm/engine/engine.core3.wasm", "typst-wasm/engine/engine.core3.wasm"),
-  copy("@typst-wasm/fonts/LibertinusSerif-Regular.otf", "typst-fonts/LibertinusSerif-Regular.otf"),
-  copy("@typst-wasm/fonts/NewCMMath-Regular.otf", "typst-fonts/NewCMMath-Regular.otf"),
+  copy(
+    "typst-wasm/engine/engine.core.wasm",
+    "typst-wasm/engine/engine.core.wasm",
+  ),
+  copy(
+    "typst-wasm/engine/engine.core2.wasm",
+    "typst-wasm/engine/engine.core2.wasm",
+  ),
+  copy(
+    "typst-wasm/engine/engine.core3.wasm",
+    "typst-wasm/engine/engine.core3.wasm",
+  ),
+  copy(
+    "@typst-wasm/fonts/LibertinusSerif-Regular.otf",
+    "typst-fonts/LibertinusSerif-Regular.otf",
+  ),
+  copy(
+    "@typst-wasm/fonts/NewCMMath-Regular.otf",
+    "typst-fonts/NewCMMath-Regular.otf",
+  ),
 ]);
 ```
 
@@ -118,7 +133,10 @@ directory.
     <title>Typst in a plain browser page</title>
   </head>
   <body>
-    <main><h1>Typst output</h1><div id="output"></div></main>
+    <main>
+      <h1>Typst output</h1>
+      <div id="output"></div>
+    </main>
     <script type="module" src="./app.js"></script>
   </body>
 </html>
@@ -142,15 +160,22 @@ const compiler = await createTypstCompiler({
   backend: "auto",
   worker: () => createWebWorker(asset("worker/web-worker.js")),
   coreModules: {
-    "engine.core.wasm": WebAssembly.compileStreaming(response(asset("engine/engine.core.wasm"))),
-    "engine.core2.wasm": WebAssembly.compileStreaming(response(asset("engine/engine.core2.wasm"))),
-    "engine.core3.wasm": WebAssembly.compileStreaming(response(asset("engine/engine.core3.wasm"))),
+    "engine.core.wasm": WebAssembly.compileStreaming(
+      response(asset("engine/engine.core.wasm")),
+    ),
+    "engine.core2.wasm": WebAssembly.compileStreaming(
+      response(asset("engine/engine.core2.wasm")),
+    ),
+    "engine.core3.wasm": WebAssembly.compileStreaming(
+      response(asset("engine/engine.core3.wasm")),
+    ),
   },
 });
 
 await compiler.addFonts(
-  ...["LibertinusSerif-Regular.otf", "NewCMMath-Regular.otf"].map(async (name) =>
-    new Uint8Array(await (await response(font(name))).arrayBuffer()),
+  ...["LibertinusSerif-Regular.otf", "NewCMMath-Regular.otf"].map(
+    async (name) =>
+      new Uint8Array(await (await response(font(name))).arrayBuffer()),
   ),
 );
 

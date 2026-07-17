@@ -1,5 +1,5 @@
 ---
-title: '@typst-wasm/fonts'
+title: "@typst-wasm/fonts"
 description: "TODO: Reference the packaged fonts and their import paths."
 ---
 

@@ -33,18 +33,34 @@ describe("compiler backend selection", () => {
       worker: () => ({ listen() {}, postMessage() {}, terminate() {} }),
     } as unknown as TypstCompilerOptions;
     const selected = selectAutomaticBackendKind(withWorker);
-    expect(selected).toBe(supportsWorkerBackend() ? "worker" : supportsJspiBackend() ? "jspi" : "none");
+    expect(selected).toBe(
+      supportsWorkerBackend()
+        ? "worker"
+        : supportsJspiBackend()
+          ? "jspi"
+          : "none",
+    );
   });
 
   it("reports missing worker configuration for explicit worker selection", () => {
-    expect(() => createRuntimeBackend("worker", { fileLoaderManager: {} as never }, options))
-      .toThrow("Worker backend requires worker");
+    expect(() =>
+      createRuntimeBackend(
+        "worker",
+        { fileLoaderManager: {} as never },
+        options,
+      ),
+    ).toThrow("Worker backend requires worker");
   });
 
   it("reports unavailable worker primitives separately", () => {
     vi.stubGlobal("SharedArrayBuffer", undefined);
     const withWorker = { ...options, worker: () => ({}) } as never;
-    expect(() => createRuntimeBackend("worker", { fileLoaderManager: {} as never }, withWorker))
-      .toThrow("Worker backend is unavailable");
+    expect(() =>
+      createRuntimeBackend(
+        "worker",
+        { fileLoaderManager: {} as never },
+        withWorker,
+      ),
+    ).toThrow("Worker backend is unavailable");
   });
 });

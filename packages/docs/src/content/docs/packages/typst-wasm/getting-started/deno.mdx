@@ -65,8 +65,7 @@ version, or use the worker backend for broader compatibility.
     const compiler = await createTypstCompiler({
       backend: "worker",
       coreModules,
-      worker: () =>
-        createWebWorker(asset("typst-wasm/worker/web-worker")),
+      worker: () => createWebWorker(asset("typst-wasm/worker/web-worker")),
     });
     ```
 

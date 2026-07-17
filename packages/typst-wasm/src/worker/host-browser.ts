@@ -6,7 +6,8 @@ export const createWebWorker = (workerUrl: string | URL): WorkerHost => {
   return {
     listen: (onMessage, onError) => {
       worker.onmessage = (event: MessageEvent) => onMessage(event.data);
-      worker.onerror = (event: ErrorEvent) => onError(event.error ?? event.message);
+      worker.onerror = (event: ErrorEvent) =>
+        onError(event.error ?? event.message);
     },
     postMessage: (data) => worker.postMessage(data),
     terminate: () => worker.terminate(),

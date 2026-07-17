@@ -29,13 +29,19 @@ Worker implementation runs the Typst compiler in a separate worker.
       backend: "worker",
       coreModules: {
         "engine.core.wasm": WebAssembly.compile(
-          await Bun.file(asset("typst-wasm/engine/engine.core.wasm")).arrayBuffer(),
+          await Bun.file(
+            asset("typst-wasm/engine/engine.core.wasm"),
+          ).arrayBuffer(),
         ),
         "engine.core2.wasm": WebAssembly.compile(
-          await Bun.file(asset("typst-wasm/engine/engine.core2.wasm")).arrayBuffer(),
+          await Bun.file(
+            asset("typst-wasm/engine/engine.core2.wasm"),
+          ).arrayBuffer(),
         ),
         "engine.core3.wasm": WebAssembly.compile(
-          await Bun.file(asset("typst-wasm/engine/engine.core3.wasm")).arrayBuffer(),
+          await Bun.file(
+            asset("typst-wasm/engine/engine.core3.wasm"),
+          ).arrayBuffer(),
         ),
       },
       worker: () => createWebWorker(asset("typst-wasm/worker/web-worker")),
