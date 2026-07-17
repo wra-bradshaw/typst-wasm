@@ -1,8 +1,11 @@
 # Vite + React + Cloudflare example
 
-A minimal Vite and React app that compiles a Typst document in the browser with `typst-wasm`. The generated static assets can be deployed with Cloudflare Workers Static Assets:
+A Vite and React example using typst-wasm in the browser.
+
+## Run locally
 
 ```sh
-pnpm dev
-pnpm deploy
+pnpm --filter @typst-wasm/example-vite-react-cloudflare dev
 ```
+
+[Read the documentation](https://typst-wasm.github.io/typst-wasm/packages/typst-wasm/examples/).

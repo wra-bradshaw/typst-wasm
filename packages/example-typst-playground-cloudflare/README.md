@@ -1,22 +1,11 @@
-# typst-playground-cloudflare
+# Cloudflare playground example
 
-TanStack Start + Cloudflare Workers SSR example for `typst-wasm`.
+A Typst playground using typst-wasm on Cloudflare Workers.
 
-The first preview is compiled in a TanStack Start route loader on Cloudflare
-Workers with `typst-wasm`. After hydration, editor changes compile in
-the browser with `typst-wasm`.
-
-The server compiler imports JCO's generated core WASM modules directly and
-passes them through `coreModules`. Cloudflare's Vite plugin handles those
-standard `.wasm` imports without any typst-wasm-specific Vite plugin.
+## Run locally
 
 ```sh
-nix develop -c pnpm --filter @typst-wasm/example-typst-playground-cloudflare dev
+pnpm --filter @typst-wasm/example-typst-playground-cloudflare dev
 ```
 
-Build and preview using the Cloudflare Vite plugin:
-
-```sh
-nix develop -c pnpm --filter @typst-wasm/example-typst-playground-cloudflare build
-nix develop -c pnpm --filter @typst-wasm/example-typst-playground-cloudflare preview
-```
+[Read the documentation](https://typst-wasm.github.io/typst-wasm/packages/typst-wasm/examples/).

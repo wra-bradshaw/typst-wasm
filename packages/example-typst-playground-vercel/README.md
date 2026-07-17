@@ -1,18 +1,11 @@
-# typst-playground-vercel
+# Vercel playground example
 
-TanStack Start SSR example for `typst-wasm`, suitable for Vercel.
+A Typst playground using typst-wasm on Vercel.
 
-The first preview is compiled on the server with `typst-wasm`.
-After hydration, editor changes compile in the browser with `typst-wasm`.
-Vite handles the wasm, font, and worker assets; Nitro emits the Vercel Build
-Output API artifact.
+## Run locally
 
 ```sh
-nix develop -c pnpm --filter @typst-wasm/example-typst-playground-vercel dev
+pnpm --filter @typst-wasm/example-typst-playground-vercel dev
 ```
 
-Build the Vercel artifact:
-
-```sh
-nix develop -c pnpm --filter @typst-wasm/example-typst-playground-vercel build
-```
+[Read the documentation](https://typst-wasm.github.io/typst-wasm/packages/typst-wasm/examples/).

@@ -1,8 +1,12 @@
-# Node + tsdown example
+# Node example
 
-A minimal Node application bundled with tsdown. It compiles a Typst document and prints the resulting SVG:
+A Node.js example using typst-wasm.
+
+## Run locally
 
 ```sh
-pnpm build
-pnpm start
+pnpm --filter @typst-wasm/example-node build
+pnpm --filter @typst-wasm/example-node start
 ```
+
+[Read the documentation](https://typst-wasm.github.io/typst-wasm/packages/typst-wasm/examples/).
