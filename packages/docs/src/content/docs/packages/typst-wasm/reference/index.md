@@ -13,14 +13,7 @@ Import the compiler and backend utilities from the package root. Only import a w
 | -------------------------- | --------------------------- |
 | Compiler API and types     | `typst-wasm`                |
 | Browser worker host        | `typst-wasm/worker/browser` |
-| Node.js or Bun worker host | `typst-wasm/worker/node`    |
+| Node.js worker-thread host | `typst-wasm/worker/node`    |
+| Deno or Bun Web Worker host | `typst-wasm/worker/browser` |
 
 Cloudflare Workers uses the root compiler API with `backend: "jspi"` and does not need a worker adapter. Use the **API reference** section in the sidebar for the complete compiler API and host adapters.
-
-## Guides
-
-- [Use in the browser and with Vite](../how-to/use-browser-and-vite/)
-- [Use with Node.js](../how-to/use-node/)
-- [Deploy to Cloudflare Workers](../how-to/deploy-to-cloudflare-workers/)
-- [Select a compiler backend](../how-to/configure-worker-backends/)
-- [Understand the compiler lifecycle](../explanation/compiler-lifecycle/)
