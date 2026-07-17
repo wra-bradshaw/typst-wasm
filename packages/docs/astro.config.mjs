@@ -31,14 +31,14 @@ export default defineConfig({
           tsconfig: "./tsconfig.typedoc.json",
           output: "packages/typst-wasm/reference/api",
           sidebar: { label: "API reference", collapsed: true },
-          typeDoc: { disableSources: true, sortEntryPoints: false },
+          typeDoc: { disableSources: true, sortEntryPoints: false, readme: "README.md" },
         }),
         viteTypeDoc({
           entryPoints: ["./reference-entrypoints/vite-plugin.ts"],
           tsconfig: "./tsconfig.typedoc.json",
           output: "packages/vite-plugin-typst/reference/api",
           sidebar: { label: "API reference", collapsed: true },
-          typeDoc: { disableSources: true },
+          typeDoc: { disableSources: true, readme: "README.md" },
         }),
       ],
       sidebar: [

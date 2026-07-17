@@ -54,14 +54,16 @@ import coreUrl from "typst-wasm/engine/engine.core.wasm?url";
 import core2Url from "typst-wasm/engine/engine.core2.wasm?url";
 import core3Url from "typst-wasm/engine/engine.core3.wasm?url";
 
+const coreModules = {
+  "engine.core.wasm": WebAssembly.compileStreaming(fetch(coreUrl)),
+  "engine.core2.wasm": WebAssembly.compileStreaming(fetch(core2Url)),
+  "engine.core3.wasm": WebAssembly.compileStreaming(fetch(core3Url)),
+};
+
 const compiler = await createTypstCompiler({
   backend: "auto",
   worker: () => createWebWorker(workerUrl),
-  coreModules: {
-    "engine.core.wasm": WebAssembly.compileStreaming(fetch(coreUrl)),
-    "engine.core2.wasm": WebAssembly.compileStreaming(fetch(core2Url)),
-    "engine.core3.wasm": WebAssembly.compileStreaming(fetch(core3Url)),
-  },
+  coreModules,
 });
 ```
 
@@ -71,7 +73,17 @@ Lets go through line-by-line to understand what is happening here.
 
 ## backend: "auto"
 
-typst-wasm supports two asynchronous backends: JSPI and workers. `backend: "auto"` will choose the backend that is supported by the runtime you run it in. To test what backend will be chosen for a runtime, replace `createTypstCompiler` with `selectAutomaticBackendKind` in the above example and log out the result.
+typst-wasm supports two asynchronous backends: JSPI and workers. `backend: "auto"` will choose the backend that is supported by the runtime you run it in. To inspect the selection without creating a compiler, import `selectAutomaticBackendKind` and run:
+
+```ts
+console.log(
+  selectAutomaticBackendKind({
+    backend: "auto",
+    coreModules,
+    worker: () => createWebWorker(workerUrl),
+  }),
+);
+```
 
 In cases where you want to opt out of runtime detection, you can pass `backend: "jspi"` or `backend: "worker"`.
 

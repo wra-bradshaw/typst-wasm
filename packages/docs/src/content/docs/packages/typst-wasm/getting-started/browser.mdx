@@ -1,0 +1,34 @@
+---
+title: Browser
+description: Compile Typst documents in a browser without a bundler.
+---
+
+import { Steps } from "@astrojs/starlight/components";
+import VersionedSourceSnippet from "../../../../../components/VersionedSourceSnippet.astro";
+import browserSource from "../../../../../snippets/browser-cdn.js?raw";
+
+Use the browser worker adapter with the published ESM files from jsDelivr. With `backend: "auto"`, the runtime may select JSPI instead when supported. The
+worker URL is wrapped in a same-origin blob because browser workers normally
+require a same-origin script URL.
+
+<Steps>
+
+1. **Add an output element**
+
+   ```html
+   <main id="output"></main>
+   ```
+
+2. **Create the compiler**
+
+   <VersionedSourceSnippet source={browserSource} region="compiler" lang="js" />
+
+3. **Load fonts, compile, and dispose**
+
+   <VersionedSourceSnippet source={browserSource} region="fonts" lang="js" />
+   <VersionedSourceSnippet source={browserSource} region="compile" lang="js" />
+
+</Steps>
+
+The worker backend requires [cross-origin isolation](../../deployment/browser-requirements/).
+Pin the package version in the CDN URLs when deploying an application.
