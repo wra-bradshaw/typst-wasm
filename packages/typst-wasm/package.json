@@ -61,6 +61,7 @@
     "test:integration:workerd": "pnpm exec vitest run -c vitest.workerd.config.ts",
     "test:integration:deno": "deno test --no-check --allow-read --allow-net --allow-env tests/integration/adapters/deno.ts",
     "test:integration:browser": "pnpm exec vitest run -c vitest.browser.config.ts",
+    "rust:check": "cargo fmt --manifest-path engine/Cargo.toml --all -- --check && cargo clippy --manifest-path engine/Cargo.toml --locked --target wasm32-unknown-unknown --all-targets -- -D warnings && cargo test --manifest-path engine/Cargo.toml --locked",
     "format": "pnpm exec prettier . --check",
     "format:fix": "pnpm exec prettier . --write",
     "knip": "pnpm exec knip"
