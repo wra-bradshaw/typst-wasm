@@ -34,12 +34,12 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v22
+        uses: DeterminateSystems/determinate-nix-action@v3
 
-      - name: Setup Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
+      - name: Setup FlakeHub Cache
+        uses: DeterminateSystems/flakehub-cache-action@v3
         with:
-          use-flakehub: false
+          use-gha-cache: true
 
       - name: Build documentation
         run: nix run .#build-artifact -- docs
