@@ -201,6 +201,11 @@ export const createTypstCompiler = async (
     options,
   );
 
-  await backend.init();
+  try {
+    await backend.init();
+  } catch (error) {
+    await backend.dispose();
+    throw error;
+  }
   return new PromiseTypstCompiler(backend);
 };
