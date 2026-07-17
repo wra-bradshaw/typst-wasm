@@ -15,7 +15,7 @@
       "dependsOn": ["^build", "prepare:engine"]
     },
     "typecheck": {
-      "dependsOn": ["^build", "prepare:engine"]
+      "dependsOn": ["^build", "build", "prepare:engine"]
     },
     "test": {
       "dependsOn": ["build", "prepare:engine"]
