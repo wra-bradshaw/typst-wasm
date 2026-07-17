@@ -219,7 +219,12 @@ export const typst = (options: TypstPluginOptions = {}): Plugin => {
         memoryPackageCacheCapacity: options.memoryPackageCacheCapacity,
       });
 
-      await options.configureCompiler?.(compiler);
+      try {
+        await options.configureCompiler?.(compiler);
+      } catch (error) {
+        await compiler.dispose().catch(() => undefined);
+        throw error;
+      }
 
       return compiler;
     })().catch((error) => {
