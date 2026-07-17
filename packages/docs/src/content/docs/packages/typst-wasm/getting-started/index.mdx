@@ -1,49 +1,89 @@
 ---
-title: Choose your setup
+title: Getting started
 description: Choose the typst-wasm getting-started guide for your runtime.
 ---
 
 import { Aside, CardGrid, LinkCard } from "@astrojs/starlight/components";
 
-`typst-wasm` provides two backends to help you compile Typst in any runtime:
-
-- The `worker` backend compiles Typst in a separate worker. Configure a host with `typst-wasm/worker/browser` or `typst-wasm/worker/node`.
-- The `jspi` backend compiles Typst on the current thread, but it requires experimental JSPI (which has [limited availability](https://caniuse.com/wf-wasm-jspi)).
-
-Between the two backends we can support all major browsers engines (Chrome, Firefox, Safari) and all major server side runtimes (Node, Deno, Bun, workerd).
-
-Use the unified `typst-wasm` compiler API everywhere. Choose a host adapter only when configuring a worker.
-
 <CardGrid>
+  <LinkCard
+    title="Browser"
+    href="/typst-wasm/packages/typst-wasm/getting-started/browser/"
+    description="Compile documents in a browser."
+  />
   <LinkCard
     title="Browser with Vite"
     href="/typst-wasm/packages/typst-wasm/getting-started/browser-vite/"
     description="Compile documents in a browser and let Vite bundle the worker, WASM, and font assets."
   />
   <LinkCard
-    title="Node.js (and Bun)"
+    title="Isomorphic applications with SSR"
+    href="/typst-wasm/packages/typst-wasm/getting-started/isomorphic-ssr/"
+    description="Render with typst-wasm on the server, then compile edits in the browser."
+  />
+  <LinkCard
+    title="Node.js"
     href="/typst-wasm/packages/typst-wasm/getting-started/node/"
-    description="Compile documents in a server-side Node.js or Bun process."
+    description="Compile documents in a Node.js worker thread."
   />
   <LinkCard
     title="Deno"
     href="/typst-wasm/packages/typst-wasm/getting-started/deno/"
-    description="Use the root compiler API with Deno's browser-compatible Worker and asset APIs."
+    description="Compile with JSPI or Deno's browser-compatible Web Worker APIs."
+  />
+  <LinkCard
+    title="Bun"
+    href="/typst-wasm/packages/typst-wasm/getting-started/bun/"
+    description="Compile documents in a Bun Web Worker."
   />
   <LinkCard
     title="Cloudflare Workers"
     href="/typst-wasm/packages/typst-wasm/getting-started/cloudflare-workers/"
     description="Compile in workerd using JSPI and precompiled core modules."
   />
+  <LinkCard
+    title="Examples"
+    href="/typst-wasm/packages/typst-wasm/examples/"
+  />
 </CardGrid>
 
-<Aside type="tip" title="Using another framework?">
-  React, Vue, Svelte, and similar frameworks use the browser/Vite or Node.js
-  guide. The framework does not change the typst-wasm runtime.
-</Aside>
+Here's what it looks like to initialise `typst-wasm`:
 
-## Runtime and deployment are separate
+```ts
+import { createTypstCompiler } from "typst-wasm";
+import { createWebWorker } from "typst-wasm/worker/browser";
+import workerUrl from "typst-wasm/worker/web-worker?worker&url";
+import coreUrl from "typst-wasm/engine/engine.core.wasm?url";
+import core2Url from "typst-wasm/engine/engine.core2.wasm?url";
+import core3Url from "typst-wasm/engine/engine.core3.wasm?url";
 
-The runtime determines which compiler backend and worker adapter to use. Your hosting provider determines how those assets and headers are deployed. See the [deployment guides](../deployment/) after completing a runtime guide.
+const compiler = await createTypstCompiler({
+  backend: "auto",
+  worker: () => createWebWorker(workerUrl),
+  coreModules: {
+    "engine.core.wasm": WebAssembly.compileStreaming(fetch(coreUrl)),
+    "engine.core2.wasm": WebAssembly.compileStreaming(fetch(core2Url)),
+    "engine.core3.wasm": WebAssembly.compileStreaming(fetch(core3Url)),
+  },
+});
+```
 
-For browser compilation without Vite, see [Use the browser without Vite](../how-to/browser-without-vite/).
+A lot of imports, yes. The benefit of this API is that you get to decide where the assets come from. This instantiation scheme is why typst-wasm has such broad compatibility.
+
+Lets go through line-by-line to understand what is happening here.
+
+## backend: "auto"
+
+typst-wasm supports two asynchronous backends: JSPI and workers. `backend: "auto"` will choose the backend that is supported by the runtime you run it in. To test what backend will be chosen for a runtime, replace `createTypstCompiler` with `selectAutomaticBackendKind` in the above example and log out the result.
+
+In cases where you want to opt out of runtime detection, you can pass `backend: "jspi"` or `backend: "worker"`.
+
+## worker: () => createWebWorker(workerUrl)
+
+Web workers and Node.js worker threads are not supported everywhere, and bundlers deal with workers in a variety of ways.
+
+We let you supply a URL to the worker in a way that fits your bundler and deployment setup.
+
+## coreModules
+
+WASM imports are currently very experimental and as such can't be reliably abstracted away. To provide broad bundler and deployment setup support, you provide the compiled WASM modules.

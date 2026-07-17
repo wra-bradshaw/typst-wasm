@@ -1,0 +1,78 @@
+---
+title: Bun
+description: Compile Typst documents in Bun with Web Workers.
+---
+
+import { Aside, Steps } from "@astrojs/starlight/components";
+
+Use the root compiler API with the browser-compatible worker host. Bun's Web
+Worker implementation runs the Typst compiler in a separate worker.
+
+<Steps>
+
+1.  **Install the packages**
+
+    ```sh
+    bun add typst-wasm @typst-wasm/fonts
+    ```
+
+2.  **Create the compiler**
+
+    ```ts
+    import { createTypstCompiler } from "typst-wasm";
+    import { createWebWorker } from "typst-wasm/worker/browser";
+
+    const asset = (specifier: string) =>
+      new URL(import.meta.resolve(specifier));
+
+    const compiler = await createTypstCompiler({
+      backend: "worker",
+      coreModules: {
+        "engine.core.wasm": WebAssembly.compile(
+          await Bun.file(asset("typst-wasm/engine/engine.core.wasm")).arrayBuffer(),
+        ),
+        "engine.core2.wasm": WebAssembly.compile(
+          await Bun.file(asset("typst-wasm/engine/engine.core2.wasm")).arrayBuffer(),
+        ),
+        "engine.core3.wasm": WebAssembly.compile(
+          await Bun.file(asset("typst-wasm/engine/engine.core3.wasm")).arrayBuffer(),
+        ),
+      },
+      worker: () => createWebWorker(asset("typst-wasm/worker/web-worker")),
+    });
+    ```
+
+3.  **Load fonts and compile**
+
+    ```ts
+    try {
+      await compiler.addFonts(
+        new Uint8Array(
+          await Bun.file(
+            asset("@typst-wasm/fonts/NewCMMath-Regular.otf"),
+          ).arrayBuffer(),
+        ),
+      );
+      await compiler.addSource("main.typ", "= Hello from Typst");
+      const result = await compiler.compile({
+        main: "main.typ",
+        format: "pdf",
+      });
+
+      await Bun.write("output.pdf", result.output);
+    } finally {
+      await compiler.dispose();
+    }
+    ```
+
+4.  **Run the program**
+
+    Save the example as `src/index.ts` and run it with `bun run src/index.ts`.
+    The worker module must be resolvable from the installed package.
+
+</Steps>
+
+<Aside type="note" title="Worker adapter">
+  Bun can also use the Node adapter, but this guide uses Bun's Web Worker API
+  and `typst-wasm/worker/browser` explicitly.
+</Aside>

@@ -1,0 +1,58 @@
+---
+title: SSR and typst-wasm
+description: Use typst-wasm from both an SSR server and the browser.
+---
+
+import { Aside, LinkCard } from "@astrojs/starlight/components";
+import SourceSnippet from "../../../../../components/SourceSnippet.astro";
+import compilerSource from "../../../../../../../example-typst-playground-cloudflare/src/compiler.ts?raw";
+import routeSource from "../../../../../../../example-typst-playground-cloudflare/src/routes/index.tsx?raw";
+
+An isomorphic application can compile the same document in two runtimes:
+
+- the server compiles the first document while rendering the route, so the response already contains a preview;
+- after hydration, the browser compiles edits in a Web Worker without waiting for the server.
+
+This page walks through the pattern used by the [TanStack Start playground](https://github.com/typst-wasm/typst-wasm/tree/main/packages/example-typst-playground-cloudflare) on Cloudflare. The pattern is not specific to TanStack Start or React, but it requires framework specific code.
+
+## Creating an isomorphic function
+
+Creation of our compiler is going to work slightly differently on the server vs client. On the server, we don't have access to any workers, so we must use the JSPI backend.
+
+TanStack Start makes isomorphic behaviour easy with `createIsomorphicFn`, but you could do this with other frameworks using something like Vite's `import.meta.env.SSR`.
+
+The basic shape of what we're doing is this:
+
+<SourceSnippet source={compilerSource} region="isomorphic-selector" lang="ts" />
+
+### initializeBrowserCompiler
+
+The browser branch uses Vite asset imports for the worker and core WASM modules. It also loads the fonts used by the playground. These imports are shared with the server branch in the playground's single compiler module:
+
+<SourceSnippet source={compilerSource} region="imports" lang="ts" />
+
+The browser initializer is an exact excerpt from that module:
+
+<SourceSnippet source={compilerSource} region="browser-initializer" lang="ts" />
+
+### initializeServerCompiler
+
+The Cloudflare version runs in `workerd`, not in a browser. It uses JSPI and imports the compiled WASM modules directly; it does not create a Web Worker or load browser asset URLs:
+
+<SourceSnippet source={compilerSource} region="server-initializer" lang="ts" />
+
+This is the server initializer in the Cloudflare playground. Direct `.wasm` imports here assume the [Cloudflare Vite plugin setup](../../deployment/cloudflare-workers/). For a Node server, use the Node worker adapter instead. The Vercel playground uses `createWorkerThread`, embeds the worker source, and resolves the WASM asset URLs against the request origin. The [Vercel deployment guide](../../deployment/vercel/) shows a different Node asset-loading option.
+
+### Putting it together
+
+<SourceSnippet source={compilerSource} region="isomorphic-selector" lang="ts" />
+
+Now we have this isomorphic `initializeCompiler` function, we can benefit from typst-wasm's unified compiler API.
+
+Write a small singleton wrapper to avoid re-creating the compiler all the time:
+
+<SourceSnippet source={compilerSource} region="compiler-cache" lang="ts" />
+
+And a small helper for use on the frontend.
+
+<SourceSnippet source={compilerSource} region="compile-facade" lang="ts" />

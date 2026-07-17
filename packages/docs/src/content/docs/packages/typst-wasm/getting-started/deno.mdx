@@ -1,62 +1,80 @@
 ---
 title: Deno
-description: Compile Typst documents in Deno with typst-wasm.
+description: Compile Typst documents in Deno with JSPI or Web Workers.
 ---
 
 import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
-Deno uses the root compiler API with the browser worker adapter. Resolve package assets with `import.meta.resolve` and fetch them; Deno's `Worker` API is compatible with the browser worker runtime.
+Deno can run `typst-wasm` with either the JSPI backend or a browser-compatible
+Web Worker. JSPI keeps compilation on the current thread; the worker backend
+runs it in a dedicated worker. Choose JSPI when it is available in your Deno
+version, or use the worker backend for broader compatibility.
 
 <Steps>
 
-1.  **Install the package**
-
-          <Tabs syncKey="package-manager">
-
-    <TabItem label="Deno">
+1.  **Install the packages**
 
     ```sh
     deno add npm:typst-wasm npm:@typst-wasm/fonts
     ```
 
-          </TabItem>
-
-    <TabItem label="npm">
-
-    ```sh
-    npm install typst-wasm @typst-wasm/fonts
-    ```
-
-          </TabItem>
-
-    </Tabs>
-
-2.  **Resolve assets and create the compiler**
+2.  **Resolve the core modules**
 
     ```ts
     import { createTypstCompiler } from "npm:typst-wasm";
-    import { createWebWorker } from "npm:typst-wasm/worker/browser";
+
     const asset = (specifier: string) =>
       new URL(import.meta.resolve(specifier));
 
+    const coreModules = {
+      "engine.core.wasm": WebAssembly.compileStreaming(
+        fetch(asset("typst-wasm/engine/engine.core.wasm")),
+      ),
+      "engine.core2.wasm": WebAssembly.compileStreaming(
+        fetch(asset("typst-wasm/engine/engine.core2.wasm")),
+      ),
+      "engine.core3.wasm": WebAssembly.compileStreaming(
+        fetch(asset("typst-wasm/engine/engine.core3.wasm")),
+      ),
+    };
+    ```
+
+3.  **Choose a backend**
+
+    <Tabs syncKey="deno-backend">
+
+    <TabItem label="JSPI">
+
+    ```ts
     const compiler = await createTypstCompiler({
-      backend: "auto",
-      coreModules: {
-        "engine.core.wasm": WebAssembly.compileStreaming(
-          fetch(asset("typst-wasm/engine/engine.core.wasm")),
-        ),
-        "engine.core2.wasm": WebAssembly.compileStreaming(
-          fetch(asset("typst-wasm/engine/engine.core2.wasm")),
-        ),
-        "engine.core3.wasm": WebAssembly.compileStreaming(
-          fetch(asset("typst-wasm/engine/engine.core3.wasm")),
-        ),
-      },
-      worker: () => createWebWorker(asset("typst-wasm/worker/web-worker")),
+      backend: "jspi",
+      coreModules,
     });
     ```
 
-3.  **Add a font and compile**
+    JSPI support depends on the Deno/V8 version. If this backend is not
+    available, use the Web Worker example instead.
+
+    </TabItem>
+
+    <TabItem label="Web Worker">
+
+    ```ts
+    import { createWebWorker } from "npm:typst-wasm/worker/browser";
+
+    const compiler = await createTypstCompiler({
+      backend: "worker",
+      coreModules,
+      worker: () =>
+        createWebWorker(asset("typst-wasm/worker/web-worker")),
+    });
+    ```
+
+    </TabItem>
+
+    </Tabs>
+
+4.  **Load a font and compile**
 
     ```ts
     try {
@@ -68,23 +86,20 @@ Deno uses the root compiler API with the browser worker adapter. Resolve package
 
       const result = await compiler.compile({
         main: "main.typ",
-        format: "html",
+        format: "pdf",
       });
-      console.log(result.output);
+      await Deno.writeFile("output.pdf", result.output);
     } finally {
       await compiler.dispose();
     }
     ```
 
-4.  **Grant the required permissions**
+5.  **Run the program**
+
+    Save the example as `src/main.ts` and run it with:
 
     ```sh
-    deno run --allow-read --allow-net src/main.ts
+    deno run --allow-read --allow-write --allow-net src/main.ts
     ```
 
 </Steps>
-
-<Aside type="note" title="Deno imports">
-  Import the compiler from `npm:typst-wasm` and the worker host from
-  `npm:typst-wasm/worker/browser`. There is no separate Deno adapter.
-</Aside>

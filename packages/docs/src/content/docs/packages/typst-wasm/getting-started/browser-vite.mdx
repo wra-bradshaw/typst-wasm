@@ -7,13 +7,6 @@ import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 This guide runs the compiler in a browser worker. Vite turns the worker, core WASM, and font imports into URLs that can be fetched at runtime.
 
-<Aside type="caution" title="This is not the Vite Typst plugin">
-  This guide uses Vite to bundle `typst-wasm` at runtime. If you want to import
-  `.typ` files and compile them during the Vite build, use the
-  [`@typst-wasm/vite-plugin-typst`
-  guide](/typst-wasm/packages/vite-plugin-typst/how-to/use-the-vite-plugin/).
-</Aside>
-
 <Steps>
 
 1.  **Install the packages**
@@ -79,8 +72,11 @@ This guide runs the compiler in a browser worker. Vite turns the worker, core WA
     });
 
     await compiler.addFonts(
-      ...[regularFontUrl, textFontUrl].map(
-        async (url) => new Uint8Array(await (await fetch(url)).arrayBuffer()),
+      fetch(regularFontUrl).then((res) =>
+        res.arrayBuffer().then((res) => new Uint8Array(res)),
+      ),
+      fetch(textFontUrl).then((res) =>
+        res.arrayBuffer().then((res) => new Uint8Array(res)),
       ),
     );
     ```

@@ -38,13 +38,15 @@ Cloudflare Workers runs on `workerd`, not Node.js. Import the compiler from `typ
     import core from "typst-wasm/engine/engine.core.wasm";
     import core2 from "typst-wasm/engine/engine.core2.wasm";
     import core3 from "typst-wasm/engine/engine.core3.wasm";
+    import regularFontUrl from "@typst-wasm/fonts/LibertinusSerif-Regular.otf?url";
+    import mathFontUrl from "@typst-wasm/fonts/NewCMMath-Regular.otf?url";
     ```
 
 3.  **Compile inside the request handler**
 
     ```ts
     export default {
-      async fetch() {
+      async fetch(request, env) {
         const compiler = await createTypstCompiler({
           backend: "jspi",
           coreModules: {
@@ -54,6 +56,15 @@ Cloudflare Workers runs on `workerd`, not Node.js. Import the compiler from `typ
           },
         });
         try {
+          await compiler.addFonts(
+            env.ASSETS.fetch(new URL(regularFontUrl, request.url)).then((res) =>
+              res.arrayBuffer().then((res) => new Uint8Array(res)),
+            ),
+            env.ASSETS.fetch(new URL(mathFontUrl, request.url)).then((res) =>
+              res.arrayBuffer().then((res) => new Uint8Array(res)),
+            ),
+          );
+
           await compiler.addSource("main.typ", "= Hello from Typst");
           const result = await compiler.compile({
             main: "main.typ",
@@ -72,11 +83,17 @@ Cloudflare Workers runs on `workerd`, not Node.js. Import the compiler from `typ
 
 </Steps>
 
-<Aside type="caution" title="Use a Workers-compatible build">
-  The example assumes a Vite-based Cloudflare Workers build that supports
-  standard `.wasm` imports. Do not bundle this code with a Node-only adapter,
-  and do not use the Vercel Edge runtime as a substitute for workerd without
-  testing it separately.
-</Aside>
+## Fonts in Workers
 
-For Wrangler configuration and deployment, continue with the [Cloudflare Workers deployment guide](../../deployment/cloudflare-workers/).
+`compiler.addFonts()` accepts a `Uint8Array` or a promise that resolves to one. It does not accept a URL, a `Response`, or a bare `ArrayBuffer`. The example above loads packaged fonts through the `ASSETS` binding and converts each response to `Uint8Array`.
+
+Configure the binding in `wrangler.jsonc`:
+
+```jsonc
+{
+  // ...
+  "assets": { "binding": "ASSETS" }
+}
+```
+
+For deployment, continue with the [Cloudflare Workers deployment guide](../../deployment/cloudflare-workers/).
