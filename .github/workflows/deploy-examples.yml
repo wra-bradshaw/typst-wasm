@@ -24,8 +24,10 @@ jobs:
     environment: examples
 
     steps:
-      - name: Checkout
+      - name: Checkout tested commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v22
