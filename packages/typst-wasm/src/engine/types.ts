@@ -8,7 +8,7 @@ import type {
   FileKind,
   LoadedFile,
   PdfStandard,
-} from "typst-wasm-internal/engine/types";
+} from "./generated/jspi/interfaces/typst-engine-types.d.ts";
 
 export type {
   CompileFormat,

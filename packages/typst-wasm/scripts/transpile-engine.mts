@@ -25,8 +25,6 @@ const options = {
   name: "engine",
   instantiation: "async" as const,
   wasiShim: false,
-  // Keep the tiny JCO helper modules in the generated JavaScript while
-  // leaving the main Typst engine as a separate streaming/loadable asset.
   base64Cutoff,
   ...(backend === "jspi" && {
     asyncMode: "jspi",
@@ -51,8 +49,7 @@ try {
         typeof content === "string"
           ? content
           : new TextDecoder().decode(content as Uint8Array);
-      const fallback =
-        /if \(!getCoreModule\)[^\n]*fetchCompile[^\n]*/;
+      const fallback = /if \(!getCoreModule\)[^\n]*fetchCompile[^\n]*/;
       if (!fallback.test(text)) {
         throw new Error("JCO engine fallback loader changed unexpectedly");
       }

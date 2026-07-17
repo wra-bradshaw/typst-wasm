@@ -4,7 +4,7 @@ import type { TypstFileLoader } from "../compiler/types";
 import type { EngineImports, EngineModule } from "../engine/types";
 
 let mockEngine = {} as EngineModule;
-vi.mock("typst-wasm-internal/engine", () => ({
+vi.mock("../engine/generated/jspi/engine.js", () => ({
   instantiate: (...args: any[]) =>
     (mockEngine.instantiate as (...args: any[]) => unknown)(...args),
 }));

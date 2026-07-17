@@ -61,6 +61,7 @@ export default tseslint.config(
       "test_*.js",
       "**/wasm/*.js",
       "**/wasm/*.d.ts",
+      "src/engine/generated/**",
     ],
   },
 );

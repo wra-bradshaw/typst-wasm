@@ -99,6 +99,8 @@ pkgs.stdenvNoCC.mkDerivation {
     runHook preInstall
     mkdir -p "$out"
     cp -r packages/typst-wasm/dist "$out/dist"
+    mkdir -p "$out/src/engine"
+    cp -r packages/typst-wasm/src/engine/generated "$out/src/engine/generated"
     runHook postInstall
   '';
 }

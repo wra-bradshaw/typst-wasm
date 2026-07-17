@@ -9,6 +9,7 @@ result-*
 # outputs
 out
 dist
+/packages/typst-wasm/src/engine/generated/
 .next
 .output
 .vercel

@@ -1,4 +1,4 @@
-import * as engine from "typst-wasm-internal/engine/worker";
+import * as engine from "../engine/generated/worker/engine.js";
 import type { WorkerPort } from "./port";
 import { installTypstWorkerRuntime } from "./runtime";
 

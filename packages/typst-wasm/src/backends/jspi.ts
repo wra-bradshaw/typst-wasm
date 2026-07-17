@@ -6,7 +6,7 @@ import {
   CompilerNotInitializedError,
   WorkerError,
 } from "../errors";
-import * as jspiEngineModule from "typst-wasm-internal/engine";
+import * as jspiEngineModule from "../engine/generated/jspi/engine.js";
 import type { FileLoaderManager } from "../files/loaders";
 import type { FontInput } from "../compiler/types";
 import { getCoreModule, resolveCoreModules } from "../engine/core-modules";

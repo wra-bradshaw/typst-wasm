@@ -1,17 +1,5 @@
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { defineConfig } from "tsdown";
 import workerPlugins from "tsdown-plugin-worker";
-
-const packageRoot = dirname(fileURLToPath(import.meta.url));
-const generatedJspi = resolve(
-  packageRoot,
-  "src/engine/generated/jspi/engine.js",
-);
-const generatedWorker = resolve(
-  packageRoot,
-  "src/engine/generated/worker/engine.js",
-);
 
 const external = ["node:fs/promises", "node:worker_threads"];
 
@@ -42,15 +30,6 @@ export default defineConfig([
       "worker/node": "./src/worker/host-node.ts",
       "worker/browser": "./src/worker/host-browser.ts",
     },
-    noExternal: ["typst-wasm-internal/engine"],
-    inputOptions: {
-      resolve: {
-        alias: {
-          "typst-wasm-internal/engine": generatedJspi,
-        },
-        mainFields: ["module", "main"],
-      },
-    },
     clean: true,
     plugins: [
       workerPlugins({
@@ -64,15 +43,6 @@ export default defineConfig([
   {
     ...common,
     external: ["node:worker_threads", "node:fs/promises"],
-    noExternal: ["typst-wasm-internal/engine/worker"],
-    inputOptions: {
-      resolve: {
-        alias: {
-          "typst-wasm-internal/engine/worker": generatedWorker,
-        },
-        mainFields: ["module", "main"],
-      },
-    },
     entry: {
       "worker/worker-thread": "./src/worker/worker-thread.ts",
     },
@@ -81,15 +51,6 @@ export default defineConfig([
   {
     ...common,
     external: ["node:fs/promises"],
-    noExternal: ["typst-wasm-internal/engine/worker"],
-    inputOptions: {
-      resolve: {
-        alias: {
-          "typst-wasm-internal/engine/worker": generatedWorker,
-        },
-        mainFields: ["module", "main"],
-      },
-    },
     entry: {
       "worker/web-worker": "./src/worker/web-worker.ts",
     },
