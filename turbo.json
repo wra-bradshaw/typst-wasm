@@ -42,7 +42,7 @@
     },
     "rust:check": {},
     "typecheck": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "build"]
     },
     "fix": {
       "dependsOn": [],
