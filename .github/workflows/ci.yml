@@ -20,16 +20,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v22
         with:
-          # Permit the blog derivation's explicit __noChroot opt-out so its
-          # prerenderer can reach its ephemeral local preview server.
           extra-conf: sandbox = relaxed
       - uses: DeterminateSystems/magic-nix-cache-action@v13
         with:
           use-flakehub: false
       - run: nix develop .#ci -c pnpm install --frozen-lockfile
-      # Install the official Playwright browsers and Ubuntu dependencies on the host.
-      # Keep this outside the Nix devshell so Playwright sees the host loader and apt
-      # libraries exactly as they are installed by the runner image.
       - name: Install Playwright browsers and dependencies
         working-directory: packages/typst-wasm
         run: ./node_modules/.bin/playwright install --with-deps chromium firefox webkit
