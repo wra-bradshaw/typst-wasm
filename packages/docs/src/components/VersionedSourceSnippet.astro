@@ -1,0 +1,18 @@
+---
+import SourceSnippet from "./SourceSnippet.astro";
+import typstWasmPackage from "../../../typst-wasm/package.json";
+
+type Props = {
+  source: string;
+  region: string;
+  lang: string;
+};
+
+const { source, region, lang } = Astro.props;
+const versionedSource = source.replaceAll(
+  "__TYPST_WASM_VERSION__",
+  typstWasmPackage.version,
+);
+---
+
+<SourceSnippet source={versionedSource} region={region} lang={lang} />

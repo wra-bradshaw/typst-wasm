@@ -1,0 +1,31 @@
+---
+import { Code } from "@astrojs/starlight/components";
+
+type Props = {
+  source: string;
+  region: string;
+  lang: string;
+};
+
+const { source, region, lang } = Astro.props;
+const startMarker = `// docs:start ${region}`;
+const endMarker = `// docs:end ${region}`;
+const lines = source.split("\n");
+const starts = lines.reduce<number[]>(
+  (matches, line, index) => (line === startMarker ? [...matches, index] : matches),
+  [],
+);
+const ends = lines.reduce<number[]>(
+  (matches, line, index) => (line === endMarker ? [...matches, index] : matches),
+  [],
+);
+
+if (starts.length !== 1 || ends.length !== 1 || starts[0] >= ends[0]!) {
+  throw new Error(`Invalid source snippet region: ${region}`);
+}
+
+const code = lines.slice(starts[0] + 1, ends[0]).join("\n");
+if (code.length === 0) throw new Error(`Empty source snippet region: ${region}`);
+---
+
+<Code code={code} lang={lang} />

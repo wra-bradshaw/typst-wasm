@@ -66,30 +66,7 @@ export default defineConfig({
                 },
               ],
             },
-            {
-              label: "Tutorials",
-              items: [
-                {
-                  autogenerate: { directory: "packages/typst-wasm/tutorials" },
-                },
-              ],
-            },
-            {
-              label: "How-to guides",
-              items: [
-                { autogenerate: { directory: "packages/typst-wasm/how-to" } },
-              ],
-            },
-            {
-              label: "Explanation",
-              items: [
-                {
-                  autogenerate: {
-                    directory: "packages/typst-wasm/explanation",
-                  },
-                },
-              ],
-            },
+            { label: "Examples", link: "/packages/typst-wasm/examples/" },
             typstWasmApiSidebar,
           ],
         },
@@ -97,15 +74,10 @@ export default defineConfig({
           label: "@typst-wasm/vite-plugin-typst",
           items: [
             {
-              label: "How-to guides",
-              items: [
-                {
-                  autogenerate: {
-                    directory: "packages/vite-plugin-typst/how-to",
-                  },
-                },
-              ],
+              label: "Getting started",
+              link: "/packages/vite-plugin-typst/getting-started/",
             },
+            { label: "Examples", link: "/packages/vite-plugin-typst/examples/" },
             viteApiSidebar,
           ],
         },
