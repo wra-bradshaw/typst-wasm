@@ -31,7 +31,11 @@ export default defineConfig({
           tsconfig: "./tsconfig.typedoc.json",
           output: "packages/typst-wasm/reference/api",
           sidebar: { label: "API reference", collapsed: true },
-          typeDoc: { disableSources: true, sortEntryPoints: false, readme: "README.md" },
+          typeDoc: {
+            disableSources: true,
+            sortEntryPoints: false,
+            readme: "README.md",
+          },
         }),
         viteTypeDoc({
           entryPoints: ["./reference-entrypoints/vite-plugin.ts"],
