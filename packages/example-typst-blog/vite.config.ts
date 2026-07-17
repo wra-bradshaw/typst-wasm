@@ -4,7 +4,6 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import typst from "@typst-wasm/vite-plugin-typst";
 import react from "@vitejs/plugin-react";
-import { createWorkerThread } from "typst-wasm/worker/node";
 import { defineConfig } from "vite";
 
 const fontUrls = [
@@ -31,28 +30,6 @@ export default defineConfig({
       },
     }),
     typst({
-      backend: "worker",
-      coreModules: {
-        "engine.core.wasm": WebAssembly.compile(
-          await readFile(
-            new URL(import.meta.resolve("typst-wasm/engine/engine.core.wasm")),
-          ),
-        ),
-        "engine.core2.wasm": WebAssembly.compile(
-          await readFile(
-            new URL(import.meta.resolve("typst-wasm/engine/engine.core2.wasm")),
-          ),
-        ),
-        "engine.core3.wasm": WebAssembly.compile(
-          await readFile(
-            new URL(import.meta.resolve("typst-wasm/engine/engine.core3.wasm")),
-          ),
-        ),
-      },
-      worker: () =>
-        createWorkerThread(
-          new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
-        ),
       configureCompiler: async (compiler) => {
         await compiler.addFonts(
           ...fontUrls.map(
