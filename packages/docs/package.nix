@@ -13,7 +13,10 @@ let
     inherit (pkgs) lib;
     inherit workspaceRoot;
   };
-  src = workspaceFiles.sourceFor "packages/docs";
+  src = workspaceFiles.sourceForWith "packages/docs" [
+    "packages/example-typst-playground-cloudflare/src/compiler.ts"
+    "packages/example-typst-playground-cloudflare/src/routes/index.tsx"
+  ];
   prepareWorkspaceArtifacts = import ../../nix/workspace-artifacts.nix { lib = pkgs.lib; };
   prepareBuildArtifacts = prepareWorkspaceArtifacts [
     {

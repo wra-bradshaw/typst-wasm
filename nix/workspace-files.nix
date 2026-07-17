@@ -22,18 +22,25 @@ let
   ++ optionalPath (workspaceRoot + "/pnpm-workspace.yml")
   ++ optionalPath (workspaceRoot + "/.npmrc");
 in
-{
+rec {
   pnpmWorkspaces = map (
     packageDir:
     (builtins.fromJSON (builtins.readFile (packagesDir + "/${packageDir}/package.json"))).name
   ) packageDirs;
 
-  sourceFor =
-    packageDir:
+  sourceForWith =
+    packageDir: extraFiles:
     fs.toSource {
       root = workspaceRoot;
-      fileset = fs.unions (sharedFiles ++ packageJsons ++ [ (workspaceRoot + "/${packageDir}") ]);
+      fileset = fs.unions (
+        sharedFiles
+        ++ packageJsons
+        ++ [ (workspaceRoot + "/${packageDir}") ]
+        ++ map (file: workspaceRoot + "/${file}") extraFiles
+      );
     };
+
+  sourceFor = packageDir: sourceForWith packageDir [];
 
   depsSource = fs.toSource {
     root = workspaceRoot;
