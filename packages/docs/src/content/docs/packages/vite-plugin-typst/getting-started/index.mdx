@@ -1,0 +1,116 @@
+---
+title: Getting started
+description: Import Typst documents as HTML modules in a Vite application.
+---
+
+import { Aside, Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+`@typst-wasm/vite-plugin-typst` compiles `.typ` files during Vite development and builds, then exposes the generated HTML as a JavaScript module. The compiler runs in Node.js; the resulting HTML can be rendered by your client application.
+
+<Steps>
+
+1. **Install the packages**
+
+   <Tabs syncKey="package-manager">
+
+   <TabItem label="npm">
+
+   ```sh
+   npm install @typst-wasm/vite-plugin-typst typst-wasm
+   ```
+
+   </TabItem>
+
+   <TabItem label="pnpm">
+
+   ```sh
+   pnpm add @typst-wasm/vite-plugin-typst typst-wasm
+   ```
+
+   </TabItem>
+
+   <TabItem label="Yarn">
+
+   ```sh
+   yarn add @typst-wasm/vite-plugin-typst typst-wasm
+   ```
+
+   </TabItem>
+
+   </Tabs>
+
+2. **Configure the plugin**
+
+   Add the plugin to `vite.config.ts`. It supplies Node/Vite defaults for the worker and core WASM modules.
+
+   ```ts
+   import typst from "@typst-wasm/vite-plugin-typst";
+   import { defineConfig } from "vite";
+
+   export default defineConfig({
+     plugins: [typst()],
+   });
+   ```
+
+   You can override `worker` or `coreModules` when your build needs custom asset resolution.
+
+3. **Add a Typst document**
+
+   Create `src/post.typ`:
+
+   ```typst
+   #set document(title: "My post")
+
+   = Hello from Typst
+
+   This document is compiled by Vite.
+   ```
+
+4. **Enable TypeScript declarations**
+
+   In `src/vite-env.d.ts`, reference the plugin's client declaration:
+
+   ```ts
+   /// <reference types="vite/client" />
+   /// <reference types="@typst-wasm/vite-plugin-typst/client" />
+   ```
+
+5. **Import and render the document**
+
+   Use the explicit `?typst=html` query when importing a Typst file. For example, in a client entry module:
+
+   ```ts
+   import typstDocument from "./post.typ?typst=html";
+
+   document.querySelector("#output")!.innerHTML = typstDocument.html;
+   ```
+
+   Render into an element in `index.html`:
+
+   ```html
+   <main id="output"></main>
+   ```
+
+</Steps>
+
+## Module exports
+
+The compiled module's default export contains `html`, `metadata`, `diagnostics`, and `dependencies`. These values are also available as named exports:
+
+```ts
+import document, {
+  diagnostics,
+  html,
+  metadata,
+} from "./post.typ?typst=html";
+```
+
+The plugin watches project files imported by a Typst document and triggers recompilation when they change. Relative asset URLs in the generated HTML are also handed to Vite for bundling.
+
+<Aside type="caution">
+
+The plugin currently supports HTML output only.
+
+</Aside>
+
+See the [API reference](../reference/api/readme/) and [examples](../examples/) for advanced compiler configuration and a complete application.
