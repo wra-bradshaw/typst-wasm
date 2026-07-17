@@ -1,6 +1,6 @@
 import type { ResolvedLogger } from "../logging";
 
-/** Minimal asynchronous cache used for downloaded Typst packages. */
+/** Asynchronous cache for compressed Typst package archives (`.tar.gz`). */
 export interface PackageCache {
   match(request: RequestInfo | URL): Promise<Response | null>;
   put(request: RequestInfo | URL, response: Response): Promise<void>;
@@ -48,8 +48,17 @@ export const makeBrowserCacheStorage = (
   };
 };
 
-/** Creates an in-memory least-recently-used package cache. */
+/** Creates an entry-count-bounded in-memory LRU for compressed package archives. */
 export const makeMemoryCacheStorage = (capacity = 400): PackageCache => {
+  if (
+    !Number.isFinite(capacity) ||
+    !Number.isInteger(capacity) ||
+    capacity < 0
+  ) {
+    throw new RangeError(
+      "package archive cache capacity must be a finite, non-negative integer",
+    );
+  }
   const storage = new Map<string, Response>();
   const key = (request: RequestInfo | URL): string => String(request);
 

@@ -4,6 +4,12 @@ import { makeBrowserCacheStorage, makeMemoryCacheStorage } from "./cache";
 const response = (value: string) => new Response(value);
 
 describe("memory package cache", () => {
+  it("validates capacity", () => {
+    expect(() => makeMemoryCacheStorage(-1)).toThrow(RangeError);
+    expect(() => makeMemoryCacheStorage(1.5)).toThrow(RangeError);
+    expect(() => makeMemoryCacheStorage(Infinity)).toThrow(RangeError);
+  });
+
   it("clones responses and updates LRU recency", async () => {
     const cache = makeMemoryCacheStorage(2);
     await cache.put("a", response("A"));

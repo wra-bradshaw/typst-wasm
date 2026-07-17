@@ -16,11 +16,6 @@ pub struct DependencyTrace {
 }
 
 impl DependencyTrace {
-    pub fn clear(&mut self) {
-        self.seen.clear();
-        self.ordered.clear();
-    }
-
     pub fn record_origin(&mut self, origin: &FileOrigin) {
         let key = DependencyKey {
             kind: origin.kind,

@@ -130,9 +130,9 @@ export interface TypstCompilerOptions {
   fetch?: typeof fetch;
   /** Base URL used to resolve Typst package downloads. */
   packageBaseUrl?: string;
-  /** Package cache, or `false` to disable caching. */
+  /** Optional compressed `.tar.gz` archive cache, or `false` to disable archive caching. */
   packageCache?: PackageCache | false;
-  /** Capacity of the in-memory package cache. */
+  /** Maximum number of decoded package maps retained per compiler (default 32). `0` disables completed decoded caching. */
   memoryPackageCacheCapacity?: number;
 }
 

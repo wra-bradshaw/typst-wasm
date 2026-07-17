@@ -5,8 +5,6 @@ use typst::syntax::{FileId, Source};
 use typst::text::{Font, FontBook};
 use typst::utils::LazyHash;
 
-use crate::dependencies::DependencyTrace;
-
 #[derive(Clone)]
 pub enum FileEntry {
     Source {
@@ -39,9 +37,7 @@ pub struct CompilerState {
     pub fonts: Vec<Font>,
     pub font_book: LazyHash<FontBook>,
     pub files: HashMap<FileId, FileEntry>,
-    pub fetched_files: HashMap<FileId, FileEntry>,
     pub main_id: Option<FileId>,
-    pub dependencies: DependencyTrace,
 }
 
 impl CompilerState {
@@ -50,9 +46,7 @@ impl CompilerState {
             fonts: Vec::new(),
             font_book: LazyHash::new(FontBook::new()),
             files: HashMap::new(),
-            fetched_files: HashMap::new(),
             main_id: None,
-            dependencies: DependencyTrace::default(),
         }
     }
 }

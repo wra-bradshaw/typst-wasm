@@ -107,7 +107,14 @@ const normalizeCompileResult = (
 };
 
 class PromiseTypstCompiler implements TypstCompiler {
-  constructor(private readonly backend: BackendService) {}
+  private packageManager: PackageManager | null;
+
+  constructor(
+    private readonly backend: BackendService,
+    packageManager: PackageManager,
+  ) {
+    this.packageManager = packageManager;
+  }
 
   addFonts(...fonts: FontInput[]): Promise<void> {
     return this.backend.addFonts(...fonts);
@@ -168,8 +175,10 @@ class PromiseTypstCompiler implements TypstCompiler {
     }
   }
 
-  dispose(): Promise<void> {
-    return this.backend.dispose();
+  async dispose(): Promise<void> {
+    this.packageManager?.dispose();
+    this.packageManager = null;
+    await this.backend.dispose();
   }
 }
 
@@ -201,8 +210,9 @@ export const createTypstCompiler = async (
   try {
     await backend.init();
   } catch (error) {
+    packageManager.dispose();
     await backend.dispose();
     throw error;
   }
-  return new PromiseTypstCompiler(backend);
+  return new PromiseTypstCompiler(backend, packageManager);
 };

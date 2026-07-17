@@ -11,7 +11,15 @@ export type FetchImpl = (
 ) => ReturnType<typeof fetch>;
 
 export class FileLoaderManager {
-  constructor(private readonly loaders: TypstFileLoader[]) {}
+  private loaders: TypstFileLoader[];
+
+  constructor(loaders: TypstFileLoader[]) {
+    this.loaders = loaders;
+  }
+
+  dispose(): void {
+    this.loaders = [];
+  }
 
   async load(request: FetchRequest): Promise<FetchedFile> {
     for (const loader of this.loaders) {

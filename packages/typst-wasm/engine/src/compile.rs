@@ -21,7 +21,6 @@ pub fn compile(
             font_book: state.font_book.clone(),
             fonts: state.fonts.clone(),
             files: state.files.clone(),
-            fetched_files: state.fetched_files.clone(),
             persistent_main: state.main_id,
         }
     };
@@ -38,7 +37,6 @@ pub fn compile(
         snapshot.fonts,
         main,
         snapshot.files,
-        snapshot.fetched_files,
     );
 
     let result = match format {
@@ -47,14 +45,9 @@ pub fn compile(
         _ => compile_paged(&world, &options),
     };
 
-    let runtime = world.into_runtime();
-
-    {
-        let mut state = state.borrow_mut();
-        state.fetched_files = runtime.fetched_files;
-        state.dependencies = runtime.dependencies;
-    }
-
+    // Fetched files and dependency tracing are compile-local. Dependencies have
+    // already been copied into the compile result above.
+    let _ = world.into_runtime();
     result
 }
 
@@ -62,7 +55,6 @@ struct CompileSnapshot {
     font_book: LazyHash<typst::text::FontBook>,
     fonts: Vec<typst::text::Font>,
     files: std::collections::HashMap<typst::syntax::FileId, crate::state::FileEntry>,
-    fetched_files: std::collections::HashMap<typst::syntax::FileId, crate::state::FileEntry>,
     persistent_main: Option<typst::syntax::FileId>,
 }
 

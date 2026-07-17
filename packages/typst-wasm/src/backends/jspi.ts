@@ -60,6 +60,7 @@ export class JspiService {
     this.disposed = true;
     this.compiler = null;
     this.compileAsync = null;
+    this.fileLoaderManager.dispose();
   }
 
   async addFonts(...fonts: FontInput[]): Promise<void> {

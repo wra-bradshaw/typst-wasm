@@ -32,7 +32,6 @@ impl CompileWorld {
         fonts: Vec<Font>,
         main: FileId,
         explicit_files: HashMap<FileId, FileEntry>,
-        fetched_files: HashMap<FileId, FileEntry>,
     ) -> Self {
         Self {
             library,
@@ -41,7 +40,7 @@ impl CompileWorld {
             main,
             explicit_files,
             runtime: Mutex::new(CompileRuntime {
-                fetched_files,
+                fetched_files: HashMap::new(),
                 dependencies: DependencyTrace::default(),
             }),
         }

@@ -79,6 +79,53 @@ describe("PackageManager", () => {
     await expect((await cache.match(url))?.text()).resolves.not.toBe("not tar");
   });
 
+  it("bounds decoded packages with an LRU and supports capacity zero", async () => {
+    const valid = await archive("one");
+    let requests = 0;
+    const manager = new PackageManager({
+      ...options(async () => {
+        requests++;
+        return response(valid);
+      }, false),
+      memoryPackageCacheCapacity: 1,
+    });
+    await manager.getFile(spec);
+    await manager.getFile(spec);
+    expect(requests).toBe(1);
+
+    const uncached = new PackageManager({
+      ...options(async () => {
+        requests++;
+        return response(valid);
+      }, false),
+      memoryPackageCacheCapacity: 0,
+    });
+    await uncached.getFile(spec);
+    await uncached.getFile(spec);
+    expect(requests).toBe(3);
+  });
+
+  it("validates decoded cache capacity", () => {
+    expect(
+      () => new PackageManager({ memoryPackageCacheCapacity: -1 }),
+    ).toThrow(RangeError);
+    expect(
+      () => new PackageManager({ memoryPackageCacheCapacity: 1.5 }),
+    ).toThrow(RangeError);
+    expect(
+      () => new PackageManager({ memoryPackageCacheCapacity: Infinity }),
+    ).toThrow(RangeError);
+  });
+
+  it("clears state and rejects new loads on disposal", async () => {
+    const manager = new PackageManager(
+      options(async () => response(await archive()), false),
+    );
+    manager.dispose();
+    await expect(manager.getFile(spec)).rejects.toThrow("disposed");
+    manager.dispose();
+  });
+
   it("reports invalid downloaded archives and missing members", async () => {
     const invalid = new PackageManager(
       options(async () => response(new TextEncoder().encode("invalid")), false),

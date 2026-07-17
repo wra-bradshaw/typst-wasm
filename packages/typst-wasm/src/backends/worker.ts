@@ -32,7 +32,7 @@ export class WorkerService {
   private readonly transport: WorkerTransport;
 
   constructor(
-    fileLoaderManager: FileLoaderManager,
+    private readonly fileLoaderManager: FileLoaderManager,
     internals: WorkerServiceInternals,
   ) {
     if (!internals.createWorker) {
@@ -101,6 +101,7 @@ export class WorkerService {
       new CompilerDisposedError("Compiler has been disposed"),
     );
     this.transport.close();
+    this.fileLoaderManager.dispose();
     void this.worker.terminate();
   }
 
