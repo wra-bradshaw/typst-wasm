@@ -40,6 +40,9 @@
     "format": {
       "dependsOn": []
     },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
     "fix": {
       "dependsOn": [],
       "cache": false

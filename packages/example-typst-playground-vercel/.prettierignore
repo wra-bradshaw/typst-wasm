@@ -1,0 +1,7 @@
+node_modules
+.vercel
+dist
+.pi-subagents
+.turbo
+.next
+src/routeTree.gen.ts

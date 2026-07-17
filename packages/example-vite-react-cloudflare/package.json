@@ -8,7 +8,9 @@
     "deploy": "pnpm run build && wrangler deploy",
     "dev": "vite",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "pnpm exec prettier . --check",
+    "format:fix": "pnpm exec prettier . --write"
   },
   "dependencies": {
     "@typst-wasm/fonts": "workspace:*",
@@ -22,6 +24,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "typescript": "^5.9.3",
-    "wrangler": "^4.105.0"
+    "wrangler": "^4.105.0",
+    "prettier": "^3.8.4"
   }
 }

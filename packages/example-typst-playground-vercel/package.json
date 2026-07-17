@@ -8,7 +8,9 @@
     "build:local": "pnpm run build && vite build",
     "dev": "pnpm run build && vite dev",
     "preview": "pnpm run build && vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "pnpm exec prettier . --check",
+    "format:fix": "pnpm exec prettier . --write"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.170.16",
@@ -25,6 +27,7 @@
     "@types/node": "^25.5.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "prettier": "^3.8.4"
   }
 }

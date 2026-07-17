@@ -1,0 +1,8 @@
+node_modules
+dist
+.astro
+.pi-subagents
+.turbo
+src/content/docs/reference/api
+src/content/docs/reference/packages/*/api
+src/content/docs/packages/*/reference/api

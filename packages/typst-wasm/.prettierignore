@@ -1,3 +1,6 @@
 dist
 node_modules
+.pi-subagents
+.turbo
+engine/target
 src/engine/generated

@@ -6,7 +6,9 @@
   "scripts": {
     "build": "nix run ../..#build-artifact -- example-node dist",
     "start": "node dist/index.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "pnpm exec prettier . --check",
+    "format:fix": "pnpm exec prettier . --write"
   },
   "dependencies": {
     "@typst-wasm/fonts": "workspace:*",
@@ -15,6 +17,7 @@
   "devDependencies": {
     "@types/node": "^25.2.0",
     "tsdown": "^0.20.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "prettier": "^3.8.4"
   }
 }

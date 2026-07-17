@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   build:
-    name: Lint, build, unit, and integration tests
+    name: Build, lint, typecheck, format, and tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,4 +33,4 @@ jobs:
       - name: Install Playwright browsers and dependencies
         working-directory: packages/typst-wasm
         run: ./node_modules/.bin/playwright install --with-deps chromium firefox webkit
-      - run: nix develop .#ci -c pnpm turbo run build lint test:unit test:integration
+      - run: nix develop .#ci -c pnpm check
