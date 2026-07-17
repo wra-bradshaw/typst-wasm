@@ -1,0 +1,30 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "prepare:engine": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/nix/**",
+        "package.nix",
+        "flake-module.nix"
+      ],
+      "outputs": ["src/engine/generated/**"]
+    },
+    "build": {
+      "dependsOn": ["^build", "prepare:engine"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build", "prepare:engine"]
+    },
+    "test": {
+      "dependsOn": ["build", "prepare:engine"]
+    },
+    "test:unit": {
+      "dependsOn": ["build", "prepare:engine"]
+    },
+    "test:integration": {
+      "dependsOn": ["^build", "build", "prepare:engine"]
+    }
+  }
+}
