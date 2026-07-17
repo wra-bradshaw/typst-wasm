@@ -131,6 +131,30 @@ describe("typst vite plugin request matching", () => {
     typstWasm.createTypstCompiler.mockReset();
   });
 
+  test("provides defaults when no options are supplied", async () => {
+    const compiler = makeCompiler();
+    typstWasm.createTypstCompiler.mockResolvedValue(compiler);
+    const plugin = resolvePlugin(typst());
+    const { context } = makeTransformContext();
+
+    await transformTypst(
+      plugin,
+      context,
+      "= Defaults",
+      `${path.join(projectRoot, "defaults.typ")}?typst=html`,
+    );
+
+    const options = typstWasm.createTypstCompiler.mock.calls[0]?.[0] as
+      | TypstCompilerOptions
+      | undefined;
+    expect(options?.coreModules).toEqual({
+      "engine.core.wasm": expect.any(Promise),
+      "engine.core2.wasm": expect.any(Promise),
+      "engine.core3.wasm": expect.any(Promise),
+    });
+    expect(options?.worker).toEqual(expect.any(Function));
+  });
+
   test("only transforms explicit html queries", async () => {
     const compiler = makeCompiler();
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
@@ -296,7 +320,9 @@ describe("typst vite plugin compiler lifecycle", () => {
       await configured.addFonts(new Uint8Array([1, 2, 3]));
     });
     typstWasm.createTypstCompiler.mockResolvedValue(compiler);
-    const plugin = resolvePlugin(typst({ coreModules, worker, configureCompiler }));
+    const plugin = resolvePlugin(
+      typst({ coreModules, worker, configureCompiler }),
+    );
     const { context } = makeTransformContext();
 
     await transformTypst(

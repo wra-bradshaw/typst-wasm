@@ -10,6 +10,7 @@ import {
   type LoadedFile,
   type Diagnostic,
 } from "typst-wasm";
+import { createWorkerThread } from "typst-wasm/worker/node";
 import type { Plugin, ResolvedConfig } from "vite";
 import { transformHtmlAssets } from "./html-assets";
 
@@ -23,8 +24,8 @@ export interface TypstPluginOptions {
   logger?: TypstCompilerOptions["logger"];
   /** Controls compiler library messages. */
   logLevel?: TypstCompilerOptions["logLevel"];
-  /** Precompiled core WASM modules. */
-  coreModules: TypstCompilerOptions["coreModules"];
+  /** Precompiled core WASM modules. Defaults to the modules published by typst-wasm. */
+  coreModules?: TypstCompilerOptions["coreModules"];
   /** Worker factory passed to the compiler. */
   worker?: TypstCompilerOptions["worker"];
   /** Base URL used for Typst package downloads. */
@@ -108,6 +109,23 @@ const makeProjectFileLoader =
     return { data: new Uint8Array(await readFile(file)), resolvedPath: file };
   };
 
+const createDefaultCoreModules = (): TypstCompilerOptions["coreModules"] => ({
+  "engine.core.wasm": readFile(
+    new URL(import.meta.resolve("typst-wasm/engine/engine.core.wasm")),
+  ).then(WebAssembly.compile),
+  "engine.core2.wasm": readFile(
+    new URL(import.meta.resolve("typst-wasm/engine/engine.core2.wasm")),
+  ).then(WebAssembly.compile),
+  "engine.core3.wasm": readFile(
+    new URL(import.meta.resolve("typst-wasm/engine/engine.core3.wasm")),
+  ).then(WebAssembly.compile),
+});
+
+const createDefaultWorker: NonNullable<TypstCompilerOptions["worker"]> = () =>
+  createWorkerThread(
+    new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
+  );
+
 const serialize = (value: unknown): string => JSON.stringify(value);
 
 const formatCompileError = (error: CompileError): Error => {
@@ -167,7 +185,7 @@ const compileTypst = async (
  * The transformed module exports the rendered HTML, metadata, diagnostics,
  * and dependencies, and uses the document as its default export.
  */
-export const typst = (options: TypstPluginOptions): Plugin => {
+export const typst = (options: TypstPluginOptions = {}): Plugin => {
   let config: ResolvedConfig | undefined;
   let compilerPromise: Promise<TypstCompiler> | undefined;
   let transformQueue: Promise<void> = Promise.resolve();
@@ -190,8 +208,8 @@ export const typst = (options: TypstPluginOptions): Plugin => {
         fetch: options.fetch,
         logger: options.logger,
         logLevel: options.logLevel,
-        coreModules: options.coreModules,
-        worker: options.worker,
+        coreModules: options.coreModules ?? createDefaultCoreModules(),
+        worker: options.worker ?? createDefaultWorker,
         fileLoaders: [
           ...(options.fileLoaders ?? []),
           makeProjectFileLoader(config.root),

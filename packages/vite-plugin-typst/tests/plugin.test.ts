@@ -1,7 +1,6 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { createWorkerThread } from "typst-wasm/worker/node";
 import typst from "@typst-wasm/vite-plugin-typst";
 import { describe, expect, test } from "vitest";
 import { buildFixture, fixturePath, getChunk, importChunk } from "./helpers";
@@ -15,25 +14,7 @@ declare global {
   };
 }
 
-const plugin = () =>
-  typst({
-    backend: "worker",
-    worker: () =>
-      createWorkerThread(
-        new URL(import.meta.resolve("typst-wasm/worker/worker-thread")),
-      ),
-    coreModules: {
-      "engine.core.wasm": readFile(
-        new URL(import.meta.resolve("typst-wasm/engine/engine.core.wasm")),
-      ).then(WebAssembly.compile),
-      "engine.core2.wasm": readFile(
-        new URL(import.meta.resolve("typst-wasm/engine/engine.core2.wasm")),
-      ).then(WebAssembly.compile),
-      "engine.core3.wasm": readFile(
-        new URL(import.meta.resolve("typst-wasm/engine/engine.core3.wasm")),
-      ).then(WebAssembly.compile),
-    },
-  });
+const plugin = () => typst();
 
 describe("vite-plugin-typst fixtures", () => {
   test("builds a typst import into a JS module", async () => {
