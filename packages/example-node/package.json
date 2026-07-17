@@ -1,7 +1,7 @@
 {
   "name": "@typst-wasm/example-node",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "build": "nix run ../..#build-artifact -- example-node dist",
